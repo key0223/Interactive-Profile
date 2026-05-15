@@ -12,7 +12,7 @@ TagManager:
   - Water
   - UI
   - Interactable
-  - 
+  - Wall
   - 
   - 
   - 
@@ -40,4 +40,22 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Background
+    uniqueID: 381000345
+    locked: 0
+  - name: GroundDecoration
+    uniqueID: 3083462353
+    locked: 0
+  - name: Furniture
+    uniqueID: 3533772411
+    locked: 0
+  - name: Player
+    uniqueID: 920752483
+    locked: 0
+  - name: Foreground
+    uniqueID: 674432103
+    locked: 0
+  - name: UI
+    uniqueID: 709277013
     locked: 0
