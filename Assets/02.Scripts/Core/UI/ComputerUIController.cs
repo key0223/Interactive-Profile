@@ -5,6 +5,8 @@ public class ComputerUIController : MonoBehaviour
     [SerializeField] private GameObject _root;
     [SerializeField] private PlayerMovement _playerMovement;
     [SerializeField] private InputManager _inputManager;
+    [SerializeField] private ProjectData _defaultProjectData;
+    [SerializeField] private ProjectViewerUI _projectViewerUI;
 
     public bool IsOpen { get; private set; }
 
@@ -18,6 +20,12 @@ public class ComputerUIController : MonoBehaviour
 
         if (_inputManager == null)
             Debug.LogWarning($"{nameof(ComputerUIController)} on {name} requires an {nameof(InputManager)} reference.");
+
+        if (_projectViewerUI == null)
+            Debug.LogWarning($"{nameof(ComputerUIController)} on {name} requires a {nameof(ProjectViewerUI)} reference.");
+
+        if (_defaultProjectData == null)
+            Debug.LogWarning($"{nameof(ComputerUIController)} on {name} requires a default {nameof(ProjectData)} reference.");
 
         SetRootActive(false);
         IsOpen = false;
@@ -40,6 +48,9 @@ public class ComputerUIController : MonoBehaviour
         IsOpen = true;
         SetRootActive(true);
 
+        if (_projectViewerUI != null)
+            _projectViewerUI.Show(_defaultProjectData);
+
         if (_playerMovement != null)
             _playerMovement.SetMovementEnabled(false);
     }
@@ -51,6 +62,9 @@ public class ComputerUIController : MonoBehaviour
 
         IsOpen = false;
         SetRootActive(false);
+
+        if (_projectViewerUI != null)
+            _projectViewerUI.Clear();
 
         if (_playerMovement != null)
             _playerMovement.SetMovementEnabled(true);
