@@ -7,6 +7,8 @@ public class InteractionPromptUI : MonoBehaviour
     [SerializeField] private TMP_Text _promptText;
     [SerializeField] private GameObject _root;
 
+    private bool _visibleBlocked;
+
     private void Awake()
     {
         if (_interactionDetector == null)
@@ -37,6 +39,30 @@ public class InteractionPromptUI : MonoBehaviour
 
     private void HandleCurrentInteractableChanged(IInteractable interactable)
     {
+        Refresh(interactable);
+    }
+
+    public void SetVisibleBlocked(bool blocked)
+    {
+        _visibleBlocked = blocked;
+
+        if (_visibleBlocked)
+        {
+            Hide();
+            return;
+        }
+
+        Refresh(_interactionDetector != null ? _interactionDetector.CurrentInteractable : null);
+    }
+
+    private void Refresh(IInteractable interactable)
+    {
+        if (_visibleBlocked)
+        {
+            Hide();
+            return;
+        }
+
         if (interactable == null || !interactable.CanInteract)
         {
             Hide();

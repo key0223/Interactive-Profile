@@ -7,6 +7,7 @@ public class ComputerUIController : MonoBehaviour
     [SerializeField] private InputManager _inputManager;
     [SerializeField] private ProjectData _defaultProjectData;
     [SerializeField] private ProjectViewerUI _projectViewerUI;
+    [SerializeField] private InteractionPromptUI _interactionPromptUI;
 
     public bool IsOpen { get; private set; }
 
@@ -26,6 +27,9 @@ public class ComputerUIController : MonoBehaviour
 
         if (_defaultProjectData == null)
             Debug.LogWarning($"{nameof(ComputerUIController)} on {name} requires a default {nameof(ProjectData)} reference.");
+
+        if (_interactionPromptUI == null)
+            Debug.LogWarning($"{nameof(ComputerUIController)} on {name} can hide prompts when an {nameof(InteractionPromptUI)} reference is assigned.");
 
         SetRootActive(false);
         IsOpen = false;
@@ -48,6 +52,9 @@ public class ComputerUIController : MonoBehaviour
         IsOpen = true;
         SetRootActive(true);
 
+        if (_interactionPromptUI != null)
+            _interactionPromptUI.SetVisibleBlocked(true);
+
         if (_projectViewerUI != null)
             _projectViewerUI.Show(_defaultProjectData);
 
@@ -68,6 +75,9 @@ public class ComputerUIController : MonoBehaviour
 
         if (_playerMovement != null)
             _playerMovement.SetMovementEnabled(true);
+
+        if (_interactionPromptUI != null)
+            _interactionPromptUI.SetVisibleBlocked(false);
     }
 
     private void SetRootActive(bool active)
