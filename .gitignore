@@ -106,3 +106,10 @@ InitTestScene*.unity*
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
 /[Aa]ssets/03.Res/Art
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
