@@ -7,6 +7,7 @@ public class ComputerUIController : MonoBehaviour
     [SerializeField] private InputManager _inputManager;
     [SerializeField] private ProjectData _defaultProjectData;
     [SerializeField] private ProjectViewerUI _projectViewerUI;
+    [SerializeField] private ProjectSelectionUI _projectSelectionUI;
     [SerializeField] private InteractionPromptUI _interactionPromptUI;
 
     public bool IsOpen { get; private set; }
@@ -22,11 +23,11 @@ public class ComputerUIController : MonoBehaviour
         if (_inputManager == null)
             Debug.LogWarning($"{nameof(ComputerUIController)} on {name} requires an {nameof(InputManager)} reference.");
 
-        if (_projectViewerUI == null)
-            Debug.LogWarning($"{nameof(ComputerUIController)} on {name} requires a {nameof(ProjectViewerUI)} reference.");
+        if (_projectSelectionUI == null && _projectViewerUI == null)
+            Debug.LogWarning($"{nameof(ComputerUIController)} on {name} requires either a {nameof(ProjectSelectionUI)} reference or a {nameof(ProjectViewerUI)} fallback reference.");
 
-        if (_defaultProjectData == null)
-            Debug.LogWarning($"{nameof(ComputerUIController)} on {name} requires a default {nameof(ProjectData)} reference.");
+        if (_projectSelectionUI == null && _defaultProjectData == null)
+            Debug.LogWarning($"{nameof(ComputerUIController)} on {name} requires either a {nameof(ProjectSelectionUI)} reference or a default {nameof(ProjectData)} fallback reference.");
 
         if (_interactionPromptUI == null)
             Debug.LogWarning($"{nameof(ComputerUIController)} on {name} can hide prompts when an {nameof(InteractionPromptUI)} reference is assigned.");
@@ -55,7 +56,9 @@ public class ComputerUIController : MonoBehaviour
         if (_interactionPromptUI != null)
             _interactionPromptUI.SetVisibleBlocked(true);
 
-        if (_projectViewerUI != null)
+        if (_projectSelectionUI != null)
+            _projectSelectionUI.SelectDefault();
+        else if (_projectViewerUI != null)
             _projectViewerUI.Show(_defaultProjectData);
 
         if (_playerMovement != null)
@@ -70,7 +73,9 @@ public class ComputerUIController : MonoBehaviour
         IsOpen = false;
         SetRootActive(false);
 
-        if (_projectViewerUI != null)
+        if (_projectSelectionUI != null)
+            _projectSelectionUI.Clear();
+        else if (_projectViewerUI != null)
             _projectViewerUI.Clear();
 
         if (_playerMovement != null)
