@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f31db59f6e92442258ff95f470804668, type: 3}
   m_Name: ProjectCatalog
   m_EditorClassIdentifier: 
-  _projects: []
+  _projects:
+  - {fileID: 11400000, guid: 7478144a8ff70664bbc2ff70af31e130, type: 2}
+  - {fileID: 11400000, guid: 213909f572597c043bf1d55112ce9ed2, type: 2}
   _defaultIndex: 0

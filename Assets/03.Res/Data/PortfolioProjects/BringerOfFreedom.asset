@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5935ea1c46134aa4b8425fb8acb16dfe, type: 3}
+  m_Name: BringerOfFreedom
+  m_EditorClassIdentifier: 
+  _title: "\uD480\uC774"
+  _subtitle: 3D Action game
+  _role: Client / System Programmer
+  _description: "\uC9C0\uD615\uC9C0\uBB3C\uC744 \uD65C\uC6A9\uD55C \uACE0\uC18D \uC774\uB3D9\uACFC
+    \uC5EC\uB7EC \uAC1C\uC758 \uBA38\uB9AC\uC640 \uBD80\uC704\uB97C \uAC00\uC9C4
+    \uAC70\uB300 \uBCF4\uC2A4\uB97C \uB2E8\uACC4\uBCC4\uB85C \uACF5\uB7B5\uD558\uB294
+    3D \uC561\uC158  \uAC8C\uC784\r\n \r\n8\uC778 \uADDC\uBAA8\uC758 \uD300\uC5D0\uC11C
+    \uC77C\uBD80 UI, \uBAAC\uC2A4\uD130 \uC804\uD22C \uC2DC\uC2A4\uD15C, \uBAA8\uBC14\uC77C
+    \uBE4C\uB4DC \uCD5C\uC801\uD654 \uB4F1\uC744 \uC9C4\uD589. \uBCF4\uC2A4\uC758
+    \uAC01 \uBD80\uC704\uAC00 \uB3C5\uB9BD\uC801\uC73C\uB85C \uD589\uB3D9\uD558\uBA74\uC11C\uB3C4
+    \uB3D9\uC2DC\uC5D0 \uD328\uD134\uC744 \uC2E4\uD589\uD560 \uC218 \uC788\uB3C4\uB85D
+    \uBD80\uC704 \uAE30\uBC18 \uC804\uD22C \uC2DC\uC2A4\uD15C \uAD6C\uD604\r\n"
+  _techStack:
+  - Unity3D
+  - C#
+  _highlights:
+  - "\uBCF4\uC2A4 AI \uBC0F \uD328\uD134 \uC2A4\uCF00\uC904\uB9C1 \uC2DC\uC2A4\uD15C"
+  - "\uBAA8\uBC14\uC77C \uBE4C\uB4DC \uCD5C\uC801\uD654"
+  _projectUrl: 
+  _githubUrl: https://github.com/key0223/Bringer-Of-Freedom.git
