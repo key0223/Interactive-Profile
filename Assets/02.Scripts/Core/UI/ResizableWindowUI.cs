@@ -10,10 +10,20 @@ public class ResizableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     private ProjectWindowUI _projectWindowUI;
     private RectTransform _parentRect;
+    private RectTransform _runtimeBoundsRoot;
     private Vector2 _startPointerPosition;
     private Vector2 _startSize;
     private Vector2 _startAnchoredPosition;
     private bool _isResizing;
+
+    public Vector2 MaxSize
+    {
+        get
+        {
+            ResolveReferences();
+            return ResolveMaxSize();
+        }
+    }
 
     private void Awake()
     {
@@ -53,20 +63,34 @@ public class ResizableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
         _targetWindow.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, clampedSize.y);
         _targetWindow.anchoredPosition = _startAnchoredPosition + new Vector2(sizeDelta.x * 0.5f, -sizeDelta.y * 0.5f);
 
-        WindowBoundsUtility.ClampToBounds(_targetWindow, _boundsRoot);
+        WindowBoundsUtility.ClampToBounds(_targetWindow, GetBoundsRoot());
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
         if (_isResizing && _targetWindow != null && !IsWindowInteractionLocked())
-            WindowBoundsUtility.ClampToBounds(_targetWindow, _boundsRoot);
+            WindowBoundsUtility.ClampToBounds(_targetWindow, GetBoundsRoot());
 
         _isResizing = false;
     }
 
+    public void SetBoundsRoot(RectTransform boundsRoot)
+    {
+        _runtimeBoundsRoot = boundsRoot;
+    }
+
     private Vector2 ClampSizeToLimits(Vector2 requestedSize)
     {
-        RectTransform resolvedBounds = WindowBoundsUtility.ResolveBounds(_targetWindow, _boundsRoot);
+        Vector2 maxSize = ResolveMaxSize();
+
+        return new Vector2(
+            Mathf.Clamp(requestedSize.x, _minSize.x, maxSize.x),
+            Mathf.Clamp(requestedSize.y, _minSize.y, maxSize.y));
+    }
+
+    private Vector2 ResolveMaxSize()
+    {
+        RectTransform resolvedBounds = WindowBoundsUtility.ResolveBounds(_targetWindow, GetBoundsRoot());
         Vector2 maxSize = _maxSize;
 
         if (resolvedBounds != null)
@@ -79,9 +103,7 @@ public class ResizableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
         maxSize.x = Mathf.Max(maxSize.x, _minSize.x);
         maxSize.y = Mathf.Max(maxSize.y, _minSize.y);
 
-        return new Vector2(
-            Mathf.Clamp(requestedSize.x, _minSize.x, maxSize.x),
-            Mathf.Clamp(requestedSize.y, _minSize.y, maxSize.y));
+        return maxSize;
     }
 
     private void ResolveReferences()
@@ -102,5 +124,10 @@ public class ResizableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
     private bool IsWindowInteractionLocked()
     {
         return _projectWindowUI != null && _projectWindowUI.IsMaximized;
+    }
+
+    private RectTransform GetBoundsRoot()
+    {
+        return _runtimeBoundsRoot != null ? _runtimeBoundsRoot : _boundsRoot;
     }
 }

@@ -311,9 +311,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1500805322704378627}
-        m_TargetAssemblyTypeName: ComputerUIController, Assembly-CSharp
-        m_MethodName: 
+      - m_Target: {fileID: 8616159403429938701}
+        m_TargetAssemblyTypeName: ProjectWindowUI, Assembly-CSharp
+        m_MethodName: Hide
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -667,11 +667,11 @@ RectTransform:
   - {fileID: 8686213017013514509}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -12.91}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 310, y: 330}
-  m_Pivot: {x: 0.5, y: 1}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6930689629151271226
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -770,8 +770,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _windowRoot: {fileID: 1500805322704378627}
   _titleBarText: {fileID: 8637239367459869494}
+  _minimizeButton: {fileID: 5952285639522515112}
+  _maximizeButton: {fileID: 5418882329746450425}
   _closeButton: {fileID: 7300883826516510145}
   _projectViewerUI: {fileID: 7817646058766232293}
+  _maximizeBoundsRoot: {fileID: 0}
+  _fallbackMaximizedSize: {x: 860, y: 560}
 --- !u!1 &1588421678586475751
 GameObject:
   m_ObjectHideFlags: 0
@@ -3925,7 +3929,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6819911516593788444}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 8616159403429938701}
+        m_TargetAssemblyTypeName: ProjectWindowUI, Assembly-CSharp
+        m_MethodName: Minimize
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &8128807329491483109
 GameObject:
   m_ObjectHideFlags: 0

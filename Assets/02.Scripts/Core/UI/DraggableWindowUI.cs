@@ -8,6 +8,7 @@ public class DraggableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     private ProjectWindowUI _projectWindowUI;
     private RectTransform _parentRect;
+    private RectTransform _runtimeBoundsRoot;
     private Vector2 _dragOffset;
     private bool _isDragging;
 
@@ -40,15 +41,20 @@ public class DraggableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
             return;
 
         _targetWindow.anchoredPosition = localPointerPosition + _dragOffset;
-        WindowBoundsUtility.ClampToBounds(_targetWindow, _boundsRoot);
+        WindowBoundsUtility.ClampToBounds(_targetWindow, GetBoundsRoot());
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
         if (_isDragging && _targetWindow != null && !IsWindowInteractionLocked())
-            WindowBoundsUtility.ClampToBounds(_targetWindow, _boundsRoot);
+            WindowBoundsUtility.ClampToBounds(_targetWindow, GetBoundsRoot());
 
         _isDragging = false;
+    }
+
+    public void SetBoundsRoot(RectTransform boundsRoot)
+    {
+        _runtimeBoundsRoot = boundsRoot;
     }
 
     private void ResolveReferences()
@@ -69,5 +75,10 @@ public class DraggableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
     private bool IsWindowInteractionLocked()
     {
         return _projectWindowUI != null && _projectWindowUI.IsMaximized;
+    }
+
+    private RectTransform GetBoundsRoot()
+    {
+        return _runtimeBoundsRoot != null ? _runtimeBoundsRoot : _boundsRoot;
     }
 }

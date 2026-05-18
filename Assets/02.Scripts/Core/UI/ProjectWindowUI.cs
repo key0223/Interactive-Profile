@@ -13,15 +13,21 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     [SerializeField] private Button _closeButton;
     [SerializeField] private ProjectViewerUI _projectViewerUI;
     [SerializeField] private RectTransform _maximizeBoundsRoot;
+    [SerializeField] private Vector2 _fallbackMaximizedSize = new Vector2(860f, 560f);
 
     public event Action<ProjectWindowUI> Closed;
     public event Action<ProjectWindowUI> FocusRequested;
 
-    private readonly Vector3[] _boundsCorners = new Vector3[4];
     private Vector2 _restoreAnchoredPosition;
-    private Vector2 _restoreSize;
+    private Vector2 _restoreAnchorMin;
+    private Vector2 _restoreAnchorMax;
+    private Vector2 _restorePivot;
+    private Vector2 _restoreSizeDelta;
+    private Vector2 _restoreOffsetMin;
+    private Vector2 _restoreOffsetMax;
     private bool _hasRestoreState;
     private bool _isMaximized;
+    private RectTransform _runtimeBoundsRoot;
 
     public ProjectData CurrentProjectData { get; private set; }
     public bool IsMaximized => _isMaximized;
@@ -124,6 +130,28 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         RequestFocus();
     }
 
+    public void SetBoundsRoot(RectTransform boundsRoot)
+    {
+        _runtimeBoundsRoot = boundsRoot;
+
+        if (_runtimeBoundsRoot == null)
+            Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} received no runtime bounds root. Maximize will use serialized bounds or parent fallback.");
+
+        DraggableWindowUI[] draggableWindows = GetComponentsInChildren<DraggableWindowUI>(true);
+        for (int i = 0; i < draggableWindows.Length; i++)
+        {
+            if (draggableWindows[i] != null)
+                draggableWindows[i].SetBoundsRoot(boundsRoot);
+        }
+
+        ResizableWindowUI[] resizableWindows = GetComponentsInChildren<ResizableWindowUI>(true);
+        for (int i = 0; i < resizableWindows.Length; i++)
+        {
+            if (resizableWindows[i] != null)
+                resizableWindows[i].SetBoundsRoot(boundsRoot);
+        }
+    }
+
     public void ToggleMaximize()
     {
         if (_isMaximized)
@@ -140,23 +168,26 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     private void Maximize()
     {
         RectTransform windowRectTransform = WindowRectTransform;
-        RectTransform boundsRoot = WindowBoundsUtility.ResolveBounds(windowRectTransform, _maximizeBoundsRoot);
+        RectTransform preferredBoundsRoot = GetMaximizeBoundsRoot();
+        RectTransform boundsRoot = WindowBoundsUtility.ResolveBounds(windowRectTransform, preferredBoundsRoot);
 
         if (windowRectTransform == null || boundsRoot == null)
         {
-            Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} cannot maximize without a window RectTransform and bounds root.");
+            string runtimeBoundsName = _runtimeBoundsRoot != null ? _runtimeBoundsRoot.name : "None";
+            string serializedBoundsName = _maximizeBoundsRoot != null ? _maximizeBoundsRoot.name : "None";
+            Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} cannot maximize without a window RectTransform and bounds root. Runtime bounds: {runtimeBoundsName}, serialized bounds: {serializedBoundsName}.");
             return;
         }
 
         if (!_hasRestoreState)
         {
-            _restoreAnchoredPosition = windowRectTransform.anchoredPosition;
-            _restoreSize = windowRectTransform.rect.size;
+            CaptureRestoreState(windowRectTransform);
             _hasRestoreState = true;
         }
 
+        Vector2 targetSize = ResolveMaximizedSize();
         _isMaximized = true;
-        ApplyBoundsRect(windowRectTransform, boundsRoot);
+        ApplyMaximizedSize(windowRectTransform, boundsRoot, targetSize);
         RequestFocus();
     }
 
@@ -171,42 +202,80 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
             return;
         }
 
-        windowRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _restoreSize.x);
-        windowRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _restoreSize.y);
-        windowRectTransform.anchoredPosition = _restoreAnchoredPosition;
+        ApplyRestoreState(windowRectTransform);
 
         _isMaximized = false;
         _hasRestoreState = false;
-        WindowBoundsUtility.ClampToBounds(windowRectTransform, _maximizeBoundsRoot);
+        WindowBoundsUtility.ClampToBounds(windowRectTransform, GetMaximizeBoundsRoot());
         RequestFocus();
     }
 
-    private void ApplyBoundsRect(RectTransform windowRectTransform, RectTransform boundsRoot)
+    private void ApplyMaximizedSize(RectTransform windowRectTransform, RectTransform boundsRoot, Vector2 targetSize)
+    {
+        windowRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetSize.x);
+        windowRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetSize.y);
+
+        MoveToBoundsCenter(windowRectTransform, boundsRoot);
+        WindowBoundsUtility.ClampToBounds(windowRectTransform, boundsRoot);
+    }
+
+    private void ResetWindowState(bool applyRestore)
+    {
+        if (applyRestore && _isMaximized && _hasRestoreState)
+        {
+            RectTransform windowRectTransform = WindowRectTransform;
+            if (windowRectTransform != null)
+                ApplyRestoreState(windowRectTransform);
+        }
+
+        _isMaximized = false;
+        _hasRestoreState = false;
+    }
+
+    private void CaptureRestoreState(RectTransform windowRectTransform)
+    {
+        _restoreAnchorMin = windowRectTransform.anchorMin;
+        _restoreAnchorMax = windowRectTransform.anchorMax;
+        _restorePivot = windowRectTransform.pivot;
+        _restoreSizeDelta = windowRectTransform.sizeDelta;
+        _restoreAnchoredPosition = windowRectTransform.anchoredPosition;
+        _restoreOffsetMin = windowRectTransform.offsetMin;
+        _restoreOffsetMax = windowRectTransform.offsetMax;
+    }
+
+    private void ApplyRestoreState(RectTransform windowRectTransform)
+    {
+        windowRectTransform.anchorMin = _restoreAnchorMin;
+        windowRectTransform.anchorMax = _restoreAnchorMax;
+        windowRectTransform.pivot = _restorePivot;
+        windowRectTransform.sizeDelta = _restoreSizeDelta;
+        windowRectTransform.anchoredPosition = _restoreAnchoredPosition;
+        windowRectTransform.offsetMin = _restoreOffsetMin;
+        windowRectTransform.offsetMax = _restoreOffsetMax;
+    }
+
+    private Vector2 ResolveMaximizedSize()
+    {
+        ResizableWindowUI resizableWindowUI = GetComponentInChildren<ResizableWindowUI>(true);
+        if (resizableWindowUI != null)
+            return resizableWindowUI.MaxSize;
+
+        return _fallbackMaximizedSize;
+    }
+
+    private void MoveToBoundsCenter(RectTransform windowRectTransform, RectTransform boundsRoot)
     {
         RectTransform parentRectTransform = windowRectTransform.parent as RectTransform;
         if (parentRectTransform == null)
-            return;
-
-        boundsRoot.GetWorldCorners(_boundsCorners);
-
-        Vector2 boundsMin = new Vector2(float.MaxValue, float.MaxValue);
-        Vector2 boundsMax = new Vector2(float.MinValue, float.MinValue);
-
-        for (int i = 0; i < _boundsCorners.Length; i++)
         {
-            Vector3 localCorner = parentRectTransform.InverseTransformPoint(_boundsCorners[i]);
-            boundsMin.x = Mathf.Min(boundsMin.x, localCorner.x);
-            boundsMin.y = Mathf.Min(boundsMin.y, localCorner.y);
-            boundsMax.x = Mathf.Max(boundsMax.x, localCorner.x);
-            boundsMax.y = Mathf.Max(boundsMax.y, localCorner.y);
+            Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} cannot center maximized window because the window parent is not a {nameof(RectTransform)}.");
+            return;
         }
 
-        Vector2 boundsSize = boundsMax - boundsMin;
-        windowRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, boundsSize.x);
-        windowRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, boundsSize.y);
-
-        Vector2 pivotPosition = boundsMin + Vector2.Scale(boundsSize, windowRectTransform.pivot);
-        windowRectTransform.anchoredPosition = pivotPosition - GetAnchorReference(parentRectTransform, windowRectTransform);
+        Vector3 boundsWorldCenter = boundsRoot.TransformPoint(boundsRoot.rect.center);
+        Vector2 boundsCenterInParent = parentRectTransform.InverseTransformPoint(boundsWorldCenter);
+        Vector2 anchorReference = GetAnchorReference(parentRectTransform, windowRectTransform);
+        windowRectTransform.anchoredPosition = boundsCenterInParent - anchorReference;
     }
 
     private Vector2 GetAnchorReference(RectTransform parentRectTransform, RectTransform windowRectTransform)
@@ -219,21 +288,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
             parentRect.yMin + parentRect.height * anchorCenter.y);
     }
 
-    private void ResetWindowState(bool applyRestore)
+    private RectTransform GetMaximizeBoundsRoot()
     {
-        if (applyRestore && _isMaximized && _hasRestoreState)
-        {
-            RectTransform windowRectTransform = WindowRectTransform;
-            if (windowRectTransform != null)
-            {
-                windowRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _restoreSize.x);
-                windowRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _restoreSize.y);
-                windowRectTransform.anchoredPosition = _restoreAnchoredPosition;
-            }
-        }
-
-        _isMaximized = false;
-        _hasRestoreState = false;
+        return _runtimeBoundsRoot != null ? _runtimeBoundsRoot : _maximizeBoundsRoot;
     }
 
     private void SetTitle(string title)

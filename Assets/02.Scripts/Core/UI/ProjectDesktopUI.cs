@@ -178,6 +178,7 @@ public sealed class ProjectWindowManager
     private readonly string _ownerName;
     private readonly ProjectWindowUI _windowPrefab;
     private readonly Transform _windowRoot;
+    private readonly RectTransform _windowBoundsRoot;
     private readonly Vector2 _spawnPosition;
     private readonly Vector2 _spawnOffset;
     private readonly int _maxCascadeSteps;
@@ -188,6 +189,11 @@ public sealed class ProjectWindowManager
         _ownerName = ownerName;
         _windowPrefab = windowPrefab;
         _windowRoot = windowRoot;
+        _windowBoundsRoot = windowRoot as RectTransform;
+
+        if (_windowRoot != null && _windowBoundsRoot == null)
+            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} received a window root named {_windowRoot.name}, but it is not a {nameof(RectTransform)}. Project windows will try to use their instantiated parent RectTransform as bounds.");
+
         _spawnPosition = spawnPosition;
         _spawnOffset = spawnOffset;
         _maxCascadeSteps = maxCascadeSteps;
@@ -217,6 +223,8 @@ public sealed class ProjectWindowManager
         }
 
         ProjectWindowUI window = Object.Instantiate(_windowPrefab, _windowRoot);
+        RectTransform boundsRoot = ResolveWindowBoundsRoot(window);
+        window.SetBoundsRoot(boundsRoot);
         window.Closed += HandleWindowClosed;
         window.FocusRequested += FocusWindow;
 
@@ -261,6 +269,23 @@ public sealed class ProjectWindowManager
             return;
 
         window.transform.SetAsLastSibling();
+    }
+
+    private RectTransform ResolveWindowBoundsRoot(ProjectWindowUI window)
+    {
+        if (_windowBoundsRoot != null)
+            return _windowBoundsRoot;
+
+        RectTransform parentRectTransform = window != null && window.WindowRectTransform != null
+            ? window.WindowRectTransform.parent as RectTransform
+            : null;
+
+        if (parentRectTransform != null)
+            return parentRectTransform;
+
+        string windowRootName = _windowRoot != null ? _windowRoot.name : "None";
+        Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} could not resolve a RectTransform bounds root from _windowRoot ({windowRootName}) or the instantiated window parent. Maximize will use ProjectWindowUI fallback bounds.");
+        return null;
     }
 
     private void HandleWindowClosed(ProjectWindowUI window)
