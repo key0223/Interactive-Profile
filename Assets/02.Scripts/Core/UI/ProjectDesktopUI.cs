@@ -175,6 +175,8 @@ public class ProjectDesktopUI : MonoBehaviour
 public sealed class ProjectWindowManager
 {
     private readonly Dictionary<ProjectData, ProjectWindowUI> _openWindows = new Dictionary<ProjectData, ProjectWindowUI>();
+    private readonly Dictionary<DesktopWindowType, WindowState> _windowStates = new Dictionary<DesktopWindowType, WindowState>();
+    private readonly Dictionary<DesktopWindowType, ProjectWindowUI> _registeredWindows = new Dictionary<DesktopWindowType, ProjectWindowUI>();
     private readonly string _ownerName;
     private readonly ProjectWindowUI _windowPrefab;
     private readonly Transform _windowRoot;
@@ -229,15 +231,113 @@ public sealed class ProjectWindowManager
         window.FocusRequested += FocusWindow;
 
         _openWindows[projectData] = window;
+        RegisterWindow(window);
         ApplySpawnPosition(window);
         window.ShowProject(projectData);
         FocusWindow(window);
+    }
+
+    public void RegisterWindow(ProjectWindowUI window)
+    {
+        if (window == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot register a null window.");
+            return;
+        }
+
+        DesktopWindowType type = window.WindowType;
+        _registeredWindows[type] = window;
+        _windowStates[type] = window.IsVisible ? WindowState.Opened : WindowState.Closed;
+
+        // TODO: Register or update the matching taskbar button when ProjectTaskbarUI is added.
+    }
+
+    public void OpenWindow(DesktopWindowType type)
+    {
+        if (_registeredWindows.TryGetValue(type, out ProjectWindowUI window) && window != null)
+        {
+            RestoreWindow(type);
+            return;
+        }
+
+        Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot open {type} by type until typed window factories are implemented.");
+        _windowStates[type] = WindowState.Closed;
+    }
+
+    public void CloseWindow(DesktopWindowType type)
+    {
+        _windowStates[type] = WindowState.Closed;
+
+        if (_registeredWindows.TryGetValue(type, out ProjectWindowUI window) && window != null)
+        {
+            if (window.CurrentProjectData != null && _openWindows.TryGetValue(window.CurrentProjectData, out ProjectWindowUI registeredProjectWindow) && registeredProjectWindow == window)
+                _openWindows.Remove(window.CurrentProjectData);
+            else
+                RemoveWindowByInstance(window);
+
+            window.Closed -= HandleWindowClosed;
+            window.FocusRequested -= FocusWindow;
+            _registeredWindows.Remove(type);
+            Object.Destroy(window.gameObject);
+        }
+        else
+        {
+            _registeredWindows.Remove(type);
+        }
+
+        // TODO: Remove the matching taskbar button when ProjectTaskbarUI is added.
+    }
+
+    public void MinimizeWindow(DesktopWindowType type)
+    {
+        if (!_registeredWindows.TryGetValue(type, out ProjectWindowUI window) || window == null)
+        {
+            _windowStates[type] = WindowState.Closed;
+            return;
+        }
+
+        window.Minimize();
+        _windowStates[type] = WindowState.Minimized;
+
+        // TODO: Sync minimized visual state to ProjectTaskbarUI when it exists.
+    }
+
+    public void RestoreWindow(DesktopWindowType type)
+    {
+        if (!_registeredWindows.TryGetValue(type, out ProjectWindowUI window) || window == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot restore {type} because no registered window exists.");
+            _windowStates[type] = WindowState.Closed;
+            return;
+        }
+
+        window.RestoreFromMinimized();
+        _windowStates[type] = WindowState.Opened;
+        FocusWindow(type);
+
+        // TODO: Sync restored visual state to ProjectTaskbarUI when it exists.
+    }
+
+    public void FocusWindow(DesktopWindowType type)
+    {
+        if (!_registeredWindows.TryGetValue(type, out ProjectWindowUI window) || window == null)
+            return;
+
+        if (_windowStates.TryGetValue(type, out WindowState state) && state == WindowState.Minimized)
+            return;
+
+        _windowStates[type] = WindowState.Opened;
+        FocusWindow(window);
+
+        // TODO: Sync active taskbar highlight when ProjectTaskbarUI is added.
     }
 
     public void CloseAll()
     {
         List<ProjectWindowUI> windows = new List<ProjectWindowUI>(_openWindows.Values);
         _openWindows.Clear();
+        _registeredWindows.Clear();
+        _windowStates.Clear();
 
         for (int i = 0; i < windows.Count; i++)
         {
@@ -269,6 +369,7 @@ public sealed class ProjectWindowManager
             return;
 
         window.transform.SetAsLastSibling();
+        _windowStates[window.WindowType] = window.IsVisible ? WindowState.Opened : WindowState.Minimized;
     }
 
     private RectTransform ResolveWindowBoundsRoot(ProjectWindowUI window)
@@ -299,9 +400,15 @@ public sealed class ProjectWindowManager
         else
             RemoveWindowByInstance(window);
 
+        DesktopWindowType type = window.WindowType;
+        _registeredWindows.Remove(type);
+        _windowStates[type] = WindowState.Closed;
+
         window.Closed -= HandleWindowClosed;
         window.FocusRequested -= FocusWindow;
         Object.Destroy(window.gameObject);
+
+        // TODO: Remove the matching taskbar button when ProjectTaskbarUI is added.
     }
 
     private void RemoveWindowByInstance(ProjectWindowUI window)

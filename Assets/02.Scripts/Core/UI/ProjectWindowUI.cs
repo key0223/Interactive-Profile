@@ -4,8 +4,24 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+public enum DesktopWindowType
+{
+    Projects,
+    AboutMe,
+    Skills,
+    Contact
+}
+
+public enum WindowState
+{
+    Closed,
+    Opened,
+    Minimized
+}
+
 public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 {
+    [SerializeField] private DesktopWindowType _windowType = DesktopWindowType.Projects;
     [SerializeField] private GameObject _windowRoot;
     [SerializeField] private TMP_Text _titleBarText;
     [SerializeField] private Button _minimizeButton;
@@ -29,6 +45,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     private bool _isMaximized;
     private RectTransform _runtimeBoundsRoot;
 
+    public DesktopWindowType WindowType => _windowType;
     public ProjectData CurrentProjectData { get; private set; }
     public bool IsMaximized => _isMaximized;
     public bool IsVisible => _windowRoot != null && _windowRoot.activeSelf;
