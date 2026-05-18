@@ -6,10 +6,16 @@ public class ProjectDesktopUI : MonoBehaviour
     [SerializeField] private ProjectCatalog _catalog;
     [SerializeField] private Transform _iconRoot;
     [SerializeField] private ProjectDesktopIconUI _iconPrefab;
+    [SerializeField] private ProjectWindowUI _projectWindowPrefab;
+    [SerializeField] private Transform _windowRoot;
+    [SerializeField] private Vector2 _windowSpawnPosition = new Vector2(0f, 0f);
+    [SerializeField] private Vector2 _windowSpawnOffset = new Vector2(28f, -28f);
+    [SerializeField] private int _maxWindowCascadeSteps = 6;
     [SerializeField] private ProjectWindowUI _projectWindowUI;
     [SerializeField] private bool _openDefaultOnStart;
 
     private readonly List<ProjectDesktopIconUI> _icons = new List<ProjectDesktopIconUI>();
+    private ProjectWindowManager _projectWindowManager;
     private ProjectData _selectedProjectData;
     private bool _initialized;
 
@@ -24,8 +30,17 @@ public class ProjectDesktopUI : MonoBehaviour
         if (_iconPrefab == null)
             Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} requires a {nameof(ProjectDesktopIconUI)} prefab reference.");
 
-        if (_projectWindowUI == null)
-            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} requires a {nameof(ProjectWindowUI)} reference.");
+        if (_projectWindowPrefab != null)
+        {
+            if (_windowRoot == null)
+                _windowRoot = transform;
+
+            _projectWindowManager = new ProjectWindowManager(name, _projectWindowPrefab, _windowRoot, _windowSpawnPosition, _windowSpawnOffset, _maxWindowCascadeSteps);
+        }
+        else if (_projectWindowUI == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} requires a window prefab for multi-window mode or a {nameof(ProjectWindowUI)} fallback reference.");
+        }
     }
 
     public void Initialize()
@@ -40,6 +55,8 @@ public class ProjectDesktopUI : MonoBehaviour
 
         if (_openDefaultOnStart)
             OpenDefaultProject();
+        else if (_projectWindowManager != null)
+            _projectWindowManager.CloseAll();
         else if (_projectWindowUI != null)
             _projectWindowUI.Hide();
     }
@@ -68,7 +85,9 @@ public class ProjectDesktopUI : MonoBehaviour
         _selectedProjectData = projectData;
         UpdateSelectionVisuals();
 
-        if (_projectWindowUI != null)
+        if (_projectWindowManager != null)
+            _projectWindowManager.OpenWindow(projectData);
+        else if (_projectWindowUI != null)
             _projectWindowUI.ShowProject(projectData);
     }
 
@@ -89,7 +108,9 @@ public class ProjectDesktopUI : MonoBehaviour
     {
         ClearSelection();
 
-        if (_projectWindowUI != null)
+        if (_projectWindowManager != null)
+            _projectWindowManager.CloseAll();
+        else if (_projectWindowUI != null)
             _projectWindowUI.Hide();
     }
 
@@ -148,5 +169,127 @@ public class ProjectDesktopUI : MonoBehaviour
 
             _icons[i].SetSelected(_icons[i].ProjectData == _selectedProjectData);
         }
+    }
+}
+
+public sealed class ProjectWindowManager
+{
+    private readonly Dictionary<ProjectData, ProjectWindowUI> _openWindows = new Dictionary<ProjectData, ProjectWindowUI>();
+    private readonly string _ownerName;
+    private readonly ProjectWindowUI _windowPrefab;
+    private readonly Transform _windowRoot;
+    private readonly Vector2 _spawnPosition;
+    private readonly Vector2 _spawnOffset;
+    private readonly int _maxCascadeSteps;
+    private int _spawnCount;
+
+    public ProjectWindowManager(string ownerName, ProjectWindowUI windowPrefab, Transform windowRoot, Vector2 spawnPosition, Vector2 spawnOffset, int maxCascadeSteps)
+    {
+        _ownerName = ownerName;
+        _windowPrefab = windowPrefab;
+        _windowRoot = windowRoot;
+        _spawnPosition = spawnPosition;
+        _spawnOffset = spawnOffset;
+        _maxCascadeSteps = maxCascadeSteps;
+    }
+
+    public void OpenWindow(ProjectData projectData)
+    {
+        if (projectData == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} received null {nameof(ProjectData)}.");
+            return;
+        }
+
+        if (_openWindows.TryGetValue(projectData, out ProjectWindowUI existingWindow) && existingWindow != null)
+        {
+            FocusWindow(existingWindow);
+            return;
+        }
+
+        if (_windowPrefab == null || _windowRoot == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot open a project window without a window prefab and window root.");
+            return;
+        }
+
+        ProjectWindowUI window = Object.Instantiate(_windowPrefab, _windowRoot);
+        window.Closed += HandleWindowClosed;
+        window.FocusRequested += FocusWindow;
+
+        _openWindows[projectData] = window;
+        ApplySpawnPosition(window);
+        window.ShowProject(projectData);
+        FocusWindow(window);
+    }
+
+    public void CloseAll()
+    {
+        List<ProjectWindowUI> windows = new List<ProjectWindowUI>(_openWindows.Values);
+        _openWindows.Clear();
+
+        for (int i = 0; i < windows.Count; i++)
+        {
+            ProjectWindowUI window = windows[i];
+            if (window == null)
+                continue;
+
+            window.Closed -= HandleWindowClosed;
+            window.FocusRequested -= FocusWindow;
+            Object.Destroy(window.gameObject);
+        }
+
+        _spawnCount = 0;
+    }
+
+    private void ApplySpawnPosition(ProjectWindowUI window)
+    {
+        if (window == null || window.WindowRectTransform == null)
+            return;
+
+        int cascadeStep = _maxCascadeSteps > 0 ? _spawnCount % _maxCascadeSteps : 0;
+        window.WindowRectTransform.anchoredPosition = _spawnPosition + _spawnOffset * cascadeStep;
+        _spawnCount++;
+    }
+
+    private void FocusWindow(ProjectWindowUI window)
+    {
+        if (window == null)
+            return;
+
+        window.transform.SetAsLastSibling();
+    }
+
+    private void HandleWindowClosed(ProjectWindowUI window)
+    {
+        if (window == null)
+            return;
+
+        ProjectData projectData = window.CurrentProjectData;
+        if (projectData != null && _openWindows.TryGetValue(projectData, out ProjectWindowUI registeredWindow) && registeredWindow == window)
+            _openWindows.Remove(projectData);
+        else
+            RemoveWindowByInstance(window);
+
+        window.Closed -= HandleWindowClosed;
+        window.FocusRequested -= FocusWindow;
+        Object.Destroy(window.gameObject);
+    }
+
+    private void RemoveWindowByInstance(ProjectWindowUI window)
+    {
+        ProjectData keyToRemove = null;
+
+        foreach (KeyValuePair<ProjectData, ProjectWindowUI> pair in _openWindows)
+        {
+            if (pair.Value == window)
+            {
+                keyToRemove = pair.Key;
+                break;
+            }
+        }
+
+        if (keyToRemove != null)
+            _openWindows.Remove(keyToRemove);
     }
 }

@@ -1,14 +1,20 @@
+using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ProjectWindowUI : MonoBehaviour
+public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 {
     [SerializeField] private GameObject _windowRoot;
     [SerializeField] private TMP_Text _titleBarText;
     [SerializeField] private Button _closeButton;
     [SerializeField] private ProjectViewerUI _projectViewerUI;
 
+    public event Action<ProjectWindowUI> Closed;
+    public event Action<ProjectWindowUI> FocusRequested;
+
+    public ProjectData CurrentProjectData { get; private set; }
     public RectTransform WindowRectTransform => _windowRoot != null ? _windowRoot.transform as RectTransform : transform as RectTransform;
 
     private void Awake()
@@ -43,25 +49,43 @@ public class ProjectWindowUI : MonoBehaviour
             return;
         }
 
+        CurrentProjectData = projectData;
         SetRootActive(true);
         SetTitle(projectData.Title);
 
         if (_projectViewerUI != null)
             _projectViewerUI.Show(projectData);
+
+        RequestFocus();
     }
 
     public void Hide()
     {
+        ProjectData closedProjectData = CurrentProjectData;
         Clear();
         SetRootActive(false);
+        CurrentProjectData = closedProjectData;
+        Closed?.Invoke(this);
+        CurrentProjectData = null;
     }
 
     public void Clear()
     {
+        CurrentProjectData = null;
         SetTitle(string.Empty);
 
         if (_projectViewerUI != null)
             _projectViewerUI.Clear();
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        RequestFocus();
+    }
+
+    public void RequestFocus()
+    {
+        FocusRequested?.Invoke(this);
     }
 
     private void SetTitle(string title)
