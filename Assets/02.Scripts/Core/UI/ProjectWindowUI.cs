@@ -151,8 +151,15 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     public void RestoreFromMinimized()
     {
         SetRootActive(true);
+        ResetProjectScrollToTop();
         Restored?.Invoke(this);
         RequestFocus();
+    }
+
+    public void ResetProjectScrollToTop()
+    {
+        if (_projectViewerUI != null)
+            _projectViewerUI.ResetScrollToTop();
     }
 
     public void SetBoundsRoot(RectTransform boundsRoot)

@@ -254,6 +254,10 @@ public sealed class ProjectWindowManager
                     SyncTaskbarWindowState(existingId);
                 }
             }
+            else
+            {
+                existingWindow.ResetProjectScrollToTop();
+            }
 
             FocusWindow(existingWindow);
             return;

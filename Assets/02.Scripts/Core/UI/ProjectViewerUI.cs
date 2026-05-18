@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -24,9 +25,17 @@ public class ProjectViewerUI : MonoBehaviour
     [SerializeField] private TMP_Text _projectLinkButtonText;
     [SerializeField] private Button _githubLinkButton;
     [SerializeField] private TMP_Text _githubLinkButtonText;
+    [SerializeField] private ScrollRect _scrollRect;
 
     private string _projectUrl;
     private string _githubUrl;
+    private Coroutine _resetScrollCoroutine;
+
+    private void Awake()
+    {
+        if (_scrollRect == null)
+            _scrollRect = GetComponentInChildren<ScrollRect>(true);
+    }
 
     private void OnEnable()
     {
@@ -45,6 +54,12 @@ public class ProjectViewerUI : MonoBehaviour
 
     private void OnDisable()
     {
+        if (_resetScrollCoroutine != null)
+        {
+            StopCoroutine(_resetScrollCoroutine);
+            _resetScrollCoroutine = null;
+        }
+
         if (_projectLinkButton != null)
             _projectLinkButton.onClick.RemoveListener(OpenProjectUrl);
 
@@ -73,6 +88,7 @@ public class ProjectViewerUI : MonoBehaviour
         SetSectionText(_highlightsText, _highlightsRoot, BuildListText(projectData.Highlights));
         SetSectionText(_urlText, null, BuildUrlText(projectData));
         UpdateLinkButtons();
+        ResetScrollToTop();
     }
 
     public void Clear()
@@ -89,6 +105,42 @@ public class ProjectViewerUI : MonoBehaviour
         SetSectionText(_highlightsText, _highlightsRoot, string.Empty);
         SetSectionText(_urlText, null, string.Empty);
         UpdateLinkButtons();
+        ResetScrollToTop();
+    }
+
+    public void ResetScrollToTop()
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        if (_resetScrollCoroutine != null)
+            StopCoroutine(_resetScrollCoroutine);
+
+        ApplyScrollTopAfterLayout();
+        _resetScrollCoroutine = StartCoroutine(ResetScrollToTopNextFrame());
+    }
+
+    private IEnumerator ResetScrollToTopNextFrame()
+    {
+        yield return null;
+        ApplyScrollTopAfterLayout();
+        _resetScrollCoroutine = null;
+    }
+
+    private void ApplyScrollTopAfterLayout()
+    {
+        if (_scrollRect == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+
+        if (_scrollRect.content != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_scrollRect.content);
+
+        _scrollRect.verticalNormalizedPosition = 1f;
+
+        if (_scrollRect.verticalScrollbar != null)
+            _scrollRect.verticalScrollbar.value = 1f;
     }
 
     private static void SetText(TMP_Text target, string text)
