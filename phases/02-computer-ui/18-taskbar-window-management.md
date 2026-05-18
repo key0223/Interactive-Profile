@@ -2,7 +2,7 @@
 
 ## Status
 
-pending
+completed
 
 ## Goal
 
@@ -61,6 +61,22 @@ Windows 스타일 Taskbar를 도입하기 위한 설계 문서를 만든다. 최
 
 ## Current Code Context
 
+현재 window identity:
+
+```text
+DesktopWindowId
+├── DesktopWindowType Type
+└── string Key
+```
+
+Project window key 생성:
+
+```text
+DesktopWindowId.ForProject(ProjectData)
+→ ProjectData.Title 우선
+→ ProjectData.name fallback
+```
+
 현재 window control과 manager 흐름:
 
 ```text
@@ -72,6 +88,8 @@ ProjectDesktopIconUI double click
 → ProjectWindowUI.FocusRequested
 → ProjectWindowManager.FocusWindow(ProjectWindowUI)
 → window.transform.SetAsLastSibling()
+→ focus order 갱신
+→ taskbar active button 동기화
 ```
 
 현재 close 흐름:
@@ -82,6 +100,8 @@ CloseButton click
 → ProjectWindowUI.Closed
 → ProjectWindowManager.HandleWindowClosed(ProjectWindowUI)
 → dictionary에서 제거
+→ taskbar button 제거
+→ 닫힌 window가 active였으면 focus order 기준 다음 opened window 활성화
 → window instance destroy
 ```
 
@@ -91,8 +111,10 @@ CloseButton click
 MinimizeButton click
 → ProjectWindowUI.Minimize()
 → window root inactive
-→ Closed event 없음
-→ ProjectWindowManager dictionary 유지
+→ ProjectWindowUI.Minimized
+→ ProjectWindowManager state = Minimized
+→ taskbar button 유지 및 minimized state 동기화
+→ 최소화된 window가 active였으면 focus order 기준 다음 opened window 활성화
 ```
 
 현재 restore 흐름:
@@ -103,6 +125,7 @@ Desktop icon double click
 → 기존 window가 있고 IsVisible == false
 → ProjectWindowUI.RestoreFromMinimized()
 → FocusWindow(ProjectWindowUI)
+→ taskbar active/minimized state 동기화
 ```
 
 taskbar MVP에서 필요한 추가 관찰 지점:
@@ -113,7 +136,30 @@ window minimized
 window restored
 window focused
 window closed
+Escape focused window close
 ```
+
+현재 완료된 구현:
+
+- `DesktopWindowId` 기반 project window identity.
+- `ProjectData`별 runtime window/taskbar button 1:1 생성.
+- 같은 `ProjectData` 재오픈 시 기존 window restore/focus.
+- 서로 다른 `ProjectData`는 각각 window/taskbar button 생성.
+- `_focusOrder` 기반 focus order 관리.
+- close 후 다음 active window 선정.
+- minimize 후 다음 active window 선정.
+- taskbar active/minimized state sync.
+- Escape로 focused `ProjectWindow` 닫기.
+- `WindowLayer` bounds를 `TaskbarRoot` 높이만큼 제외하는 기준.
+- 창 클릭/타이틀바 드래그 시 focus 동작 검증 완료.
+
+남은 항목:
+
+- active/minimized indicator visual polish.
+- taskbar button layout polish.
+- `AboutMe`, `Skills`, `Contact` window 추가.
+- 프로젝트별 window title/thumbnail/metadata 표시 개선.
+- Play Mode 검증 결과 문서화.
 
 ## Recommended Hierarchy
 
@@ -200,26 +246,30 @@ _buttonPrefab: ProjectTaskbarButtonUI
 권장 내부 상태:
 
 ```text
-Dictionary<ProjectWindowUI, ProjectTaskbarButtonUI> _buttonsByWindow
-ProjectWindowUI _focusedWindow
+Dictionary<DesktopWindowId, ProjectTaskbarButtonUI> _buttonsById
+ProjectWindowManager _windowManager
 ```
 
 권장 public API:
 
 ```text
-RegisterWindow(ProjectWindowUI window)
-UnregisterWindow(ProjectWindowUI window)
-SetFocusedWindow(ProjectWindowUI window)
+Initialize(ProjectWindowManager windowManager)
+RegisterButton(DesktopWindowId id, string title)
+HideButton(DesktopWindowId id)
+SetActiveButton(DesktopWindowId id)
+ClearActiveButton()
+SetButtonMinimized(DesktopWindowId id, bool isMinimized)
 Clear()
 ```
 
 권장 동작:
 
-- `RegisterWindow`는 window가 열릴 때 한 번 호출한다.
-- 이미 등록된 window를 다시 등록하면 중복 버튼을 만들지 않는다.
-- button title은 `window.CurrentProjectData.Title`을 우선 사용한다.
-- `UnregisterWindow`는 button을 destroy하고 dictionary에서 제거한다.
-- `SetFocusedWindow`는 모든 버튼 선택 표시를 갱신한다.
+- `RegisterButton`은 window identity가 처음 열릴 때 한 번 호출한다.
+- 이미 등록된 id를 다시 등록하면 중복 버튼을 만들지 않는다.
+- button title은 manager가 전달한 title을 사용한다.
+- `HideButton`은 button을 destroy하고 dictionary에서 제거한다.
+- `SetActiveButton`은 모든 버튼 active 표시를 갱신한다.
+- `ClearActiveButton`은 active window가 없을 때 모든 active 표시를 해제한다.
 - window가 최소화되어도 button은 유지한다.
 
 ### ProjectTaskbarButtonUI
@@ -244,9 +294,10 @@ _selectionImage: Graphic 또는 Image
 권장 public API:
 
 ```text
-Setup(ProjectWindowUI window, Action<ProjectWindowUI> clicked)
-SetTitle(string title)
-SetSelected(bool selected)
+Initialize(DesktopWindowId id, string title, Action<DesktopWindowId> onClick)
+SetVisible(bool visible)
+SetActive(bool active)
+SetMinimized(bool minimized)
 Clear()
 ```
 
@@ -254,9 +305,9 @@ Clear()
 
 ```text
 Taskbar button click
-→ clicked(window)
+→ clicked(DesktopWindowId)
 → ProjectTaskbarUI
-→ ProjectWindowUI.RestoreFromMinimized() 또는 RequestFocus()
+→ ProjectWindowManager.RestoreOrFocusWindow(DesktopWindowId)
 ```
 
 주의:
@@ -306,10 +357,12 @@ public event Action<ProjectWindowUI> Restored;
 현재 책임에 추가할 역할:
 
 ```text
-window 생성 후 ProjectTaskbarUI.RegisterWindow(window)
-window focus 시 ProjectTaskbarUI.SetFocusedWindow(window)
-window close 시 ProjectTaskbarUI.UnregisterWindow(window)
+window 생성 후 ProjectTaskbarUI.RegisterButton(id, title)
+window focus 시 ProjectTaskbarUI.SetActiveButton(id)
+window close 시 ProjectTaskbarUI.HideButton(id)
+window minimize/restore 시 ProjectTaskbarUI.SetButtonMinimized(id, bool)
 taskbar click 요청 처리
+focus order와 active window 관리
 ```
 
 권장 constructor 추가 인자:
@@ -321,7 +374,8 @@ ProjectTaskbarUI taskbarUI
 권장 public API:
 
 ```text
-RestoreOrFocusWindow(ProjectWindowUI window)
+RestoreOrFocusWindow(DesktopWindowId id)
+CloseFocusedWindow()
 ```
 
 또는 `ProjectTaskbarUI`가 window에 직접 다음을 호출해도 된다:
@@ -335,7 +389,7 @@ else
 
 권장 선택:
 
-- focus source of truth를 manager에 두기 위해 taskbar click은 manager 메서드로 중계한다.
+- focus source of truth를 manager에 두기 위해 taskbar click은 `DesktopWindowId` 기반 manager 메서드로 중계한다.
 - `ProjectTaskbarUI`는 UI 표시와 click event만 담당한다.
 - `ProjectWindowManager`는 window 상태 변경과 focus sibling order를 담당한다.
 
@@ -407,17 +461,17 @@ Desktop icon double click
 → window.SetBoundsRoot(WindowLayer)
 → window.Closed += HandleWindowClosed
 → window.FocusRequested += FocusWindow
-→ ProjectTaskbarUI.RegisterWindow(window)
+→ ProjectTaskbarUI.RegisterButton(id, title)
 → window.ShowProject(projectData)
 → FocusWindow(window)
-→ ProjectTaskbarUI.SetFocusedWindow(window)
+→ ProjectTaskbarUI.SetActiveButton(id)
 ```
 
 Taskbar 결과:
 
 - 새 taskbar button이 열린 순서대로 추가된다.
-- 새 window의 button이 selected 상태가 된다.
-- 기존 window button은 selected false가 된다.
+- 새 window의 button이 active 상태가 된다.
+- 기존 window button은 active false가 된다.
 
 ### Minimize Window
 
@@ -427,35 +481,28 @@ MinimizeButton click
 → window root inactive
 → ProjectWindowUI.Minimized
 → ProjectTaskbarUI는 button 유지
+→ ProjectTaskbarUI.SetButtonMinimized(id, true)
+→ active window였다면 focus order 기준 다음 opened window focus
 ```
 
 Taskbar 결과:
 
 - 최소화된 window button은 제거되지 않는다.
-- 최소화 직전 focus window였다면 selected 상태를 유지할지 해제할지 정책을 정해야 한다.
-
-MVP 권장 정책:
-
-```text
-최소화된 window가 focus 상태였으면 taskbar selected는 유지한다.
-다른 window를 클릭하면 selected가 해당 window로 이동한다.
-```
-
-이유:
-
-- Windows 스타일에서는 최소화된 앱도 taskbar에서 활성 그룹처럼 보일 수 있다.
-- MVP에서는 "현재 마지막 focus window"를 단순히 표시하는 편이 구현 비용이 낮다.
+- 최소화된 window는 active focus 대상에서 제외한다.
+- 최소화된 window가 active였으면 남아 있는 opened window 중 가장 최근 focus된 window가 active가 된다.
+- 후보가 없으면 taskbar active indicator를 모두 해제한다.
 
 ### Taskbar Button Click Restore
 
 ```text
 Taskbar button click
 → ProjectTaskbarUI.OnButtonClicked(window)
-→ ProjectWindowManager.RestoreOrFocusWindow(window)
+→ ProjectWindowManager.RestoreOrFocusWindow(id)
 → window.IsVisible == false
 → window.RestoreFromMinimized()
 → FocusWindow(window)
-→ ProjectTaskbarUI.SetFocusedWindow(window)
+→ ProjectTaskbarUI.SetActiveButton(id)
+→ ProjectTaskbarUI.SetButtonMinimized(id, false)
 ```
 
 Taskbar 결과:
@@ -469,10 +516,10 @@ Taskbar 결과:
 ```text
 Taskbar button click
 → ProjectTaskbarUI.OnButtonClicked(window)
-→ ProjectWindowManager.RestoreOrFocusWindow(window)
+→ ProjectWindowManager.RestoreOrFocusWindow(id)
 → window.IsVisible == true
 → FocusWindow(window)
-→ ProjectTaskbarUI.SetFocusedWindow(window)
+→ ProjectTaskbarUI.SetActiveButton(id)
 ```
 
 Taskbar 결과:
@@ -488,7 +535,8 @@ ProjectWindowUI.OnPointerDown
 → ProjectWindowUI.RequestFocus()
 → ProjectWindowManager.FocusWindow(window)
 → window.transform.SetAsLastSibling()
-→ ProjectTaskbarUI.SetFocusedWindow(window)
+→ focus order 갱신
+→ ProjectTaskbarUI.SetActiveButton(id)
 ```
 
 Taskbar 결과:
@@ -503,41 +551,41 @@ CloseButton click
 → ProjectWindowUI.Hide()
 → ProjectWindowUI.Closed
 → ProjectWindowManager.HandleWindowClosed(window)
-→ ProjectTaskbarUI.UnregisterWindow(window)
+→ ProjectTaskbarUI.HideButton(id)
 → dictionary에서 제거
 → window event unsubscribe
 → Destroy(window.gameObject)
+→ focused window였다면 focus order 기준 다음 opened window focus
 ```
 
 Taskbar 결과:
 
 - 닫힌 window의 button이 제거된다.
-- 닫힌 window가 focused window였다면 selected window를 재선정하거나 none으로 둔다.
+- 닫힌 window가 focused window였다면 다음 active window를 재선정하거나 후보가 없으면 active 없음으로 둔다.
 
 MVP 권장 정책:
 
 ```text
-닫힌 window가 focused window이면 selected 없음.
-다른 window를 클릭하거나 taskbar button을 클릭하면 selected가 다시 설정된다.
+닫힌 window가 focused window이면 남아 있는 opened window 중 가장 최근 focus된 window를 active로 지정한다.
+후보가 없으면 taskbar active indicator를 모두 해제한다.
 ```
-
-선택적으로 close 후 남은 topmost window를 찾아 selected로 지정할 수 있지만, MVP에서는 필수가 아니다.
 
 ### Close All / Escape
 
 ```text
 Escape
-→ ComputerUIController close 흐름
-→ ProjectDesktopUI.Clear() 또는 Initialize() cleanup
-→ ProjectWindowManager.CloseAll()
-→ ProjectTaskbarUI.Clear()
-→ 모든 button 제거
+→ ComputerUIController.Update()
+→ ProjectDesktopUI.CloseFocusedWindow()
+→ ProjectWindowManager.CloseFocusedWindow()
+→ active id가 Opened/visible이면 CloseWindow(id)
+→ taskbar button 제거 및 다음 active window 선정
 ```
 
 Taskbar 결과:
 
-- Computer UI를 다시 열었을 때 이전 taskbar button이 남지 않는다.
-- runtime window instance와 taskbar button이 모두 정리된다.
+- focused/opened window 하나만 닫힌다.
+- focused window가 없거나 active window가 minimized/closed이면 아무 동작도 하지 않는다.
+- Computer UI 종료 cleanup은 `ProjectDesktopUI.Clear()`와 `ProjectWindowManager.CloseAll()` 흐름으로 별도 처리된다.
 
 ## Implementation Step Order
 
@@ -599,7 +647,7 @@ Taskbar 결과:
 5. A taskbar button click → A restore, selected, topmost
 6. B taskbar button click → B focus, selected, topmost
 7. A close → A button 제거, B button 유지
-8. Escape → 모든 window와 taskbar button 제거
+8. Escape → active ProjectWindow 하나 close, 해당 taskbar button 제거, 다음 opened window active
 ```
 
 ### Step 4: Failure Recovery Documentation
@@ -711,20 +759,21 @@ Taskbar 결과:
 - B 창과 B taskbar button은 유지된다.
 - A icon을 다시 double click하면 새 A 창과 새 taskbar button이 생성된다.
 
-### Case 8: Escape Clears Taskbar
+### Case 8: Escape Closes Focused Window
 
 절차:
 
 1. 프로젝트 A, B 창을 연다.
-2. A 창을 minimize한다.
-3. Escape를 눌러 Computer UI를 닫는다.
-4. Computer UI를 다시 연다.
+2. A 창을 클릭해 focus한다.
+3. Escape를 누른다.
 
 기대 결과:
 
-- 모든 runtime window가 정리된다.
-- 모든 taskbar button이 제거된다.
-- 다시 열었을 때 이전 taskbar button이 남아 있지 않다.
+- A window가 닫힌다.
+- A taskbar button이 제거된다.
+- B window와 B taskbar button은 유지된다.
+- B가 다음 focus 후보이면 B taskbar button이 active 상태가 된다.
+- 모든 opened window가 닫힌 뒤 Escape를 눌러도 추가 동작이 없다.
 
 ## Failure Checklist
 
@@ -772,7 +821,9 @@ Taskbar 결과:
 
 ## Completed Step Summary
 
-아직 실행 전이다. 완료 시 이 문서의 `TaskbarRoot` hierarchy, `ProjectTaskbarUI`와 `ProjectTaskbarButtonUI` 설계, `ProjectDesktopUI`와 `ProjectWindowManager` 연결 방식, 상태 이벤트 흐름, 구현 step 순서를 기준으로 후속 코드 step과 Editor wiring step을 생성한다.
+Taskbar/window management MVP가 현재 구현에 반영되었다. `DesktopWindowId` 기반으로 project window와 runtime taskbar button을 1:1로 관리하며, 같은 `ProjectData` 재오픈은 기존 window restore/focus로 처리한다. `ProjectWindowManager`는 `_focusOrder`와 active id를 기준으로 focus, close, minimize 후 다음 active window를 선정하고, `ProjectTaskbarUI`는 active/minimized indicator와 button 생성/제거를 동기화한다. Escape는 Computer UI 활성 상태에서 focused/opened `ProjectWindow` 하나를 닫는 동작으로 연결되었다.
+
+남은 작업은 active/minimized indicator visual polish, taskbar button layout polish, `AboutMe`/`Skills`/`Contact` window 추가, 프로젝트별 title/thumbnail/metadata 표시 개선, Play Mode 검증 결과 문서화다.
 
 ## Retry / Recovery
 

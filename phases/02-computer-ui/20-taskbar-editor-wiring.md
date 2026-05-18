@@ -2,7 +2,7 @@
 
 ## Status
 
-pending
+completed
 
 ## Goal
 
@@ -19,9 +19,9 @@ pending
 - 제외:
   - C# 코드 수정.
   - Unity scene, prefab, asset, meta 파일 직접 수정.
-  - fixed `DesktopWindowType` button mapping.
+  - fixed `DesktopWindowType` button mapping 신규 도입.
   - 시작 메뉴, 시계, 시스템 트레이, preview, reorder.
-  - Escape focused window close 구현.
+  - visual polish.
 
 ## Tasks
 
@@ -70,6 +70,11 @@ DesktopWindowId.ForProject(ProjectData)
 
 - 같은 `ProjectData`를 다시 열면 새 window를 만들지 않고 기존 window를 focus/restore한다.
 - 서로 다른 `ProjectData`를 열면 각각 다른 `DesktopWindowId`로 window와 taskbar button을 만든다.
+- visible/opened window를 focus하면 최상단 sibling으로 이동하고 `_focusOrder`가 갱신된다.
+- minimized window는 focus 대상이 아니다.
+- focused window close/minimize 후 남아 있는 opened window 중 가장 최근 focus된 window가 active가 된다.
+- 후보가 없으면 active window 없음 상태가 되고 taskbar active indicator가 모두 해제된다.
+- Escape는 현재 focused/opened `ProjectWindow` 하나를 닫는다.
 
 현재 taskbar 연결 흐름:
 
@@ -109,6 +114,7 @@ ProjectTaskbarButtonUI click
 
 - `DesktopWindowType.Projects` 하나로는 서로 다른 프로젝트 창 여러 개를 taskbar button 여러 개로 표현할 수 없다.
 - 현재 요구사항은 runtime window instance, 정확히는 `DesktopWindowId`, 단위의 button 생성이다.
+- 위 방식은 legacy 설명으로만 남기며 새 wiring 기준으로 사용하지 않는다.
 
 ## Recommended Hierarchy
 
@@ -245,6 +251,7 @@ indicator:
 - `_activeIndicator`가 있으면 focused window의 button active 상태를 표시한다.
 - `_minimizedIndicator`가 있으면 minimized window의 button 상태를 표시한다.
 - indicator가 없어도 button 생성, click, 제거 검증은 가능해야 한다.
+- active/minimized indicator의 최종 visual polish는 남은 작업이다.
 
 주의:
 
@@ -287,6 +294,24 @@ Bottom: TaskbarRoot Height
 - `WindowLayer Bottom` 값과 `TaskbarRoot Height`가 다르면 window가 taskbar와 겹치거나 빈 영역이 생길 수 있다.
 
 ## Play Mode Verification
+
+현재 완료된 검증:
+
+- Project window 1개 open 시 taskbar button clone 생성.
+- 같은 Project 재오픈 시 button 중복 생성 없음.
+- 서로 다른 Project 2개 open 시 button 2개 생성.
+- minimize 시 button 유지.
+- taskbar button click 시 해당 window restore/focus.
+- close 시 해당 button 제거.
+- maximize 시 taskbar 영역 침범 없음.
+- 창 클릭/타이틀바 드래그 시 focus 동작.
+
+추가로 문서화할 검증:
+
+- focus order 기반 close 후 다음 active window 선정.
+- focus order 기반 minimize 후 다음 active window 선정.
+- Escape로 focused ProjectWindow close.
+- active/minimized indicator visual 결과.
 
 ### Case 1: Different Projects Create Different Buttons
 
@@ -389,13 +414,16 @@ Bottom: TaskbarRoot Height
 
 ## Next Step
 
-- 21번 체크리스트에 따라 Unity Editor에서 `TaskbarRoot`, `TaskbarButtonRoot`, `ProjectTaskbarButtonUI` prefab/template을 연결한다.
-- `WindowLayer Bottom`을 `TaskbarRoot Height`와 맞춘다.
-- Play Mode에서 서로 다른 프로젝트 2개 open, minimize, restore, close, maximize bounds를 검증한다.
+- active/minimized indicator visual polish를 진행한다.
+- taskbar button layout polish를 진행한다.
+- Play Mode 검증 결과를 21번 체크리스트 또는 별도 review 문서에 기록한다.
+- `AboutMe`, `Skills`, `Contact` window 추가 시 `DesktopWindowId.ForType(type)` 경로를 사용한다.
 
 ## Completed Step Summary
 
-아직 실행 전이다. 완료 시 runtime taskbar button hierarchy, Inspector 연결, `WindowLayer` bounds 조정, Play Mode 검증 결과를 기록한다.
+Runtime taskbar button wiring 기준은 현재 구현과 일치한다. `ProjectTaskbarUI`는 `_buttonRoot`와 `_buttonPrefab`만으로 `DesktopWindowId`별 button을 runtime 생성하며, fixed `DesktopWindowType` button mapping은 legacy 방식으로 폐기되었다. `WindowLayer Bottom = TaskbarRoot Height` 기준으로 drag/resize/maximize bounds가 taskbar 영역을 제외하도록 정리되었고, maximize가 taskbar를 침범하지 않는 검증이 완료되었다.
+
+남은 작업은 active/minimized indicator visual polish, taskbar button layout polish, `AboutMe`/`Skills`/`Contact` window 추가, 프로젝트별 window title/thumbnail/metadata 표시 개선, Play Mode 검증 결과 문서화다.
 
 ## Retry / Recovery
 

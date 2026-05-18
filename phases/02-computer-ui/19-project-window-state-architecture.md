@@ -2,7 +2,7 @@
 
 ## Status
 
-pending
+completed
 
 ## Goal
 
@@ -11,20 +11,21 @@ Taskbar 구현 전에 `ProjectWindow`의 상태, identity, focus, minimize/resto
 ## Scope
 
 - 포함:
-  - `WindowState` enum 후보와 상태 전이 규칙.
+  - `WindowState` enum과 상태 전이 규칙.
   - SetActive 기반이 아닌 상태 기반 관리가 필요한 이유.
   - `ProjectDesktopUI`, `ProjectWindowManager`, `ProjectTaskbarUI`, `ProjectTaskbarButtonUI`, `ProjectWindowUI` 책임 분리.
-  - `DesktopWindowType` enum 후보와 window identity 설계.
+  - `DesktopWindowType` enum과 `DesktopWindowId` window identity 설계.
   - focus, minimize, restore, close, Escape 정책.
   - manager state dictionary와 taskbar sync API 구현 순서.
   - Play Mode 검증 기준.
 - 제외:
   - C# 코드 수정.
   - Unity scene, prefab, asset, meta 파일 수정.
-  - `ProjectTaskbarUI` 실제 구현.
-  - `ProjectWindowManager` 실제 리팩터링.
+  - 추가 C# 코드 수정.
+  - 추가 `ProjectTaskbarUI` 구현.
+  - 추가 `ProjectWindowManager` 리팩터링.
   - 시작 메뉴, 시계, 시스템 트레이, 창 미리보기, taskbar reorder.
-  - close-all 동작 구현.
+  - 추가 close-all 동작 변경.
 
 ## Tasks
 
@@ -61,7 +62,7 @@ Taskbar 구현 전에 `ProjectWindow`의 상태, identity, focus, minimize/resto
 
 ## Window State Model
 
-권장 enum 후보:
+현재 enum:
 
 ```csharp
 public enum WindowState
@@ -122,21 +123,32 @@ Closed 상태 window taskbar button 유지
 - Escape, focus, close 후 다음 focus 선정은 "현재 열린 window 목록과 상태"를 기준으로 해야 하며 scene hierarchy만 훑는 방식은 순서와 의도를 잃는다.
 - 이후 `Projects`, `AboutMe`, `Skills`, `Contact`처럼 다른 window type이 추가되면 runtime reference만으로 중복 open 방지와 restore 정책을 안정적으로 유지하기 어렵다.
 
-권장 source of truth:
+현재 source of truth:
 
 ```text
 ProjectWindowManager
-└── Dictionary<DesktopWindowId, WindowRecord>
+├── Dictionary<DesktopWindowId, WindowState> _windowStates
+├── Dictionary<DesktopWindowId, ProjectWindowUI> _registeredWindows
+├── Dictionary<ProjectWindowUI, DesktopWindowId> _idsByWindow
+├── Dictionary<ProjectData, ProjectWindowUI> _openWindows
+├── List<DesktopWindowId> _focusOrder
+└── DesktopWindowId _activeWindowId + bool _hasActiveWindow
 ```
 
-`WindowRecord` 후보:
+현재는 별도 `WindowRecord` class를 만들지 않고 dictionary들을 분리해 관리한다. `WindowRecord`는 향후 `AboutMe`, `Skills`, `Contact`까지 window 종류가 늘어날 때 결합 후보로 남긴다.
+
+현재 구현 완료 항목:
 
 ```text
-DesktopWindowId Id
-WindowState State
-ProjectWindowUI Instance
-ProjectData ProjectData
-int FocusOrder 또는 lastFocusedSequence
+DesktopWindowId 기반 project window identity
+ProjectData별 runtime window/taskbar button 1:1 생성
+같은 ProjectData 재오픈 시 기존 window restore/focus
+서로 다른 ProjectData는 각각 window/taskbar button 생성
+focus order 관리
+close 후 다음 active window 선정
+minimize 후 다음 active window 선정
+taskbar active/minimized state sync
+Escape로 focused ProjectWindow 닫기
 ```
 
 원칙:
@@ -275,7 +287,7 @@ visible 적용
 
 ## Window Identity Design
 
-권장 enum 후보:
+현재 enum:
 
 ```csharp
 public enum DesktopWindowType
@@ -309,7 +321,7 @@ Contact: "default"
 MVP에서 `ProjectData`에 안정적인 id 필드가 없다면 임시 후보:
 
 ```text
-Projects key = ProjectData instance reference 기반 registry key
+Projects key = ProjectData.Title 우선, ProjectData.name fallback
 ```
 
 단, 문서상 권장 방향:
@@ -329,8 +341,10 @@ runtime reference만으로 관리하지 말아야 하는 이유:
 권장 manager dictionary:
 
 ```text
-Dictionary<DesktopWindowId, WindowRecord> _windowsById
-DesktopWindowId? _focusedWindowId
+Dictionary<DesktopWindowId, WindowState> _windowStates
+Dictionary<DesktopWindowId, ProjectWindowUI> _registeredWindows
+DesktopWindowId _activeWindowId
+bool _hasActiveWindow
 ```
 
 보조 lookup 후보:
@@ -399,14 +413,20 @@ close 시 다음 focus 후보 처리 기준:
 권장 focus order:
 
 ```text
-long _focusSequence
-WindowRecord.LastFocusedSequence
+List<DesktopWindowId> _focusOrder
 ```
 
 이유:
 
 - hierarchy sibling order만으로는 minimized/closed 후보 필터링이 번거롭다.
 - focus order를 기록하면 close 후 다음 focus를 manager dictionary만으로 결정할 수 있다.
+
+현재 구현:
+
+- visible/opened window focus 시 `transform.SetAsLastSibling()` 호출.
+- 같은 id를 `_focusOrder`에서 제거한 뒤 마지막에 추가한다.
+- close/minimize 후 `_focusOrder`를 뒤에서부터 검색해 `Opened`이고 visible인 첫 후보를 focus한다.
+- 후보가 없으면 active window를 비우고 taskbar active indicator를 모두 해제한다.
 
 ## Minimize / Restore Rules
 
@@ -534,21 +554,22 @@ CloseWindow(id)
 
 ## Escape Behavior Policy
 
-현재 scope 권장 정책:
+현재 구현 정책:
 
 ```text
 Escape
 → focused window가 있으면 focused window close
-→ focused window가 없고 opened window가 있으면 topmost opened window close 후보
-→ opened window가 없으면 Computer UI exit 후보
+→ focused window가 없으면 아무 동작 없음
 ```
 
 구체 기준:
 
 - `WindowState.Opened` window만 Escape close 대상이다.
 - `Minimized` window는 Escape close 대상이 아니다.
-- focused window가 유효하지 않으면 manager가 `TryFocusTopmostOpenedWindow()` 또는 focus order 기준으로 후보를 찾는다.
-- 열린 visible window가 없으면 기존 `ComputerUIController`의 Computer UI exit 흐름을 유지하는 후보로 둔다.
+- active id가 없으면 아무 동작도 하지 않는다.
+- active id가 `Opened`가 아니거나 window가 visible이 아니면 아무 동작도 하지 않는다.
+- 유효한 focused/opened window가 있으면 기존 `CloseWindow(id)` 흐름을 사용해 taskbar button 제거와 다음 active window 선정을 재사용한다.
+- `ProjectDesktopUI`가 없는 fallback 경로에서는 기존 Computer UI `Close()` 동작을 유지한다.
 
 close-all 정책:
 
@@ -568,41 +589,31 @@ debug/test helper로 CloseAll()
 
 ### ProjectWindowManager
 
-후보 API:
+현재 API:
 
 ```text
-OpenWindow(DesktopWindowId id, WindowOpenRequest request)
+OpenWindow(ProjectData projectData)
+OpenWindow(DesktopWindowId id)
 CloseWindow(DesktopWindowId id)
 MinimizeWindow(DesktopWindowId id)
 RestoreWindow(DesktopWindowId id)
 RestoreOrFocusWindow(DesktopWindowId id)
 FocusWindow(DesktopWindowId id)
-HandleWindowFocusRequested(ProjectWindowUI window)
-HandleWindowCloseRequested(ProjectWindowUI window)
-HandleWindowMinimizeRequested(ProjectWindowUI window)
-HandleEscape()
+CloseFocusedWindow()
 CloseAll()
 ```
 
-`WindowOpenRequest` 후보:
-
-```text
-DesktopWindowType Type
-string Title
-ProjectData ProjectData
-```
-
-MVP에서는 Projects만 구현하더라도 API는 type/id를 받도록 설계한다.
-
 ### ProjectTaskbarUI
 
-후보 API:
+현재 API:
 
 ```text
-RegisterWindow(DesktopWindowId id, string title, Action<DesktopWindowId> clicked)
-UnregisterWindow(DesktopWindowId id)
-SetActiveWindow(DesktopWindowId? id)
-UpdateWindowState(DesktopWindowId id, WindowState state)
+Initialize(ProjectWindowManager windowManager)
+RegisterButton(DesktopWindowId id, string title)
+HideButton(DesktopWindowId id)
+SetActiveButton(DesktopWindowId id)
+ClearActiveButton()
+SetButtonMinimized(DesktopWindowId id, bool isMinimized)
 Clear()
 ```
 
@@ -613,20 +624,21 @@ Clear()
 
 ### ProjectWindowUI
 
-후보 이벤트:
+현재 이벤트:
 
 ```text
 FocusRequested(ProjectWindowUI window)
-CloseRequested(ProjectWindowUI window)
-MinimizeRequested(ProjectWindowUI window)
-ToggleMaximizeRequested(ProjectWindowUI window)
+Closed(ProjectWindowUI window)
+Minimized(ProjectWindowUI window)
+Restored(ProjectWindowUI window)
 ```
 
 기존 `Closed`, `FocusRequested`와의 관계:
 
-- `FocusRequested`는 유지 가능하다.
-- `Closed`는 close 완료 이벤트이므로 manager source of truth 구조에서는 `CloseRequested`로 바꾸는 것이 더 명확하다.
-- 리팩터링 부담을 줄이려면 1차 구현에서 기존 `Closed`를 유지하되, manager가 close cleanup의 최종 소유자가 되도록 순서를 조정한다.
+- `FocusRequested`는 window click, show, restore, maximize/restore 후 focus 요청에 사용한다.
+- `Closed`는 기존 close 완료 이벤트로 유지한다.
+- `Minimized`와 `Restored`는 taskbar minimized state sync에 사용한다.
+- `CloseRequested` 전환은 현재 범위에서는 하지 않았다.
 
 표시 적용 API 후보:
 
@@ -644,17 +656,18 @@ ShowProject(ProjectData projectData)
 
 ### Step 1: Code Surface
 
+상태: 완료
+
 목표:
 
 - enum과 id/value object, 기본 event/API 표면을 추가한다.
 
 작업:
 
-- `WindowState` enum 추가.
-- `DesktopWindowType` enum 추가.
-- `DesktopWindowId` struct 또는 class 추가.
-- `WindowRecord` 내부 class 후보 정의.
-- `ProjectWindowUI` event를 manager 요청 중심으로 정리할 범위를 결정한다.
+- `WindowState` enum 추가 완료.
+- `DesktopWindowType` enum 추가 완료.
+- `DesktopWindowId` readonly struct 추가 완료.
+- `ProjectWindowUI`의 기존 event 유지 및 `Minimized`, `Restored` 추가 완료.
 
 검증:
 
@@ -662,16 +675,17 @@ ShowProject(ProjectData projectData)
 
 ### Step 2: Manager State Dictionary
 
+상태: 완료
+
 목표:
 
 - `ProjectWindowManager`가 identity와 state의 source of truth가 되게 한다.
 
 작업:
 
-- `Dictionary<DesktopWindowId, WindowRecord> _windowsById` 추가.
-- `Dictionary<ProjectWindowUI, DesktopWindowId> _idsByInstance` 추가.
-- `_focusedWindowId`와 focus sequence 추가.
-- 기존 `Dictionary<ProjectData, ProjectWindowUI>` 흐름을 `DesktopWindowId` 기반으로 이전한다.
+- `_windowStates`, `_registeredWindows`, `_idsByWindow` 추가 완료.
+- `_activeWindowId`, `_hasActiveWindow`, `_focusOrder` 추가 완료.
+- `ProjectData`별 중복 open 방지는 `_openWindows`를 유지하고, taskbar/window state는 `DesktopWindowId`로 동기화한다.
 
 검증:
 
@@ -680,19 +694,22 @@ ShowProject(ProjectData projectData)
 
 ### Step 3: Window Lifecycle APIs
 
+상태: 완료
+
 목표:
 
 - open, close, minimize, restore, focus가 모두 manager API를 통과하게 한다.
 
 작업:
 
-- `OpenWindow(id, request)` 구현.
+- `OpenWindow(ProjectData)` 및 `OpenWindow(DesktopWindowId)` 구현.
 - `CloseWindow(id)` 구현.
 - `MinimizeWindow(id)` 구현.
 - `RestoreWindow(id)` 구현.
 - `RestoreOrFocusWindow(id)` 구현.
 - `FocusWindow(id)` 구현.
 - close 후 focus 후보 선정 구현.
+- `CloseFocusedWindow()` 구현.
 
 검증:
 
@@ -701,16 +718,19 @@ ShowProject(ProjectData projectData)
 
 ### Step 4: Taskbar Sync API
 
+상태: 완료
+
 목표:
 
 - manager state 변경이 taskbar 표시와 active highlight에 반영되게 한다.
 
 작업:
 
-- open 시 `ProjectTaskbarUI.RegisterWindow()`.
-- close 시 `ProjectTaskbarUI.UnregisterWindow()`.
-- focus 변경 시 `ProjectTaskbarUI.SetActiveWindow()`.
-- minimize/restore 시 `ProjectTaskbarUI.UpdateWindowState()`.
+- open 시 `ProjectTaskbarUI.RegisterButton()`.
+- close 시 `ProjectTaskbarUI.HideButton()`.
+- focus 변경 시 `ProjectTaskbarUI.SetActiveButton()`.
+- active 없음 시 `ProjectTaskbarUI.ClearActiveButton()`.
+- minimize/restore 시 `ProjectTaskbarUI.SetButtonMinimized()`.
 - taskbar button click을 `RestoreOrFocusWindow(id)`로 연결.
 
 검증:
@@ -719,6 +739,8 @@ ShowProject(ProjectData projectData)
 - focused window와 active button이 일치한다.
 
 ### Step 5: Editor Wiring
+
+상태: 완료, visual polish는 남음
 
 목표:
 
@@ -738,6 +760,8 @@ ShowProject(ProjectData projectData)
 
 ### Step 6: Play Mode Verification
 
+상태: 일부 완료, 결과 문서화 남음
+
 목표:
 
 - state architecture가 사용자 행동과 일치하는지 검증한다.
@@ -747,6 +771,24 @@ ShowProject(ProjectData projectData)
 - open, minimize, taskbar restore, focus, close, Escape focused close, taskbar active sync를 순서대로 검증한다.
 - Console warning/error를 기록한다.
 - 실패 시 state dictionary, identity key, event subscription, taskbar sync 순서를 확인한다.
+
+완료된 검증:
+
+- 프로젝트 창 1개 open 시 taskbar button clone 생성.
+- 같은 프로젝트 재오픈 시 button 중복 생성 없음.
+- 서로 다른 프로젝트 2개 open 시 button 2개 생성.
+- minimize 시 button 유지.
+- taskbar button click 시 restore/focus.
+- close 시 button 제거.
+- maximize 시 taskbar 영역 침범 없음.
+- 창 클릭/타이틀바 드래그 시 focus 동작.
+
+남은 검증 문서화:
+
+- active/minimized indicator visual 결과.
+- focus order 기반 close/minimize 후 다음 active 선정 결과.
+- Escape focused close 결과.
+- 전체 Play Mode 검증 로그와 스크린샷 또는 관찰 기록.
 
 ## Verification Criteria
 
@@ -877,25 +919,28 @@ ShowProject(ProjectData projectData)
 
 ### Escape가 Computer UI를 바로 닫을 때
 
-- `ComputerUIController`의 Escape 처리보다 manager `HandleEscape()`가 먼저 시도되는지 확인한다.
+- `ComputerUIController`의 Escape 처리에서 `_projectDesktopUI.CloseFocusedWindow()`가 먼저 시도되는지 확인한다.
 - focused `Opened` window가 있으면 `CloseWindow(focusedId)`가 호출되는지 확인한다.
-- opened window가 없을 때만 Computer UI exit 후보로 넘어가는지 확인한다.
+- `ProjectDesktopUI`가 있는 desktop 경로에서는 focused window가 없을 때 아무 동작도 하지 않는지 확인한다.
+- `ProjectDesktopUI`가 없는 fallback 경로에서만 기존 Computer UI `Close()`가 호출되는지 확인한다.
 
 ### close 후 다음 focus가 이상할 때
 
 - close 대상이 `_focusedWindowId`와 같은지 확인한다.
-- 남은 `Opened` window 중 `LastFocusedSequence`가 가장 큰 후보를 찾는지 확인한다.
+- 남은 `Opened` window 중 `_focusOrder`에서 가장 최근 후보를 찾는지 확인한다.
 - `Minimized` window를 다음 focus 후보에서 제외하는지 확인한다.
 - 후보가 없을 때 taskbar active highlight가 모두 해제되는지 확인한다.
 
 ## Completed Step Summary
 
-아직 실행 전이다. 완료 시 이 문서의 `WindowState`, `DesktopWindowId`, manager state dictionary, focus/minimize/restore/close/Escape 정책을 기준으로 후속 코드 구현 step을 진행한다.
+`WindowState`, `DesktopWindowId`, manager state dictionaries, focus/minimize/restore/close/Escape 정책이 구현되었다. 현재 architecture는 `ProjectWindowManager`가 state와 focus source of truth를 갖고, `ProjectTaskbarUI`가 `DesktopWindowId` 단위 button 생성/제거 및 active/minimized 표시만 담당한다. fixed `DesktopWindowType` button mapping은 프로젝트별 다중 window 요구사항을 만족하지 못하므로 legacy 방식으로만 남긴다.
+
+남은 작업은 active/minimized indicator visual polish, taskbar button layout polish, `AboutMe`/`Skills`/`Contact` window 추가, 프로젝트별 title/thumbnail/metadata 표시 개선, Play Mode 검증 결과 문서화다.
 
 ## Retry / Recovery
 
 - 상태 리팩터링 범위가 커지면 먼저 `WindowState`와 `DesktopWindowId`만 추가하고 기존 동작을 유지한 뒤 manager dictionary 이전을 별도 step으로 분리한다.
 - 기존 `Closed` 이벤트와 새 `CloseRequested` 이벤트 전환이 위험하면 1차 구현에서는 기존 이벤트를 유지하고 manager cleanup 순서만 정리한다.
 - `ProjectData` stable id가 없어 identity 설계가 막히면 MVP에서는 reference 기반 key를 쓰되, 후속 데이터 step으로 `ProjectData.Id` 추가를 기록한다.
-- Escape 처리 충돌이 생기면 Computer UI exit보다 window manager handling을 먼저 시도하는 작은 adapter API를 둔다.
+- Escape 처리 충돌이 생기면 Computer UI exit보다 `ProjectDesktopUI.CloseFocusedWindow()`를 먼저 시도하는 adapter API를 유지한다.
 - taskbar sync가 불안정하면 manager state 변경 후 taskbar 전체를 재빌드하는 fallback을 임시로 사용하고, 이후 incremental update로 최적화한다.
