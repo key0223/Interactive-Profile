@@ -670,7 +670,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 310, y: 330}
+  m_SizeDelta: {x: 310, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6930689629151271226
 CanvasRenderer:
@@ -768,6 +768,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d82396259c96d6b459ee5f4523abc7fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _windowType: 0
   _windowRoot: {fileID: 1500805322704378627}
   _titleBarText: {fileID: 8637239367459869494}
   _minimizeButton: {fileID: 5952285639522515112}
@@ -1708,8 +1709,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6424344660988538357}
   m_HandleRect: {fileID: 3909544309233884466}
   m_Direction: 2
-  m_Value: 0.49999982
-  m_Size: 0.8248726
+  m_Value: 0.5
+  m_Size: 0.71984285
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

@@ -279,7 +279,7 @@ public sealed class ProjectWindowManager
 
         _registeredWindows[id] = window;
         _idsByWindow[window] = id;
-        _windowStates[id] = window.IsVisible ? WindowState.Opened : WindowState.Closed;
+        _windowStates[id] = WindowState.Opened;
 
         _taskbarUI?.RegisterButton(id, string.IsNullOrWhiteSpace(title) ? id.Key : title);
         SyncTaskbarWindowState(id);

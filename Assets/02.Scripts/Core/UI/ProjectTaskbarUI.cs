@@ -24,13 +24,20 @@ public class ProjectTaskbarUI : MonoBehaviour
         if (_buttonsById.ContainsKey(id))
             return;
 
-        if (_buttonPrefab == null || _buttonRoot == null)
+        if (_buttonRoot == null)
         {
-            Debug.LogWarning($"{nameof(ProjectTaskbarUI)} on {name} cannot create a taskbar button for {id} without a button prefab and button root.");
+            Debug.LogWarning($"{nameof(ProjectTaskbarUI)} on {name} cannot create a taskbar button for {id} because _buttonRoot is not assigned.");
+            return;
+        }
+
+        if (_buttonPrefab == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectTaskbarUI)} on {name} cannot create a taskbar button for {id} because _buttonPrefab is not assigned.");
             return;
         }
 
         ProjectTaskbarButtonUI button = Instantiate(_buttonPrefab, _buttonRoot);
+        button.gameObject.SetActive(true);
         RegisterButton(id, title, button);
     }
 
@@ -50,7 +57,7 @@ public class ProjectTaskbarUI : MonoBehaviour
 
         _buttonsById[id] = button;
         button.Initialize(id, title, HandleButtonClicked);
-        button.SetVisible(false);
+        button.SetVisible(true);
         button.SetActive(false);
         button.SetMinimized(false);
     }
