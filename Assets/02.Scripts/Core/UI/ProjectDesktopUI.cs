@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ProjectDesktopUI : MonoBehaviour
 {
@@ -12,6 +14,7 @@ public class ProjectDesktopUI : MonoBehaviour
     [SerializeField] private Vector2 _windowSpawnOffset = new Vector2(28f, -28f);
     [SerializeField] private int _maxWindowCascadeSteps = 6;
     [SerializeField] private ProjectWindowUI _projectWindowUI;
+    [SerializeField] private ProjectTaskbarUI _projectTaskbarUI;
     [SerializeField] private bool _openDefaultOnStart;
 
     private readonly List<ProjectDesktopIconUI> _icons = new List<ProjectDesktopIconUI>();
@@ -36,11 +39,14 @@ public class ProjectDesktopUI : MonoBehaviour
                 _windowRoot = transform;
 
             _projectWindowManager = new ProjectWindowManager(name, _projectWindowPrefab, _windowRoot, _windowSpawnPosition, _windowSpawnOffset, _maxWindowCascadeSteps);
+            _projectWindowManager.SetTaskbar(_projectTaskbarUI);
         }
         else if (_projectWindowUI == null)
         {
             Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} requires a window prefab for multi-window mode or a {nameof(ProjectWindowUI)} fallback reference.");
         }
+
+        // TODO: When taskbar Editor wiring is added, decide whether the fallback single-window path should also drive ProjectTaskbarUI.
     }
 
     public void Initialize()
@@ -172,6 +178,142 @@ public class ProjectDesktopUI : MonoBehaviour
     }
 }
 
+public class ProjectTaskbarUI : MonoBehaviour
+{
+    private readonly Dictionary<DesktopWindowType, ProjectTaskbarButtonUI> _buttonsByType = new Dictionary<DesktopWindowType, ProjectTaskbarButtonUI>();
+    private ProjectWindowManager _windowManager;
+
+    public void Initialize(ProjectWindowManager windowManager)
+    {
+        _windowManager = windowManager;
+    }
+
+    public void RegisterButton(DesktopWindowType type, ProjectTaskbarButtonUI button)
+    {
+        if (button == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectTaskbarUI)} on {name} cannot register a null taskbar button for {type}.");
+            return;
+        }
+
+        _buttonsByType[type] = button;
+        button.Initialize(type, HandleButtonClicked);
+        button.SetVisible(false);
+        button.SetActive(false);
+        button.SetMinimized(false);
+    }
+
+    public void ShowButton(DesktopWindowType type)
+    {
+        if (TryGetButton(type, out ProjectTaskbarButtonUI button))
+            button.SetVisible(true);
+    }
+
+    public void HideButton(DesktopWindowType type)
+    {
+        if (!TryGetButton(type, out ProjectTaskbarButtonUI button))
+            return;
+
+        button.SetActive(false);
+        button.SetMinimized(false);
+        button.SetVisible(false);
+    }
+
+    public void SetActiveButton(DesktopWindowType type)
+    {
+        foreach (KeyValuePair<DesktopWindowType, ProjectTaskbarButtonUI> pair in _buttonsByType)
+        {
+            if (pair.Value != null)
+                pair.Value.SetActive(pair.Key == type);
+        }
+    }
+
+    public void SetButtonMinimized(DesktopWindowType type, bool isMinimized)
+    {
+        if (TryGetButton(type, out ProjectTaskbarButtonUI button))
+            button.SetMinimized(isMinimized);
+    }
+
+    private void HandleButtonClicked(DesktopWindowType type)
+    {
+        if (_windowManager == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectTaskbarUI)} on {name} cannot handle {type} taskbar click without a {nameof(ProjectWindowManager)}.");
+            return;
+        }
+
+        _windowManager.RestoreOrFocusWindow(type);
+    }
+
+    private bool TryGetButton(DesktopWindowType type, out ProjectTaskbarButtonUI button)
+    {
+        if (_buttonsByType.TryGetValue(type, out button) && button != null)
+            return true;
+
+        button = null;
+        return false;
+    }
+}
+
+public class ProjectTaskbarButtonUI : MonoBehaviour
+{
+    [SerializeField] private Button _button;
+    [SerializeField] private GameObject _activeIndicator;
+    [SerializeField] private GameObject _minimizedIndicator;
+
+    private DesktopWindowType _windowType;
+    private Action<DesktopWindowType> _onClick;
+
+    private void Awake()
+    {
+        if (_button == null)
+            _button = GetComponent<Button>();
+
+        if (_button == null)
+            Debug.LogWarning($"{nameof(ProjectTaskbarButtonUI)} on {name} requires a {nameof(Button)} reference.");
+    }
+
+    private void OnEnable()
+    {
+        if (_button != null)
+            _button.onClick.AddListener(HandleClicked);
+    }
+
+    private void OnDisable()
+    {
+        if (_button != null)
+            _button.onClick.RemoveListener(HandleClicked);
+    }
+
+    public void Initialize(DesktopWindowType type, Action<DesktopWindowType> onClick)
+    {
+        _windowType = type;
+        _onClick = onClick;
+    }
+
+    public void SetVisible(bool visible)
+    {
+        gameObject.SetActive(visible);
+    }
+
+    public void SetActive(bool active)
+    {
+        if (_activeIndicator != null)
+            _activeIndicator.SetActive(active);
+    }
+
+    public void SetMinimized(bool minimized)
+    {
+        if (_minimizedIndicator != null)
+            _minimizedIndicator.SetActive(minimized);
+    }
+
+    private void HandleClicked()
+    {
+        _onClick?.Invoke(_windowType);
+    }
+}
+
 public sealed class ProjectWindowManager
 {
     private readonly Dictionary<ProjectData, ProjectWindowUI> _openWindows = new Dictionary<ProjectData, ProjectWindowUI>();
@@ -184,6 +326,7 @@ public sealed class ProjectWindowManager
     private readonly Vector2 _spawnPosition;
     private readonly Vector2 _spawnOffset;
     private readonly int _maxCascadeSteps;
+    private ProjectTaskbarUI _taskbarUI;
     private int _spawnCount;
 
     public ProjectWindowManager(string ownerName, ProjectWindowUI windowPrefab, Transform windowRoot, Vector2 spawnPosition, Vector2 spawnOffset, int maxCascadeSteps)
@@ -201,6 +344,17 @@ public sealed class ProjectWindowManager
         _maxCascadeSteps = maxCascadeSteps;
     }
 
+    public void SetTaskbar(ProjectTaskbarUI taskbarUI)
+    {
+        _taskbarUI = taskbarUI;
+
+        if (_taskbarUI == null)
+            return;
+
+        _taskbarUI.Initialize(this);
+        SyncTaskbarButtons();
+    }
+
     public void OpenWindow(ProjectData projectData)
     {
         if (projectData == null)
@@ -212,7 +366,11 @@ public sealed class ProjectWindowManager
         if (_openWindows.TryGetValue(projectData, out ProjectWindowUI existingWindow) && existingWindow != null)
         {
             if (!existingWindow.IsVisible)
+            {
                 existingWindow.RestoreFromMinimized();
+                _windowStates[existingWindow.WindowType] = WindowState.Opened;
+                SyncTaskbarWindowState(existingWindow.WindowType);
+            }
 
             FocusWindow(existingWindow);
             return;
@@ -224,7 +382,7 @@ public sealed class ProjectWindowManager
             return;
         }
 
-        ProjectWindowUI window = Object.Instantiate(_windowPrefab, _windowRoot);
+        ProjectWindowUI window = UnityEngine.Object.Instantiate(_windowPrefab, _windowRoot);
         RectTransform boundsRoot = ResolveWindowBoundsRoot(window);
         window.SetBoundsRoot(boundsRoot);
         window.Closed += HandleWindowClosed;
@@ -249,7 +407,7 @@ public sealed class ProjectWindowManager
         _registeredWindows[type] = window;
         _windowStates[type] = window.IsVisible ? WindowState.Opened : WindowState.Closed;
 
-        // TODO: Register or update the matching taskbar button when ProjectTaskbarUI is added.
+        SyncTaskbarWindowState(type);
     }
 
     public void OpenWindow(DesktopWindowType type)
@@ -262,6 +420,18 @@ public sealed class ProjectWindowManager
 
         Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot open {type} by type until typed window factories are implemented.");
         _windowStates[type] = WindowState.Closed;
+        SyncTaskbarWindowState(type);
+    }
+
+    public void RestoreOrFocusWindow(DesktopWindowType type)
+    {
+        if (_windowStates.TryGetValue(type, out WindowState state) && state == WindowState.Minimized)
+        {
+            RestoreWindow(type);
+            return;
+        }
+
+        FocusWindow(type);
     }
 
     public void CloseWindow(DesktopWindowType type)
@@ -278,14 +448,14 @@ public sealed class ProjectWindowManager
             window.Closed -= HandleWindowClosed;
             window.FocusRequested -= FocusWindow;
             _registeredWindows.Remove(type);
-            Object.Destroy(window.gameObject);
+            UnityEngine.Object.Destroy(window.gameObject);
         }
         else
         {
             _registeredWindows.Remove(type);
         }
 
-        // TODO: Remove the matching taskbar button when ProjectTaskbarUI is added.
+        SyncTaskbarWindowState(type);
     }
 
     public void MinimizeWindow(DesktopWindowType type)
@@ -299,7 +469,7 @@ public sealed class ProjectWindowManager
         window.Minimize();
         _windowStates[type] = WindowState.Minimized;
 
-        // TODO: Sync minimized visual state to ProjectTaskbarUI when it exists.
+        SyncTaskbarWindowState(type);
     }
 
     public void RestoreWindow(DesktopWindowType type)
@@ -315,7 +485,7 @@ public sealed class ProjectWindowManager
         _windowStates[type] = WindowState.Opened;
         FocusWindow(type);
 
-        // TODO: Sync restored visual state to ProjectTaskbarUI when it exists.
+        SyncTaskbarWindowState(type);
     }
 
     public void FocusWindow(DesktopWindowType type)
@@ -329,7 +499,7 @@ public sealed class ProjectWindowManager
         _windowStates[type] = WindowState.Opened;
         FocusWindow(window);
 
-        // TODO: Sync active taskbar highlight when ProjectTaskbarUI is added.
+        _taskbarUI?.SetActiveButton(type);
     }
 
     public void CloseAll()
@@ -338,6 +508,7 @@ public sealed class ProjectWindowManager
         _openWindows.Clear();
         _registeredWindows.Clear();
         _windowStates.Clear();
+        SyncTaskbarButtons();
 
         for (int i = 0; i < windows.Count; i++)
         {
@@ -347,7 +518,7 @@ public sealed class ProjectWindowManager
 
             window.Closed -= HandleWindowClosed;
             window.FocusRequested -= FocusWindow;
-            Object.Destroy(window.gameObject);
+            UnityEngine.Object.Destroy(window.gameObject);
         }
 
         _spawnCount = 0;
@@ -370,6 +541,10 @@ public sealed class ProjectWindowManager
 
         window.transform.SetAsLastSibling();
         _windowStates[window.WindowType] = window.IsVisible ? WindowState.Opened : WindowState.Minimized;
+        SyncTaskbarWindowState(window.WindowType);
+
+        if (window.IsVisible)
+            _taskbarUI?.SetActiveButton(window.WindowType);
     }
 
     private RectTransform ResolveWindowBoundsRoot(ProjectWindowUI window)
@@ -406,9 +581,9 @@ public sealed class ProjectWindowManager
 
         window.Closed -= HandleWindowClosed;
         window.FocusRequested -= FocusWindow;
-        Object.Destroy(window.gameObject);
+        UnityEngine.Object.Destroy(window.gameObject);
 
-        // TODO: Remove the matching taskbar button when ProjectTaskbarUI is added.
+        SyncTaskbarWindowState(type);
     }
 
     private void RemoveWindowByInstance(ProjectWindowUI window)
@@ -426,5 +601,31 @@ public sealed class ProjectWindowManager
 
         if (keyToRemove != null)
             _openWindows.Remove(keyToRemove);
+    }
+
+    private void SyncTaskbarButtons()
+    {
+        if (_taskbarUI == null)
+            return;
+
+        foreach (DesktopWindowType type in (DesktopWindowType[])Enum.GetValues(typeof(DesktopWindowType)))
+        {
+            SyncTaskbarWindowState(type);
+        }
+    }
+
+    private void SyncTaskbarWindowState(DesktopWindowType type)
+    {
+        if (_taskbarUI == null)
+            return;
+
+        if (!_windowStates.TryGetValue(type, out WindowState state) || state == WindowState.Closed)
+        {
+            _taskbarUI.HideButton(type);
+            return;
+        }
+
+        _taskbarUI.ShowButton(type);
+        _taskbarUI.SetButtonMinimized(type, state == WindowState.Minimized);
     }
 }
