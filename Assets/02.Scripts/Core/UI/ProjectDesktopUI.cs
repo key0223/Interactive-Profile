@@ -203,6 +203,9 @@ public sealed class ProjectWindowManager
 
         if (_openWindows.TryGetValue(projectData, out ProjectWindowUI existingWindow) && existingWindow != null)
         {
+            if (!existingWindow.IsVisible)
+                existingWindow.RestoreFromMinimized();
+
             FocusWindow(existingWindow);
             return;
         }

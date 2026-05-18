@@ -8,10 +8,12 @@ public class ResizableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
     [SerializeField] private Vector2 _minSize = new Vector2(560f, 340f);
     [SerializeField] private Vector2 _maxSize = new Vector2(860f, 560f);
 
+    private ProjectWindowUI _projectWindowUI;
     private RectTransform _parentRect;
     private Vector2 _startPointerPosition;
     private Vector2 _startSize;
     private Vector2 _startAnchoredPosition;
+    private bool _isResizing;
 
     private void Awake()
     {
@@ -20,9 +22,10 @@ public class ResizableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        _isResizing = false;
         ResolveReferences();
 
-        if (_targetWindow == null || _parentRect == null)
+        if (_targetWindow == null || _parentRect == null || IsWindowInteractionLocked())
             return;
 
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_parentRect, eventData.position, eventData.pressEventCamera, out _startPointerPosition))
@@ -30,11 +33,12 @@ public class ResizableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
         _startSize = _targetWindow.rect.size;
         _startAnchoredPosition = _targetWindow.anchoredPosition;
+        _isResizing = true;
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (_targetWindow == null || _parentRect == null)
+        if (!_isResizing || _targetWindow == null || _parentRect == null || IsWindowInteractionLocked())
             return;
 
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_parentRect, eventData.position, eventData.pressEventCamera, out Vector2 currentPointerPosition))
@@ -54,8 +58,10 @@ public class ResizableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (_targetWindow != null)
+        if (_isResizing && _targetWindow != null && !IsWindowInteractionLocked())
             WindowBoundsUtility.ClampToBounds(_targetWindow, _boundsRoot);
+
+        _isResizing = false;
     }
 
     private Vector2 ClampSizeToLimits(Vector2 requestedSize)
@@ -80,14 +86,21 @@ public class ResizableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     private void ResolveReferences()
     {
+        if (_projectWindowUI == null)
+            _projectWindowUI = GetComponentInParent<ProjectWindowUI>();
+
         if (_targetWindow == null)
         {
-            ProjectWindowUI projectWindowUI = GetComponentInParent<ProjectWindowUI>();
-            if (projectWindowUI != null)
-                _targetWindow = projectWindowUI.WindowRectTransform;
+            if (_projectWindowUI != null)
+                _targetWindow = _projectWindowUI.WindowRectTransform;
         }
 
         if (_targetWindow != null)
             _parentRect = _targetWindow.parent as RectTransform;
+    }
+
+    private bool IsWindowInteractionLocked()
+    {
+        return _projectWindowUI != null && _projectWindowUI.IsMaximized;
     }
 }

@@ -6,8 +6,10 @@ public class DraggableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
     [SerializeField] private RectTransform _targetWindow;
     [SerializeField] private RectTransform _boundsRoot;
 
+    private ProjectWindowUI _projectWindowUI;
     private RectTransform _parentRect;
     private Vector2 _dragOffset;
+    private bool _isDragging;
 
     private void Awake()
     {
@@ -16,20 +18,22 @@ public class DraggableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        _isDragging = false;
         ResolveReferences();
 
-        if (_targetWindow == null || _parentRect == null)
+        if (_targetWindow == null || _parentRect == null || IsWindowInteractionLocked())
             return;
 
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_parentRect, eventData.position, eventData.pressEventCamera, out Vector2 localPointerPosition))
             return;
 
         _dragOffset = _targetWindow.anchoredPosition - localPointerPosition;
+        _isDragging = true;
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (_targetWindow == null || _parentRect == null)
+        if (!_isDragging || _targetWindow == null || _parentRect == null || IsWindowInteractionLocked())
             return;
 
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_parentRect, eventData.position, eventData.pressEventCamera, out Vector2 localPointerPosition))
@@ -41,20 +45,29 @@ public class DraggableWindowUI : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (_targetWindow != null)
+        if (_isDragging && _targetWindow != null && !IsWindowInteractionLocked())
             WindowBoundsUtility.ClampToBounds(_targetWindow, _boundsRoot);
+
+        _isDragging = false;
     }
 
     private void ResolveReferences()
     {
+        if (_projectWindowUI == null)
+            _projectWindowUI = GetComponentInParent<ProjectWindowUI>();
+
         if (_targetWindow == null)
         {
-            ProjectWindowUI projectWindowUI = GetComponentInParent<ProjectWindowUI>();
-            if (projectWindowUI != null)
-                _targetWindow = projectWindowUI.WindowRectTransform;
+            if (_projectWindowUI != null)
+                _targetWindow = _projectWindowUI.WindowRectTransform;
         }
 
         if (_targetWindow != null)
             _parentRect = _targetWindow.parent as RectTransform;
+    }
+
+    private bool IsWindowInteractionLocked()
+    {
+        return _projectWindowUI != null && _projectWindowUI.IsMaximized;
     }
 }
