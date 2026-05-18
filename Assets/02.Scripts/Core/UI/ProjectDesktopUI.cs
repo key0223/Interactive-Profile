@@ -119,6 +119,14 @@ public class ProjectDesktopUI : MonoBehaviour
             _projectWindowUI.Hide();
     }
 
+    public bool CloseFocusedWindow()
+    {
+        if (_projectWindowManager == null)
+            return false;
+
+        return _projectWindowManager.CloseFocusedWindow();
+    }
+
     private void RebuildIcons()
     {
         ClearIcons();
@@ -359,6 +367,23 @@ public sealed class ProjectWindowManager
 
         if (wasActiveWindow)
             ActivateMostRecentOpenWindow();
+    }
+
+    public bool CloseFocusedWindow()
+    {
+        if (!_hasActiveWindow)
+            return false;
+
+        DesktopWindowId id = _activeWindowId;
+
+        if (!_windowStates.TryGetValue(id, out WindowState state) || state != WindowState.Opened)
+            return false;
+
+        if (!_registeredWindows.TryGetValue(id, out ProjectWindowUI window) || window == null || !window.IsVisible)
+            return false;
+
+        CloseWindow(id);
+        return true;
     }
 
     public void MinimizeWindow(DesktopWindowType type)

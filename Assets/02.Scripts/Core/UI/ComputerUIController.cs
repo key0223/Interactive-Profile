@@ -43,7 +43,12 @@ public class ComputerUIController : MonoBehaviour
             return;
 
         if (_inputManager.IsCancelPressed)
-            Close();
+        {
+            if (_projectDesktopUI != null)
+                _projectDesktopUI.CloseFocusedWindow();
+            else
+                Close();
+        }
     }
 
     public void Open()
