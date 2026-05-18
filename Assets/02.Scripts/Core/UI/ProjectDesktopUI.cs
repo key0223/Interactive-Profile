@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class ProjectDesktopUI : MonoBehaviour
 {
@@ -178,193 +177,12 @@ public class ProjectDesktopUI : MonoBehaviour
     }
 }
 
-public class ProjectTaskbarUI : MonoBehaviour
-{
-    [Serializable]
-    private struct TaskbarButtonEntry
-    {
-        [SerializeField] private DesktopWindowType _type;
-        [SerializeField] private ProjectTaskbarButtonUI _button;
-
-        public DesktopWindowType Type => _type;
-        public ProjectTaskbarButtonUI Button => _button;
-    }
-
-    [SerializeField] private TaskbarButtonEntry[] _buttonEntries;
-
-    private readonly Dictionary<DesktopWindowType, ProjectTaskbarButtonUI> _buttonsByType = new Dictionary<DesktopWindowType, ProjectTaskbarButtonUI>();
-    private ProjectWindowManager _windowManager;
-    private bool _serializedButtonsRegistered;
-
-    public void Initialize(ProjectWindowManager windowManager)
-    {
-        _windowManager = windowManager;
-        RegisterSerializedButtons();
-    }
-
-    public void RegisterButton(DesktopWindowType type, ProjectTaskbarButtonUI button)
-    {
-        if (button == null)
-        {
-            Debug.LogWarning($"{nameof(ProjectTaskbarUI)} on {name} cannot register a null taskbar button for {type}.");
-            return;
-        }
-
-        if (_buttonsByType.ContainsKey(type))
-        {
-            Debug.LogWarning($"{nameof(ProjectTaskbarUI)} on {name} already has a taskbar button registered for {type}. Duplicate registration was skipped.");
-            return;
-        }
-
-        _buttonsByType[type] = button;
-        button.Initialize(type, HandleButtonClicked);
-        button.SetVisible(false);
-        button.SetActive(false);
-        button.SetMinimized(false);
-    }
-
-    public void ShowButton(DesktopWindowType type)
-    {
-        if (TryGetButton(type, out ProjectTaskbarButtonUI button))
-            button.SetVisible(true);
-    }
-
-    public void HideButton(DesktopWindowType type)
-    {
-        if (!TryGetButton(type, out ProjectTaskbarButtonUI button))
-            return;
-
-        button.SetActive(false);
-        button.SetMinimized(false);
-        button.SetVisible(false);
-    }
-
-    public void SetActiveButton(DesktopWindowType type)
-    {
-        foreach (KeyValuePair<DesktopWindowType, ProjectTaskbarButtonUI> pair in _buttonsByType)
-        {
-            if (pair.Value != null)
-                pair.Value.SetActive(pair.Key == type);
-        }
-    }
-
-    public void SetButtonMinimized(DesktopWindowType type, bool isMinimized)
-    {
-        if (TryGetButton(type, out ProjectTaskbarButtonUI button))
-            button.SetMinimized(isMinimized);
-    }
-
-    private void HandleButtonClicked(DesktopWindowType type)
-    {
-        if (_windowManager == null)
-        {
-            Debug.LogWarning($"{nameof(ProjectTaskbarUI)} on {name} cannot handle {type} taskbar click without a {nameof(ProjectWindowManager)}.");
-            return;
-        }
-
-        _windowManager.RestoreOrFocusWindow(type);
-    }
-
-    private bool TryGetButton(DesktopWindowType type, out ProjectTaskbarButtonUI button)
-    {
-        if (_buttonsByType.TryGetValue(type, out button) && button != null)
-            return true;
-
-        button = null;
-        return false;
-    }
-
-    private void RegisterSerializedButtons()
-    {
-        if (_serializedButtonsRegistered)
-            return;
-
-        _serializedButtonsRegistered = true;
-
-        if (_buttonEntries == null)
-            return;
-
-        for (int i = 0; i < _buttonEntries.Length; i++)
-        {
-            TaskbarButtonEntry entry = _buttonEntries[i];
-            if (entry.Button == null)
-            {
-                Debug.LogWarning($"{nameof(ProjectTaskbarUI)} on {name} has a null taskbar button entry for {entry.Type} at index {i}.");
-                continue;
-            }
-
-            RegisterButton(entry.Type, entry.Button);
-        }
-    }
-}
-
-public class ProjectTaskbarButtonUI : MonoBehaviour
-{
-    [SerializeField] private Button _button;
-    [SerializeField] private GameObject _activeIndicator;
-    [SerializeField] private GameObject _minimizedIndicator;
-
-    private DesktopWindowType _windowType;
-    private Action<DesktopWindowType> _onClick;
-
-    private void Awake()
-    {
-        if (_button == null)
-            _button = GetComponent<Button>();
-
-        if (_button == null)
-            Debug.LogWarning($"{nameof(ProjectTaskbarButtonUI)} on {name} requires a {nameof(Button)} reference.");
-    }
-
-    private void OnEnable()
-    {
-        if (_button != null)
-        {
-            _button.onClick.RemoveListener(HandleClicked);
-            _button.onClick.AddListener(HandleClicked);
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (_button != null)
-            _button.onClick.RemoveListener(HandleClicked);
-    }
-
-    public void Initialize(DesktopWindowType type, Action<DesktopWindowType> onClick)
-    {
-        _windowType = type;
-        _onClick = onClick;
-    }
-
-    public void SetVisible(bool visible)
-    {
-        gameObject.SetActive(visible);
-    }
-
-    public void SetActive(bool active)
-    {
-        if (_activeIndicator != null)
-            _activeIndicator.SetActive(active);
-    }
-
-    public void SetMinimized(bool minimized)
-    {
-        if (_minimizedIndicator != null)
-            _minimizedIndicator.SetActive(minimized);
-    }
-
-    private void HandleClicked()
-    {
-        _onClick?.Invoke(_windowType);
-    }
-}
-
 public sealed class ProjectWindowManager
 {
     private readonly Dictionary<ProjectData, ProjectWindowUI> _openWindows = new Dictionary<ProjectData, ProjectWindowUI>();
-    private readonly Dictionary<DesktopWindowType, WindowState> _windowStates = new Dictionary<DesktopWindowType, WindowState>();
-    private readonly Dictionary<DesktopWindowType, ProjectWindowUI> _registeredWindows = new Dictionary<DesktopWindowType, ProjectWindowUI>();
+    private readonly Dictionary<DesktopWindowId, WindowState> _windowStates = new Dictionary<DesktopWindowId, WindowState>();
+    private readonly Dictionary<DesktopWindowId, ProjectWindowUI> _registeredWindows = new Dictionary<DesktopWindowId, ProjectWindowUI>();
+    private readonly Dictionary<ProjectWindowUI, DesktopWindowId> _idsByWindow = new Dictionary<ProjectWindowUI, DesktopWindowId>();
     private readonly string _ownerName;
     private readonly ProjectWindowUI _windowPrefab;
     private readonly Transform _windowRoot;
@@ -398,7 +216,7 @@ public sealed class ProjectWindowManager
             return;
 
         _taskbarUI.Initialize(this);
-        SyncTaskbarButtons();
+        SyncAllTaskbarButtons();
     }
 
     public void OpenWindow(ProjectData projectData)
@@ -414,8 +232,11 @@ public sealed class ProjectWindowManager
             if (!existingWindow.IsVisible)
             {
                 existingWindow.RestoreFromMinimized();
-                _windowStates[existingWindow.WindowType] = WindowState.Opened;
-                SyncTaskbarWindowState(existingWindow.WindowType);
+                if (_idsByWindow.TryGetValue(existingWindow, out DesktopWindowId existingId))
+                {
+                    _windowStates[existingId] = WindowState.Opened;
+                    SyncTaskbarWindowState(existingId);
+                }
             }
 
             FocusWindow(existingWindow);
@@ -433,9 +254,11 @@ public sealed class ProjectWindowManager
         window.SetBoundsRoot(boundsRoot);
         window.Closed += HandleWindowClosed;
         window.FocusRequested += FocusWindow;
+        window.Minimized += HandleWindowMinimized;
+        window.Restored += HandleWindowRestored;
 
         _openWindows[projectData] = window;
-        RegisterWindow(window);
+        RegisterWindow(window, DesktopWindowId.ForProject(projectData), ResolveWindowTitle(projectData, window));
         ApplySpawnPosition(window);
         window.ShowProject(projectData);
         FocusWindow(window);
@@ -443,109 +266,145 @@ public sealed class ProjectWindowManager
 
     public void RegisterWindow(ProjectWindowUI window)
     {
+        RegisterWindow(window, DesktopWindowId.ForType(window != null ? window.WindowType : DesktopWindowType.Projects), null);
+    }
+
+    public void RegisterWindow(ProjectWindowUI window, DesktopWindowId id, string title)
+    {
         if (window == null)
         {
             Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot register a null window.");
             return;
         }
 
-        DesktopWindowType type = window.WindowType;
-        _registeredWindows[type] = window;
-        _windowStates[type] = window.IsVisible ? WindowState.Opened : WindowState.Closed;
+        _registeredWindows[id] = window;
+        _idsByWindow[window] = id;
+        _windowStates[id] = window.IsVisible ? WindowState.Opened : WindowState.Closed;
 
-        SyncTaskbarWindowState(type);
+        _taskbarUI?.RegisterButton(id, string.IsNullOrWhiteSpace(title) ? id.Key : title);
+        SyncTaskbarWindowState(id);
     }
 
     public void OpenWindow(DesktopWindowType type)
     {
-        if (_registeredWindows.TryGetValue(type, out ProjectWindowUI window) && window != null)
+        OpenWindow(DesktopWindowId.ForType(type));
+    }
+
+    public void OpenWindow(DesktopWindowId id)
+    {
+        if (_registeredWindows.TryGetValue(id, out ProjectWindowUI window) && window != null)
         {
-            RestoreWindow(type);
+            RestoreWindow(id);
             return;
         }
 
-        Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot open {type} by type until typed window factories are implemented.");
-        _windowStates[type] = WindowState.Closed;
-        SyncTaskbarWindowState(type);
+        Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot open {id} by id until typed window factories are implemented.");
+        _windowStates[id] = WindowState.Closed;
+        SyncTaskbarWindowState(id);
     }
 
     public void RestoreOrFocusWindow(DesktopWindowType type)
     {
-        if (_windowStates.TryGetValue(type, out WindowState state) && state == WindowState.Minimized)
+        RestoreOrFocusWindow(DesktopWindowId.ForType(type));
+    }
+
+    public void RestoreOrFocusWindow(DesktopWindowId id)
+    {
+        if (_windowStates.TryGetValue(id, out WindowState state) && state == WindowState.Minimized)
         {
-            RestoreWindow(type);
+            RestoreWindow(id);
             return;
         }
 
-        FocusWindow(type);
+        FocusWindow(id);
     }
 
     public void CloseWindow(DesktopWindowType type)
     {
-        _windowStates[type] = WindowState.Closed;
+        CloseWindow(DesktopWindowId.ForType(type));
+    }
 
-        if (_registeredWindows.TryGetValue(type, out ProjectWindowUI window) && window != null)
+    public void CloseWindow(DesktopWindowId id)
+    {
+        _windowStates[id] = WindowState.Closed;
+
+        if (_registeredWindows.TryGetValue(id, out ProjectWindowUI window) && window != null)
         {
             if (window.CurrentProjectData != null && _openWindows.TryGetValue(window.CurrentProjectData, out ProjectWindowUI registeredProjectWindow) && registeredProjectWindow == window)
                 _openWindows.Remove(window.CurrentProjectData);
             else
                 RemoveWindowByInstance(window);
 
-            window.Closed -= HandleWindowClosed;
-            window.FocusRequested -= FocusWindow;
-            _registeredWindows.Remove(type);
+            UnsubscribeWindow(window);
+            _registeredWindows.Remove(id);
+            _idsByWindow.Remove(window);
             UnityEngine.Object.Destroy(window.gameObject);
         }
         else
         {
-            _registeredWindows.Remove(type);
+            _registeredWindows.Remove(id);
         }
 
-        SyncTaskbarWindowState(type);
+        SyncTaskbarWindowState(id);
     }
 
     public void MinimizeWindow(DesktopWindowType type)
     {
-        if (!_registeredWindows.TryGetValue(type, out ProjectWindowUI window) || window == null)
+        MinimizeWindow(DesktopWindowId.ForType(type));
+    }
+
+    public void MinimizeWindow(DesktopWindowId id)
+    {
+        if (!_registeredWindows.TryGetValue(id, out ProjectWindowUI window) || window == null)
         {
-            _windowStates[type] = WindowState.Closed;
+            _windowStates[id] = WindowState.Closed;
             return;
         }
 
         window.Minimize();
-        _windowStates[type] = WindowState.Minimized;
+        _windowStates[id] = WindowState.Minimized;
 
-        SyncTaskbarWindowState(type);
+        SyncTaskbarWindowState(id);
     }
 
     public void RestoreWindow(DesktopWindowType type)
     {
-        if (!_registeredWindows.TryGetValue(type, out ProjectWindowUI window) || window == null)
+        RestoreWindow(DesktopWindowId.ForType(type));
+    }
+
+    public void RestoreWindow(DesktopWindowId id)
+    {
+        if (!_registeredWindows.TryGetValue(id, out ProjectWindowUI window) || window == null)
         {
-            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot restore {type} because no registered window exists.");
-            _windowStates[type] = WindowState.Closed;
+            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot restore {id} because no registered window exists.");
+            _windowStates[id] = WindowState.Closed;
             return;
         }
 
         window.RestoreFromMinimized();
-        _windowStates[type] = WindowState.Opened;
-        FocusWindow(type);
+        _windowStates[id] = WindowState.Opened;
+        FocusWindow(id);
 
-        SyncTaskbarWindowState(type);
+        SyncTaskbarWindowState(id);
     }
 
     public void FocusWindow(DesktopWindowType type)
     {
-        if (!_registeredWindows.TryGetValue(type, out ProjectWindowUI window) || window == null)
+        FocusWindow(DesktopWindowId.ForType(type));
+    }
+
+    public void FocusWindow(DesktopWindowId id)
+    {
+        if (!_registeredWindows.TryGetValue(id, out ProjectWindowUI window) || window == null)
             return;
 
-        if (_windowStates.TryGetValue(type, out WindowState state) && state == WindowState.Minimized)
+        if (_windowStates.TryGetValue(id, out WindowState state) && state == WindowState.Minimized)
             return;
 
-        _windowStates[type] = WindowState.Opened;
+        _windowStates[id] = WindowState.Opened;
         FocusWindow(window);
 
-        _taskbarUI?.SetActiveButton(type);
+        _taskbarUI?.SetActiveButton(id);
     }
 
     public void CloseAll()
@@ -554,7 +413,8 @@ public sealed class ProjectWindowManager
         _openWindows.Clear();
         _registeredWindows.Clear();
         _windowStates.Clear();
-        SyncTaskbarButtons();
+        _idsByWindow.Clear();
+        _taskbarUI?.Clear();
 
         for (int i = 0; i < windows.Count; i++)
         {
@@ -562,8 +422,7 @@ public sealed class ProjectWindowManager
             if (window == null)
                 continue;
 
-            window.Closed -= HandleWindowClosed;
-            window.FocusRequested -= FocusWindow;
+            UnsubscribeWindow(window);
             UnityEngine.Object.Destroy(window.gameObject);
         }
 
@@ -586,11 +445,14 @@ public sealed class ProjectWindowManager
             return;
 
         window.transform.SetAsLastSibling();
-        _windowStates[window.WindowType] = window.IsVisible ? WindowState.Opened : WindowState.Minimized;
-        SyncTaskbarWindowState(window.WindowType);
+        if (!_idsByWindow.TryGetValue(window, out DesktopWindowId id))
+            return;
+
+        _windowStates[id] = window.IsVisible ? WindowState.Opened : WindowState.Minimized;
+        SyncTaskbarWindowState(id);
 
         if (window.IsVisible)
-            _taskbarUI?.SetActiveButton(window.WindowType);
+            _taskbarUI?.SetActiveButton(id);
     }
 
     private RectTransform ResolveWindowBoundsRoot(ProjectWindowUI window)
@@ -621,15 +483,35 @@ public sealed class ProjectWindowManager
         else
             RemoveWindowByInstance(window);
 
-        DesktopWindowType type = window.WindowType;
-        _registeredWindows.Remove(type);
-        _windowStates[type] = WindowState.Closed;
+        if (!_idsByWindow.TryGetValue(window, out DesktopWindowId id))
+            id = DesktopWindowId.ForType(window.WindowType);
 
-        window.Closed -= HandleWindowClosed;
-        window.FocusRequested -= FocusWindow;
+        _registeredWindows.Remove(id);
+        _idsByWindow.Remove(window);
+        _windowStates[id] = WindowState.Closed;
+
+        UnsubscribeWindow(window);
         UnityEngine.Object.Destroy(window.gameObject);
 
-        SyncTaskbarWindowState(type);
+        SyncTaskbarWindowState(id);
+    }
+
+    private void HandleWindowMinimized(ProjectWindowUI window)
+    {
+        if (window == null || !_idsByWindow.TryGetValue(window, out DesktopWindowId id))
+            return;
+
+        _windowStates[id] = WindowState.Minimized;
+        SyncTaskbarWindowState(id);
+    }
+
+    private void HandleWindowRestored(ProjectWindowUI window)
+    {
+        if (window == null || !_idsByWindow.TryGetValue(window, out DesktopWindowId id))
+            return;
+
+        _windowStates[id] = WindowState.Opened;
+        SyncTaskbarWindowState(id);
     }
 
     private void RemoveWindowByInstance(ProjectWindowUI window)
@@ -649,29 +531,54 @@ public sealed class ProjectWindowManager
             _openWindows.Remove(keyToRemove);
     }
 
-    private void SyncTaskbarButtons()
+    private void SyncAllTaskbarButtons()
     {
         if (_taskbarUI == null)
             return;
 
-        foreach (DesktopWindowType type in (DesktopWindowType[])Enum.GetValues(typeof(DesktopWindowType)))
+        foreach (DesktopWindowId id in _windowStates.Keys)
         {
-            SyncTaskbarWindowState(type);
+            SyncTaskbarWindowState(id);
         }
     }
 
-    private void SyncTaskbarWindowState(DesktopWindowType type)
+    private void SyncTaskbarWindowState(DesktopWindowId id)
     {
         if (_taskbarUI == null)
             return;
 
-        if (!_windowStates.TryGetValue(type, out WindowState state) || state == WindowState.Closed)
+        if (!_windowStates.TryGetValue(id, out WindowState state) || state == WindowState.Closed)
         {
-            _taskbarUI.HideButton(type);
+            _taskbarUI.HideButton(id);
             return;
         }
 
-        _taskbarUI.ShowButton(type);
-        _taskbarUI.SetButtonMinimized(type, state == WindowState.Minimized);
+        _taskbarUI.ShowButton(id);
+        _taskbarUI.SetButtonMinimized(id, state == WindowState.Minimized);
+    }
+
+    private void UnsubscribeWindow(ProjectWindowUI window)
+    {
+        if (window == null)
+            return;
+
+        window.Closed -= HandleWindowClosed;
+        window.FocusRequested -= FocusWindow;
+        window.Minimized -= HandleWindowMinimized;
+        window.Restored -= HandleWindowRestored;
+    }
+
+    private string ResolveWindowTitle(ProjectData projectData, ProjectWindowUI window)
+    {
+        if (projectData != null)
+        {
+            if (!string.IsNullOrWhiteSpace(projectData.Title))
+                return projectData.Title;
+
+            if (!string.IsNullOrWhiteSpace(projectData.name))
+                return projectData.name;
+        }
+
+        return window != null ? window.WindowType.ToString() : "Window";
     }
 }

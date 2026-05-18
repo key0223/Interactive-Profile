@@ -33,6 +33,8 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
     public event Action<ProjectWindowUI> Closed;
     public event Action<ProjectWindowUI> FocusRequested;
+    public event Action<ProjectWindowUI> Minimized;
+    public event Action<ProjectWindowUI> Restored;
 
     private Vector2 _restoreAnchoredPosition;
     private Vector2 _restoreAnchorMin;
@@ -139,11 +141,13 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     public void Minimize()
     {
         SetRootActive(false);
+        Minimized?.Invoke(this);
     }
 
     public void RestoreFromMinimized()
     {
         SetRootActive(true);
+        Restored?.Invoke(this);
         RequestFocus();
     }
 
