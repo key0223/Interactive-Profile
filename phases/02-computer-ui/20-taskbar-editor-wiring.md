@@ -1,4 +1,4 @@
-# Step: Taskbar Editor Wiring
+# Step: Runtime Taskbar Editor Wiring
 
 ## Status
 
@@ -6,73 +6,72 @@ pending
 
 ## Goal
 
-Taskbar code surface가 준비된 상태에서 실제 taskbar 동작을 검증할 수 있도록 Unity Editor hierarchy, component, Inspector wiring 기준을 정리한다. 18번은 taskbar/window management 전체 개요, 19번은 window state architecture이며, 이 문서는 `TaskbarRoot`와 taskbar button을 Unity Editor에서 어떻게 연결할지에 집중한다.
+`ProjectTaskbarUI`가 runtime button 생성 방식으로 변경된 현재 구조에 맞춰 Unity Editor wiring 기준을 정리한다. 18번은 taskbar/window management 전체 개요, 19번은 state architecture, 이 문서는 runtime taskbar button을 만들기 위한 `TaskbarRoot`, `TaskbarButtonRoot`, `ProjectTaskbarButtonUI` prefab/template 연결 기준에 집중한다.
 
 ## Scope
 
 - 포함:
-  - `ComputerUIRoot` 아래 taskbar 권장 hierarchy.
-  - 현재 단계에서 serialized button mapping을 권장하는 이유.
-  - `ProjectDesktopUI._projectTaskbarUI` 연결 기준.
-  - `ProjectTaskbarUI`의 `DesktopWindowType`별 button 등록 방식.
-  - `ProjectTaskbarButtonUI` Inspector 연결 기준.
+  - runtime taskbar button 방식의 Editor hierarchy.
+  - `ProjectDesktopUI`, `ProjectTaskbarUI`, `ProjectTaskbarButtonUI` Inspector 연결 기준.
+  - `DesktopWindowId` 기반 taskbar button 생성/삭제/상태 갱신 흐름.
+  - `WindowLayer` taskbar 제외 bounds 설정 기준.
   - Play Mode 검증 시나리오.
-  - 실패/주의 케이스.
 - 제외:
   - C# 코드 수정.
   - Unity scene, prefab, asset, meta 파일 직접 수정.
-  - taskbar button prefab instantiate 구현.
-  - `DesktopWindowId` 기반 프로젝트별 taskbar button 구현.
-  - focus order, close 후 다음 focus 후보 선정.
+  - fixed `DesktopWindowType` button mapping.
+  - 시작 메뉴, 시계, 시스템 트레이, preview, reorder.
   - Escape focused window close 구현.
 
 ## Tasks
 
 - `TaskbarRoot`와 `TaskbarButtonRoot`의 권장 위치를 정한다.
-- 고정 window type 기반 MVP에서는 prefab instantiate보다 serialized mapping을 우선하는 기준을 문서화한다.
-- `ProjectDesktopUI`, `ProjectTaskbarUI`, `ProjectTaskbarButtonUI`의 Inspector 연결 목록을 정리한다.
-- 현재 `RegisterButton(DesktopWindowType, ProjectTaskbarButtonUI)` API를 Editor wiring에서 어떻게 사용할지 다음 구현 결정을 명시한다.
-- Play Mode에서 open, minimize, taskbar click restore/focus, close, null-safe 동작을 검증하는 절차를 정리한다.
+- `ProjectTaskbarUI._buttonRoot`와 `_buttonPrefab` 연결 기준을 정리한다.
+- `ProjectTaskbarButtonUI` prefab/template 내부 필드 연결 기준을 정리한다.
+- `ProjectWindowManager`가 `DesktopWindowId`별 window state를 taskbar에 동기화하는 흐름을 문서화한다.
+- `WindowLayer`가 taskbar 높이를 제외한 영역이 되도록 RectTransform 기준을 정리한다.
 
 ## Guardrails
 
-- 이 step은 문서만 생성한다.
+- 이 step은 문서만 수정한다.
 - 코드와 Unity 직렬화 파일은 수정하지 않는다.
-- 실제 hierarchy 생성, component 추가, Inspector 연결은 사람이 Unity Editor에서 수행한다.
-- 현재 code surface는 taskbar button을 runtime instantiate하지 않는다.
-- `ProjectWindowManager`가 taskbar 없이도 기존 window 기능을 유지해야 한다.
-- `ProjectTaskbarUI`는 window lifecycle의 source of truth가 아니며, manager state를 표시한다.
-- `ProjectWindowUI.WindowType` 기본값이 `Projects`임을 염두에 두고, 새 window type 추가 시 Inspector 값을 반드시 확인한다.
+- 고정 `ProjectsTaskbarButton`, `AboutMeTaskbarButton`, `SkillsTaskbarButton`, `ContactTaskbarButton`을 기본 방식으로 만들지 않는다.
+- `ProjectTaskbarUI`는 runtime 생성된 button의 parent와 prefab/template만 알면 된다.
+- `ProjectWindowManager`가 taskbar 없이도 null-safe하게 동작해야 한다.
 
 ## Acceptance Criteria
 
-- `phases/02-computer-ui/20-taskbar-editor-wiring.md`가 생성되어 있다.
-- 권장 hierarchy가 `TaskbarRoot`, `TaskbarButtonRoot`, `ProjectsTaskbarButton`, `AboutMeTaskbarButton`, `SkillsTaskbarButton`, `ContactTaskbarButton`을 포함한다.
-- 현재 단계에서 serialized button mapping을 권장하는 이유가 포함되어 있다.
-- `ProjectDesktopUI._projectTaskbarUI` wiring 기준이 포함되어 있다.
-- `ProjectTaskbarUI`가 `DesktopWindowType`별 `ProjectTaskbarButtonUI`를 등록해야 한다는 기준이 포함되어 있다.
-- `ProjectTaskbarButtonUI._button`, active/minimized indicator 연결 기준이 포함되어 있다.
-- 검증 시나리오와 실패/주의 케이스가 포함되어 있다.
-- 다음 구현 step 제안이 포함되어 있다.
+- `phases/02-computer-ui/20-taskbar-editor-wiring.md`가 runtime button 생성 방식으로 갱신되어 있다.
+- `_buttonEntries`와 고정 type mapping 설명이 기본 방식에서 제거되어 있다.
+- `TaskbarButtonRoot`가 runtime button parent임을 명시한다.
+- `_buttonPrefab`에 `ProjectTaskbarButtonUI` prefab/template을 연결하는 기준이 포함되어 있다.
+- `DesktopWindowId`별 taskbar button 생성/제거/상태 갱신 흐름이 포함되어 있다.
+- `WindowLayer Bottom = TaskbarRoot Height` 기준이 포함되어 있다.
 
 ## Current Code Context
 
-현재 준비된 code surface:
+현재 taskbar key:
 
 ```text
-DesktopWindowType
-├── Projects
-├── AboutMe
-├── Skills
-└── Contact
-
-WindowState
-├── Closed
-├── Opened
-└── Minimized
+DesktopWindowId
+├── DesktopWindowType Type
+└── string Key
 ```
 
-현재 연결 흐름:
+Project window key 생성:
+
+```text
+DesktopWindowId.ForProject(ProjectData)
+→ ProjectData.Title 우선
+→ ProjectData.name fallback
+```
+
+현재 window 정책:
+
+- 같은 `ProjectData`를 다시 열면 새 window를 만들지 않고 기존 window를 focus/restore한다.
+- 서로 다른 `ProjectData`를 열면 각각 다른 `DesktopWindowId`로 window와 taskbar button을 만든다.
+
+현재 taskbar 연결 흐름:
 
 ```text
 ProjectDesktopUI.Awake()
@@ -81,20 +80,35 @@ ProjectDesktopUI.Awake()
 → ProjectTaskbarUI.Initialize(ProjectWindowManager)
 ```
 
+현재 taskbar button 생성 흐름:
+
+```text
+ProjectWindowManager.RegisterWindow(window, DesktopWindowId, title)
+→ ProjectTaskbarUI.RegisterButton(DesktopWindowId, title)
+→ Instantiate(_buttonPrefab, _buttonRoot)
+→ ProjectTaskbarButtonUI.Initialize(DesktopWindowId, title, callback)
+```
+
 현재 taskbar click 흐름:
 
 ```text
 ProjectTaskbarButtonUI click
-→ ProjectTaskbarUI.HandleButtonClicked(DesktopWindowType)
-→ ProjectWindowManager.RestoreOrFocusWindow(DesktopWindowType)
+→ ProjectTaskbarUI.HandleButtonClicked(DesktopWindowId)
+→ ProjectWindowManager.RestoreOrFocusWindow(DesktopWindowId)
 ```
 
-현재 제한:
+폐기된 방식:
 
-- `ProjectTaskbarUI`는 `RegisterButton(DesktopWindowType, ProjectTaskbarButtonUI)` API를 가진다.
-- 아직 `ProjectTaskbarUI`에 serialized mapping field가 없다.
-- 아직 taskbar button prefab instantiate는 없다.
-- `DesktopWindowType.Projects` 하나로 모든 project window가 묶이는 구조이며, 프로젝트별 개별 taskbar button은 아직 지원하지 않는다.
+- `ProjectTaskbarUI._buttonEntries`
+- `Projects -> ProjectsTaskbarButton`
+- `AboutMe -> AboutMeTaskbarButton`
+- `Skills -> SkillsTaskbarButton`
+- `Contact -> ContactTaskbarButton`
+
+폐기 이유:
+
+- `DesktopWindowType.Projects` 하나로는 서로 다른 프로젝트 창 여러 개를 taskbar button 여러 개로 표현할 수 없다.
+- 현재 요구사항은 runtime window instance, 정확히는 `DesktopWindowId`, 단위의 button 생성이다.
 
 ## Recommended Hierarchy
 
@@ -105,26 +119,27 @@ ComputerUIRoot
 ├── DesktopLayer
 ├── WindowLayer
 └── TaskbarRoot
-    └── TaskbarButtonRoot
-        ├── ProjectsTaskbarButton
-        ├── AboutMeTaskbarButton
-        ├── SkillsTaskbarButton
-        └── ContactTaskbarButton
+    ├── TaskbarButtonRoot
+    └── ProjectTaskbarButtonTemplate 또는 ProjectTaskbarButtonPrefab
 ```
 
-이름 조정 기준:
+`TaskbarRoot`:
 
-- 프로젝트의 기존 naming이 `ProjectWindow`, `DesktopIconRoot`처럼 명확한 역할명을 쓰고 있으므로 위 이름을 권장한다.
-- 기존 scene/prefab naming 규칙이 다르면 같은 의미를 유지하는 선에서 조정할 수 있다.
-- type 이름과 hierarchy 이름이 대응되면 wiring 검증이 쉽다.
+- `ComputerUIRoot`의 마지막 sibling으로 둔다.
+- 화면 하단에 고정한다.
+- `WindowLayer` 내부에 넣지 않는다.
 
-배치 기준:
+`TaskbarButtonRoot`:
 
-- `TaskbarRoot`는 `ComputerUIRoot`의 마지막 sibling으로 둔다.
-- `TaskbarRoot`는 화면 하단에 고정한다.
-- `WindowLayer`보다 뒤쪽 sibling에 두어 taskbar가 window에 가려지지 않게 한다.
-- `TaskbarButtonRoot`는 `TaskbarRoot` 내부에서 버튼들을 가로로 배치한다.
-- 시작 메뉴, 시계, tray placeholder는 만들지 않는다.
+- runtime taskbar button instance의 parent다.
+- Horizontal Layout Group 사용 가능.
+- runtime 생성 button만 담는 구조를 권장한다.
+
+`ProjectTaskbarButtonTemplate`:
+
+- `ProjectTaskbarButtonUI`가 붙은 prefab 또는 scene template이다.
+- prefab asset으로 분리하는 방식을 권장한다.
+- scene template을 쓸 경우 원본 template이 runtime에 보이지 않도록 별도 비활성 object로 관리한다.
 
 권장 RectTransform:
 
@@ -145,56 +160,24 @@ Top: 4
 Bottom: 4
 ```
 
-## Recommended Wiring Approach
-
-현재 단계에서는 prefab instantiate보다 serialized button mapping을 권장한다.
-
-이유:
-
-- window 종류가 `Projects`, `AboutMe`, `Skills`, `Contact`로 아직 고정적이다.
-- Unity Editor에서 빠르게 hierarchy와 시각 상태를 검증할 수 있다.
-- 버튼별 active/minimized indicator 연결 상태를 직접 확인하기 쉽다.
-- runtime 생성 로직과 prefab lifecycle 문제를 다음 단계로 미룰 수 있다.
-- 현재 taskbar code surface가 `RegisterButton(type, button)` 기반이므로 고정 버튼 등록과 잘 맞는다.
-
-권장 확장 방향:
-
-- 프로젝트별 개별 창이 필요해지면 serialized mapping에서 prefab instantiate 방식으로 전환한다.
-- 이때 `DesktopWindowType`만으로는 부족하므로 19번 문서의 `DesktopWindowId(Type + Key)` 설계로 확장한다.
-- `Projects` type 아래 여러 `ProjectData`가 각각 다른 taskbar button을 가져야 하는 시점에 `ProjectTaskbarButtonUI` prefab과 dynamic create/remove API를 도입한다.
-
 ## ProjectDesktopUI Wiring
 
 대상:
 
 ```text
-ComputerUIRoot 또는 ProjectDesktopUI가 붙은 기존 desktop controller object
+ProjectDesktopUI가 붙은 Computer UI desktop controller object
 ```
 
-연결:
+Inspector 연결:
 
 ```text
 _projectTaskbarUI: TaskbarRoot의 ProjectTaskbarUI
 ```
 
-현재 C# 동작:
-
-```text
-ProjectDesktopUI.Awake()
-→ _projectWindowManager = new ProjectWindowManager(...)
-→ _projectWindowManager.SetTaskbar(_projectTaskbarUI)
-```
-
 검증 기준:
 
-- `_projectTaskbarUI`가 비어 있으면 taskbar만 동작하지 않고 기존 window open/minimize/restore/close는 null-safe하게 유지되어야 한다.
-- `_projectWindowPrefab`과 `_windowRoot`가 연결되어 multi-window path가 활성화되어야 taskbar sync를 검증하기 쉽다.
-- fallback 단일 `_projectWindowUI` path는 이번 taskbar wiring의 주 검증 대상이 아니다.
-
-주의:
-
-- `_projectTaskbarUI` 연결은 `ProjectWindowManager` 생성 이후 `SetTaskbar`로 전달된다.
-- `ProjectDesktopUI`가 taskbar button을 직접 생성하거나 show/hide하지 않는다.
+- `_projectTaskbarUI`가 비어 있어도 기존 project window open/minimize/restore/close는 동작해야 한다.
+- taskbar 검증은 `_projectWindowPrefab`과 `_windowRoot`가 연결된 multi-window path에서 수행한다.
 
 ## ProjectTaskbarUI Wiring
 
@@ -209,322 +192,213 @@ TaskbarRoot
 ```text
 ProjectTaskbarUI
 RectTransform
-Image 또는 배경용 Graphic 선택
+Image 또는 배경 Graphic 선택
 ```
 
-현재 code surface:
+Inspector 연결:
 
 ```text
-RegisterButton(DesktopWindowType type, ProjectTaskbarButtonUI button)
-ShowButton(DesktopWindowType type)
-HideButton(DesktopWindowType type)
-SetActiveButton(DesktopWindowType type)
-SetButtonMinimized(DesktopWindowType type, bool isMinimized)
+_buttonRoot: TaskbarRoot/TaskbarButtonRoot
+_buttonPrefab: ProjectTaskbarButtonUI prefab 또는 template
 ```
 
-현재 `RegisterButton` API만 있으므로 다음 구현에서 등록 방식을 결정해야 한다.
+주의:
 
-권장 구현:
-
-```text
-serialized mapping
-├── DesktopWindowType type
-└── ProjectTaskbarButtonUI button
-```
-
-권장 데이터 구조 후보:
-
-```text
-[Serializable]
-private struct TaskbarButtonBinding
-{
-    public DesktopWindowType Type;
-    public ProjectTaskbarButtonUI Button;
-}
-
-[SerializeField] private TaskbarButtonBinding[] _buttonBindings;
-```
-
-권장 초기화:
-
-```text
-Awake 또는 Initialize(ProjectWindowManager)
-→ _buttonBindings 순회
-→ RegisterButton(binding.Type, binding.Button)
-```
-
-권장 정책:
-
-- `Awake`에서 등록하면 manager 연결 전에도 button dictionary가 준비된다.
-- `Initialize(ProjectWindowManager)`에서 등록하면 manager click callback이 준비된 뒤 한 번에 초기화된다.
-- 현재 구조에서는 `Initialize`에서 mapping 등록을 수행하는 방식을 권장한다. `ProjectWindowManager.SetTaskbar()`가 `Initialize(this)`를 호출하기 때문이다.
-
-중복 등록 처리:
-
-- 같은 `DesktopWindowType`이 중복 등록되면 마지막 binding이 이전 binding을 덮어쓸 수 있다.
-- 다음 구현에서는 중복 등록 시 warning을 남기는 것을 권장한다.
+- `_buttonRoot`가 없으면 runtime taskbar button을 생성할 수 없다.
+- `_buttonPrefab`이 없으면 runtime taskbar button을 생성할 수 없다.
+- `_buttonPrefab`에는 `ProjectTaskbarButtonUI`가 붙어 있어야 한다.
+- 고정 button mapping은 현재 기본 방식이 아니다.
 
 ## ProjectTaskbarButtonUI Wiring
 
 대상:
 
 ```text
-TaskbarButtonRoot/ProjectsTaskbarButton
-TaskbarButtonRoot/AboutMeTaskbarButton
-TaskbarButtonRoot/SkillsTaskbarButton
-TaskbarButtonRoot/ContactTaskbarButton
+ProjectTaskbarButtonTemplate 또는 ProjectTaskbarButtonPrefab root
 ```
 
 필수 component:
 
 ```text
+RectTransform
+Image
 Button
-Image 또는 Button target graphic
 ProjectTaskbarButtonUI
 ```
 
-필수 연결:
+Inspector 연결:
 
 ```text
-ProjectTaskbarButtonUI._button: 같은 GameObject 또는 자식의 Button
+_button: 같은 GameObject 또는 자식의 Button
+_titleText: title 표시용 TMP_Text
+_activeIndicator: 선택 사항
+_minimizedIndicator: 선택 사항
 ```
 
-선택 연결:
+title:
 
-```text
-ProjectTaskbarButtonUI._activeIndicator: active highlight용 GameObject
-ProjectTaskbarButtonUI._minimizedIndicator: minimized 표시용 GameObject
-```
+- runtime에서 `ProjectWindowManager`가 전달한 title을 `_titleText`에 표시한다.
+- project window는 `ProjectData.Title`을 우선 사용하고, 없으면 asset name fallback을 사용한다.
 
-indicator가 있는 경우:
+indicator:
 
-- active indicator는 focused window의 taskbar button에만 표시한다.
-- minimized indicator는 minimized state일 때 표시한다.
-- active와 minimized가 동시에 true가 되지 않게 하는 정책은 후속 state/focus 구현에서 보강할 수 있다.
-
-indicator가 없는 경우:
-
-- `_activeIndicator`, `_minimizedIndicator`를 비워도 null-safe하게 동작해야 한다.
-- 우선 `SetVisible(bool)`의 `gameObject.SetActive`만으로 open/close/minimize 유지 여부를 검증할 수 있다.
-- active/minimized 시각 표현은 후속 polish step으로 분리 가능하다.
-
-초기 상태:
-
-```text
-ProjectsTaskbarButton: inactive 권장
-AboutMeTaskbarButton: inactive 권장
-SkillsTaskbarButton: inactive 권장
-ContactTaskbarButton: inactive 권장
-```
+- `_activeIndicator`가 있으면 focused window의 button active 상태를 표시한다.
+- `_minimizedIndicator`가 있으면 minimized window의 button 상태를 표시한다.
+- indicator가 없어도 button 생성, click, 제거 검증은 가능해야 한다.
 
 주의:
 
-- button GameObject를 처음부터 inactive로 두면 `Awake`/`OnEnable` 호출 시점이 wiring 검증에 영향을 줄 수 있다.
-- serialized mapping 등록 후 `RegisterButton`이 `SetVisible(false)`를 호출하는 구조라면, Editor에서는 active 상태로 둔 뒤 Play Mode 시작 시 숨겨지는 방식이 디버깅하기 쉽다.
+- Button OnClick에 수동 listener를 추가하지 않는다.
+- `ProjectTaskbarButtonUI`가 코드에서 listener를 등록한다.
 
-## Verification Scenarios
+## WindowLayer Bounds
 
-### Case 1: Project Window Open Shows Projects Button
+Taskbar가 생긴 뒤 window drag/resize/maximize 영역은 taskbar를 침범하면 안 된다.
 
-절차:
+권장 방식:
 
-1. `ProjectDesktopUI._projectTaskbarUI`를 연결한다.
-2. `ProjectTaskbarUI`에 `Projects -> ProjectsTaskbarButton` mapping을 등록한다.
-3. Computer UI를 연다.
-4. Project desktop icon을 double click한다.
+```text
+TaskbarRoot Height = 40
+WindowLayer Bottom = 40
+```
 
-기대 결과:
+예시 RectTransform:
 
-- Project window가 열린다.
-- `ProjectsTaskbarButton`이 표시된다.
-- `ProjectsTaskbarButton`이 active 상태가 된다.
-- Console에 null reference warning이 없다.
+```text
+WindowLayer
+Anchor Min: (0, 0)
+Anchor Max: (1, 1)
+Left: 0
+Right: 0
+Top: 0
+Bottom: TaskbarRoot Height
+```
 
-### Case 2: Minimize Keeps Taskbar Button
+현재 코드와의 관계:
 
-절차:
-
-1. Project window를 연다.
-2. window의 MinimizeButton을 클릭한다.
-
-기대 결과:
-
-- Project window가 숨겨진다.
-- `ProjectsTaskbarButton`은 숨겨지지 않는다.
-- minimized indicator가 연결되어 있다면 minimized 상태가 표시된다.
-- active indicator 정책은 현재 구현 상태에 맞춰 별도 확인한다.
-
-### Case 3: Taskbar Click Restores Or Focuses
-
-절차:
-
-1. Project window를 연다.
-2. Project window를 minimize한다.
-3. `ProjectsTaskbarButton`을 클릭한다.
-
-기대 결과:
-
-- `ProjectTaskbarUI`가 click을 manager로 전달한다.
-- `ProjectWindowManager.RestoreOrFocusWindow(Projects)`가 호출되는 흐름으로 복원된다.
-- Project window가 다시 표시된다.
-- Project window가 앞으로 온다.
-
-### Case 4: Visible Window Focus Updates Active State
-
-절차:
-
-1. Project window를 연다.
-2. Project window body 또는 title bar를 클릭한다.
-
-기대 결과:
-
-- Project window가 최상단 sibling이 된다.
-- `ProjectsTaskbarButton` active indicator가 연결되어 있다면 active 상태가 표시된다.
+- `ProjectWindowManager`는 `_windowRoot`를 `ProjectWindowUI.SetBoundsRoot()`로 전달한다.
+- `_windowRoot`가 `WindowLayer`이면 drag, resize, maximize clamp가 `WindowLayer` RectTransform을 기준으로 동작한다.
+- 따라서 `WindowLayer` RectTransform만 taskbar 제외 영역으로 조정하면 project window가 taskbar 영역을 침범하지 않는 구조다.
 
 주의:
 
-- 현재 `DesktopWindowType`만 기준으로는 프로젝트별 여러 창이 모두 `Projects`로 묶인다.
-- 프로젝트별 개별 active 상태는 `DesktopWindowId` 도입 전까지 검증 대상이 아니다.
+- `TaskbarRoot`를 `WindowLayer` 내부에 넣지 않는다.
+- `WindowLayer`에 Layout Group을 붙이지 않는다.
+- `WindowLayer Bottom` 값과 `TaskbarRoot Height`가 다르면 window가 taskbar와 겹치거나 빈 영역이 생길 수 있다.
 
-### Case 5: Close Hides Taskbar Button
+## Play Mode Verification
 
-절차:
-
-1. Project window를 연다.
-2. Project window CloseButton을 클릭한다.
-
-기대 결과:
-
-- Project window가 닫힌다.
-- `ProjectsTaskbarButton`이 숨겨진다.
-- 같은 project icon double click 시 다시 window와 taskbar button이 표시된다.
-
-### Case 6: Taskbar Not Connected Is Null-Safe
+### Case 1: Different Projects Create Different Buttons
 
 절차:
 
-1. `ProjectDesktopUI._projectTaskbarUI`를 비운다.
-2. Computer UI를 연다.
-3. Project window open/minimize/restore/close를 수행한다.
+1. 서로 다른 project icon A, B를 double click한다.
 
 기대 결과:
 
-- 기존 window 기능은 계속 동작한다.
-- taskbar 관련 null reference가 발생하지 않는다.
-- taskbar button은 표시되지 않는다.
+- Project window A, B가 각각 열린다.
+- Taskbar에 A button, B button이 각각 생성된다.
+- 각 button title은 해당 project title을 표시한다.
 
-## Failure And Caution Cases
+### Case 2: Same Project Reuses Existing Button
 
-### `_projectTaskbarUI` 미연결
+절차:
 
-증상:
+1. Project A를 연다.
+2. 같은 Project A icon을 다시 double click한다.
 
-- window는 열리지만 taskbar button이 표시되지 않는다.
+기대 결과:
 
-확인:
+- 새 window가 생성되지 않는다.
+- 새 taskbar button도 생성되지 않는다.
+- 기존 A window가 restore/focus된다.
 
-- `ProjectDesktopUI._projectTaskbarUI`가 `TaskbarRoot/ProjectTaskbarUI`를 가리키는지 확인한다.
-- taskbar 없이도 window 기능이 동작하면 null-safe 동작은 정상이다.
+### Case 3: Minimize Keeps Matching Button
 
-### button `_button` 미연결
+절차:
 
-증상:
+1. Project A, B를 연다.
+2. A window를 minimize한다.
 
-- taskbar button이 보여도 클릭으로 restore/focus가 되지 않는다.
+기대 결과:
 
-확인:
+- A window는 숨겨진다.
+- A button은 유지된다.
+- B button은 그대로 유지된다.
 
-- `ProjectTaskbarButtonUI._button`이 Button 컴포넌트를 가리키는지 확인한다.
-- `_button`이 비어 있으면 같은 GameObject의 Button을 `Awake`에서 fallback으로 찾는다.
-- 같은 GameObject에도 Button이 없으면 warning이 나와야 한다.
+### Case 4: Button Click Restores Matching Window
 
-### `DesktopWindowType` 중복 등록
+절차:
 
-증상:
+1. A window를 minimize한다.
+2. A taskbar button을 클릭한다.
 
-- 같은 type에 대해 어떤 button이 표시되는지 예측하기 어렵다.
+기대 결과:
 
-확인:
+- A window가 restore된다.
+- A window가 focus된다.
+- B window가 잘못 restore/focus되지 않는다.
 
-- `ProjectTaskbarUI` mapping에 `Projects`가 2개 이상 들어 있지 않은지 확인한다.
-- 다음 구현에서 중복 type warning을 추가한다.
-- MVP에서는 type당 button 하나만 허용한다.
+### Case 5: Close Removes Matching Button
 
-### 모든 창이 `Projects`로 등록되는 문제
+절차:
 
-증상:
+1. Project A, B를 연다.
+2. A window를 close한다.
 
-- `AboutMe`, `Skills`, `Contact` window를 추가했는데 모두 `ProjectsTaskbarButton`만 갱신된다.
+기대 결과:
 
-원인:
+- A button이 제거된다.
+- B window와 B button은 유지된다.
 
-- `ProjectWindowUI._windowType` 기본값이 `Projects`다.
+### Case 6: Maximize Does Not Cover Taskbar
 
-확인:
+절차:
 
-- 각 window prefab 또는 scene instance의 `ProjectWindowUI._windowType` 값을 확인한다.
-- `AboutMe` 창은 `AboutMe`, `Skills` 창은 `Skills`, `Contact` 창은 `Contact`로 지정해야 한다.
+1. `WindowLayer Bottom`을 `TaskbarRoot Height`와 같게 설정한다.
+2. Project window를 maximize한다.
 
-### 프로젝트별 개별 창 미지원
+기대 결과:
 
-현재 한계:
+- maximized window가 taskbar 영역을 침범하지 않는다.
+- drag/resize clamp도 taskbar 위쪽 WindowLayer 영역 안에서 동작한다.
 
-- `DesktopWindowType.Projects`는 프로젝트 창 전체를 대표한다.
-- 여러 `ProjectData` 창을 각각 다른 taskbar button으로 표시하는 기능은 아직 없다.
+## Failure Cases
 
-확장 기준:
+### taskbar button이 생성되지 않을 때
 
-- 프로젝트별 개별 taskbar button이 필요하면 `DesktopWindowId(Type + Key)`를 도입한다.
-- `ProjectTaskbarUI` dictionary key를 `DesktopWindowType`에서 `DesktopWindowId`로 바꾼다.
-- button은 serialized fixed mapping이 아니라 prefab instantiate 방식으로 전환한다.
+- `ProjectDesktopUI._projectTaskbarUI` 연결을 확인한다.
+- `ProjectTaskbarUI._buttonRoot` 연결을 확인한다.
+- `ProjectTaskbarUI._buttonPrefab` 연결을 확인한다.
+- `_buttonPrefab` root에 `ProjectTaskbarButtonUI`가 있는지 확인한다.
 
-### taskbar가 window에 가려지는 문제
+### button title이 비어 있을 때
 
-확인:
+- `ProjectTaskbarButtonUI._titleText` 연결을 확인한다.
+- `ProjectData.Title` 값이 비어 있으면 asset name fallback이 사용되는지 확인한다.
 
-- `TaskbarRoot`가 `WindowLayer`보다 뒤쪽 sibling인지 확인한다.
-- `TaskbarRoot`가 `WindowLayer` 내부에 들어가 있지 않은지 확인한다.
-- 별도 Canvas를 쓴다면 sorting order를 확인한다.
+### 같은 project를 다시 열 때 button이 중복될 때
 
-### taskbar와 window가 겹치는 문제
+- `ProjectWindowManager`가 같은 `ProjectData`를 `_openWindows`에서 찾는지 확인한다.
+- `DesktopWindowId.ForProject()` key가 같은 project에 대해 같은 값을 반환하는지 확인한다.
 
-현재 정책:
+### 서로 다른 project button이 하나로 합쳐질 때
 
-- MVP에서는 taskbar 표시와 restore/focus 검증을 우선한다.
-- window bounds에서 taskbar 높이를 제외하는 작업은 후속 layout polish로 분리 가능하다.
+- 서로 다른 project의 `Title`이 같은지 확인한다.
+- stable id가 필요하면 `ProjectData`에 별도 id/slug field 추가를 후속 step으로 분리한다.
 
-## Next Implementation Step
+## Next Step
 
-권장 다음 step:
-
-```text
-ProjectTaskbarUI에 serialized button mapping 추가
-```
-
-작업:
-
-- `TaskbarButtonBinding` serializable struct 추가.
-- `[SerializeField] private TaskbarButtonBinding[] _buttonBindings;` 추가.
-- `Initialize(ProjectWindowManager)`에서 mapping을 순회해 `RegisterButton` 호출.
-- 중복 `DesktopWindowType` 등록 시 warning 추가.
-- null button binding warning 추가.
-
-그 다음 Editor step:
-
-- Unity Editor에서 `TaskbarRoot` 생성.
-- `TaskbarButtonRoot` 생성.
-- `ProjectsTaskbarButton`, `AboutMeTaskbarButton`, `SkillsTaskbarButton`, `ContactTaskbarButton` 생성.
-- 각 button에 `ProjectTaskbarButtonUI`와 `Button` 연결.
-- `ProjectDesktopUI._projectTaskbarUI` 연결.
-- Play Mode에서 open/minimize/restore/close 검증.
+- 21번 체크리스트에 따라 Unity Editor에서 `TaskbarRoot`, `TaskbarButtonRoot`, `ProjectTaskbarButtonUI` prefab/template을 연결한다.
+- `WindowLayer Bottom`을 `TaskbarRoot Height`와 맞춘다.
+- Play Mode에서 서로 다른 프로젝트 2개 open, minimize, restore, close, maximize bounds를 검증한다.
 
 ## Completed Step Summary
 
-아직 실행 전이다. 완료 시 이 문서의 hierarchy, serialized button mapping, `ProjectDesktopUI._projectTaskbarUI`, `ProjectTaskbarUI`, `ProjectTaskbarButtonUI` 연결 기준을 실제 Unity Editor 작업 결과로 갱신한다.
+아직 실행 전이다. 완료 시 runtime taskbar button hierarchy, Inspector 연결, `WindowLayer` bounds 조정, Play Mode 검증 결과를 기록한다.
 
 ## Retry / Recovery
 
-- serialized mapping 구현 전에는 `RegisterButton`을 수동 호출할 runtime 경로가 없으므로 Play Mode 검증이 제한된다.
-- Editor wiring이 막히면 먼저 `ProjectsTaskbarButton` 하나만 연결해 project window open/minimize/restore/close를 검증한다.
-- active/minimized indicator가 시각적으로 애매하면 indicator 없이 visible show/hide와 click restore만 먼저 검증한다.
-- `AboutMe`, `Skills`, `Contact` 창이 아직 없으면 해당 버튼은 mapping만 준비하거나 후속 window 추가 step까지 비활성 검증 대상으로 둔다.
+- runtime prefab 연결이 막히면 먼저 scene template을 `_buttonPrefab`으로 연결해 기능을 검증한다.
+- button title/indicator 연결이 복잡하면 `_button`, `_titleText`만 연결하고 active/minimized indicator는 후속 polish로 미룬다.
+- taskbar 영역 침범 문제가 남으면 `WindowLayer` RectTransform이 실제로 taskbar를 제외하는지 먼저 확인한다.
