@@ -180,12 +180,26 @@ public class ProjectDesktopUI : MonoBehaviour
 
 public class ProjectTaskbarUI : MonoBehaviour
 {
+    [Serializable]
+    private struct TaskbarButtonEntry
+    {
+        [SerializeField] private DesktopWindowType _type;
+        [SerializeField] private ProjectTaskbarButtonUI _button;
+
+        public DesktopWindowType Type => _type;
+        public ProjectTaskbarButtonUI Button => _button;
+    }
+
+    [SerializeField] private TaskbarButtonEntry[] _buttonEntries;
+
     private readonly Dictionary<DesktopWindowType, ProjectTaskbarButtonUI> _buttonsByType = new Dictionary<DesktopWindowType, ProjectTaskbarButtonUI>();
     private ProjectWindowManager _windowManager;
+    private bool _serializedButtonsRegistered;
 
     public void Initialize(ProjectWindowManager windowManager)
     {
         _windowManager = windowManager;
+        RegisterSerializedButtons();
     }
 
     public void RegisterButton(DesktopWindowType type, ProjectTaskbarButtonUI button)
@@ -193,6 +207,12 @@ public class ProjectTaskbarUI : MonoBehaviour
         if (button == null)
         {
             Debug.LogWarning($"{nameof(ProjectTaskbarUI)} on {name} cannot register a null taskbar button for {type}.");
+            return;
+        }
+
+        if (_buttonsByType.ContainsKey(type))
+        {
+            Debug.LogWarning($"{nameof(ProjectTaskbarUI)} on {name} already has a taskbar button registered for {type}. Duplicate registration was skipped.");
             return;
         }
 
@@ -253,6 +273,29 @@ public class ProjectTaskbarUI : MonoBehaviour
         button = null;
         return false;
     }
+
+    private void RegisterSerializedButtons()
+    {
+        if (_serializedButtonsRegistered)
+            return;
+
+        _serializedButtonsRegistered = true;
+
+        if (_buttonEntries == null)
+            return;
+
+        for (int i = 0; i < _buttonEntries.Length; i++)
+        {
+            TaskbarButtonEntry entry = _buttonEntries[i];
+            if (entry.Button == null)
+            {
+                Debug.LogWarning($"{nameof(ProjectTaskbarUI)} on {name} has a null taskbar button entry for {entry.Type} at index {i}.");
+                continue;
+            }
+
+            RegisterButton(entry.Type, entry.Button);
+        }
+    }
 }
 
 public class ProjectTaskbarButtonUI : MonoBehaviour
@@ -276,7 +319,10 @@ public class ProjectTaskbarButtonUI : MonoBehaviour
     private void OnEnable()
     {
         if (_button != null)
+        {
+            _button.onClick.RemoveListener(HandleClicked);
             _button.onClick.AddListener(HandleClicked);
+        }
     }
 
     private void OnDisable()
