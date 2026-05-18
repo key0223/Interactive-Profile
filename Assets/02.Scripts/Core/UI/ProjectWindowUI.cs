@@ -9,6 +9,8 @@ public class ProjectWindowUI : MonoBehaviour
     [SerializeField] private Button _closeButton;
     [SerializeField] private ProjectViewerUI _projectViewerUI;
 
+    public RectTransform WindowRectTransform => _windowRoot != null ? _windowRoot.transform as RectTransform : transform as RectTransform;
+
     private void Awake()
     {
         if (_windowRoot == null)

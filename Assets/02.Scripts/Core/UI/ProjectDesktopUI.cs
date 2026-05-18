@@ -72,6 +72,19 @@ public class ProjectDesktopUI : MonoBehaviour
             _projectWindowUI.ShowProject(projectData);
     }
 
+    public void SelectProject(ProjectData projectData)
+    {
+        if (projectData == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} received null {nameof(ProjectData)}.");
+            ClearSelection();
+            return;
+        }
+
+        _selectedProjectData = projectData;
+        UpdateSelectionVisuals();
+    }
+
     public void Clear()
     {
         ClearSelection();
@@ -103,7 +116,7 @@ public class ProjectDesktopUI : MonoBehaviour
                 continue;
 
             ProjectDesktopIconUI icon = Instantiate(_iconPrefab, _iconRoot);
-            icon.Setup(projectData, OpenProject);
+            icon.Setup(projectData, SelectProject, OpenProject);
             _icons.Add(icon);
         }
     }

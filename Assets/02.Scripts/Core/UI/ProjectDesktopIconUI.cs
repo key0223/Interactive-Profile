@@ -12,9 +12,12 @@ public class ProjectDesktopIconUI : MonoBehaviour
     [SerializeField] private Sprite _fallbackIcon;
     [SerializeField] private Color _normalSelectionColor = new Color(0f, 0f, 0f, 0f);
     [SerializeField] private Color _selectedSelectionColor = new Color(0f, 0f, 0.5f, 0.45f);
+    [SerializeField] private float _doubleClickThreshold = 0.35f;
 
     private ProjectData _projectData;
-    private Action<ProjectData> _onClicked;
+    private Action<ProjectData> _onSelected;
+    private Action<ProjectData> _onOpened;
+    private float _lastClickTime = -1f;
 
     public ProjectData ProjectData => _projectData;
 
@@ -41,8 +44,15 @@ public class ProjectDesktopIconUI : MonoBehaviour
 
     public void Setup(ProjectData projectData, Action<ProjectData> onClicked)
     {
+        Setup(projectData, onClicked, onClicked);
+    }
+
+    public void Setup(ProjectData projectData, Action<ProjectData> onSelected, Action<ProjectData> onOpened)
+    {
         _projectData = projectData;
-        _onClicked = onClicked;
+        _onSelected = onSelected;
+        _onOpened = onOpened;
+        _lastClickTime = -1f;
 
         if (_titleText != null)
             _titleText.text = projectData != null ? projectData.Title : "Untitled";
@@ -63,10 +73,17 @@ public class ProjectDesktopIconUI : MonoBehaviour
     {
         if (_projectData == null)
         {
-            Debug.LogWarning($"{nameof(ProjectDesktopIconUI)} on {name} cannot open a null {nameof(ProjectData)}.");
+            Debug.LogWarning($"{nameof(ProjectDesktopIconUI)} on {name} cannot select a null {nameof(ProjectData)}.");
             return;
         }
 
-        _onClicked?.Invoke(_projectData);
+        float clickTime = Time.unscaledTime;
+        bool isDoubleClick = _lastClickTime >= 0f && clickTime - _lastClickTime <= _doubleClickThreshold;
+        _lastClickTime = isDoubleClick ? -1f : clickTime;
+
+        _onSelected?.Invoke(_projectData);
+
+        if (isDoubleClick)
+            _onOpened?.Invoke(_projectData);
     }
 }
