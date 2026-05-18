@@ -183,6 +183,7 @@ public sealed class ProjectWindowManager
     private readonly Dictionary<DesktopWindowId, WindowState> _windowStates = new Dictionary<DesktopWindowId, WindowState>();
     private readonly Dictionary<DesktopWindowId, ProjectWindowUI> _registeredWindows = new Dictionary<DesktopWindowId, ProjectWindowUI>();
     private readonly Dictionary<ProjectWindowUI, DesktopWindowId> _idsByWindow = new Dictionary<ProjectWindowUI, DesktopWindowId>();
+    private readonly List<DesktopWindowId> _focusOrder = new List<DesktopWindowId>();
     private readonly string _ownerName;
     private readonly ProjectWindowUI _windowPrefab;
     private readonly Transform _windowRoot;
@@ -191,6 +192,8 @@ public sealed class ProjectWindowManager
     private readonly Vector2 _spawnOffset;
     private readonly int _maxCascadeSteps;
     private ProjectTaskbarUI _taskbarUI;
+    private DesktopWindowId _activeWindowId;
+    private bool _hasActiveWindow;
     private int _spawnCount;
 
     public ProjectWindowManager(string ownerName, ProjectWindowUI windowPrefab, Transform windowRoot, Vector2 spawnPosition, Vector2 spawnOffset, int maxCascadeSteps)
@@ -217,6 +220,11 @@ public sealed class ProjectWindowManager
 
         _taskbarUI.Initialize(this);
         SyncAllTaskbarButtons();
+
+        if (_hasActiveWindow)
+            _taskbarUI.SetActiveButton(_activeWindowId);
+        else
+            _taskbarUI.ClearActiveButton();
     }
 
     public void OpenWindow(ProjectData projectData)
@@ -326,6 +334,7 @@ public sealed class ProjectWindowManager
 
     public void CloseWindow(DesktopWindowId id)
     {
+        bool wasActiveWindow = IsActiveWindow(id);
         _windowStates[id] = WindowState.Closed;
 
         if (_registeredWindows.TryGetValue(id, out ProjectWindowUI window) && window != null)
@@ -345,7 +354,11 @@ public sealed class ProjectWindowManager
             _registeredWindows.Remove(id);
         }
 
+        RemoveFocusTracking(id);
         SyncTaskbarWindowState(id);
+
+        if (wasActiveWindow)
+            ActivateMostRecentOpenWindow();
     }
 
     public void MinimizeWindow(DesktopWindowType type)
@@ -365,6 +378,9 @@ public sealed class ProjectWindowManager
         _windowStates[id] = WindowState.Minimized;
 
         SyncTaskbarWindowState(id);
+
+        if (IsActiveWindow(id))
+            ActivateMostRecentOpenWindow();
     }
 
     public void RestoreWindow(DesktopWindowType type)
@@ -403,8 +419,6 @@ public sealed class ProjectWindowManager
 
         _windowStates[id] = WindowState.Opened;
         FocusWindow(window);
-
-        _taskbarUI?.SetActiveButton(id);
     }
 
     public void CloseAll()
@@ -414,6 +428,8 @@ public sealed class ProjectWindowManager
         _registeredWindows.Clear();
         _windowStates.Clear();
         _idsByWindow.Clear();
+        _focusOrder.Clear();
+        ClearActiveWindow();
         _taskbarUI?.Clear();
 
         for (int i = 0; i < windows.Count; i++)
@@ -444,15 +460,21 @@ public sealed class ProjectWindowManager
         if (window == null)
             return;
 
-        window.transform.SetAsLastSibling();
         if (!_idsByWindow.TryGetValue(window, out DesktopWindowId id))
             return;
 
-        _windowStates[id] = window.IsVisible ? WindowState.Opened : WindowState.Minimized;
-        SyncTaskbarWindowState(id);
+        if (!window.IsVisible)
+        {
+            _windowStates[id] = WindowState.Minimized;
+            SyncTaskbarWindowState(id);
+            return;
+        }
 
-        if (window.IsVisible)
-            _taskbarUI?.SetActiveButton(id);
+        window.transform.SetAsLastSibling();
+        _windowStates[id] = WindowState.Opened;
+        MarkRecentlyFocused(id);
+        SetActiveWindow(id);
+        SyncTaskbarWindowState(id);
     }
 
     private RectTransform ResolveWindowBoundsRoot(ProjectWindowUI window)
@@ -489,11 +511,16 @@ public sealed class ProjectWindowManager
         _registeredWindows.Remove(id);
         _idsByWindow.Remove(window);
         _windowStates[id] = WindowState.Closed;
+        bool wasActiveWindow = IsActiveWindow(id);
 
         UnsubscribeWindow(window);
         UnityEngine.Object.Destroy(window.gameObject);
 
+        RemoveFocusTracking(id);
         SyncTaskbarWindowState(id);
+
+        if (wasActiveWindow)
+            ActivateMostRecentOpenWindow();
     }
 
     private void HandleWindowMinimized(ProjectWindowUI window)
@@ -503,6 +530,9 @@ public sealed class ProjectWindowManager
 
         _windowStates[id] = WindowState.Minimized;
         SyncTaskbarWindowState(id);
+
+        if (IsActiveWindow(id))
+            ActivateMostRecentOpenWindow();
     }
 
     private void HandleWindowRestored(ProjectWindowUI window)
@@ -512,6 +542,69 @@ public sealed class ProjectWindowManager
 
         _windowStates[id] = WindowState.Opened;
         SyncTaskbarWindowState(id);
+    }
+
+    private void MarkRecentlyFocused(DesktopWindowId id)
+    {
+        RemoveFocusOrderEntry(id);
+        _focusOrder.Add(id);
+    }
+
+    private void RemoveFocusTracking(DesktopWindowId id)
+    {
+        RemoveFocusOrderEntry(id);
+
+        if (IsActiveWindow(id))
+            ClearActiveWindow();
+    }
+
+    private void RemoveFocusOrderEntry(DesktopWindowId id)
+    {
+        for (int i = _focusOrder.Count - 1; i >= 0; i--)
+        {
+            if (_focusOrder[i].Equals(id))
+                _focusOrder.RemoveAt(i);
+        }
+    }
+
+    private bool IsActiveWindow(DesktopWindowId id)
+    {
+        return _hasActiveWindow && _activeWindowId.Equals(id);
+    }
+
+    private void SetActiveWindow(DesktopWindowId id)
+    {
+        _activeWindowId = id;
+        _hasActiveWindow = true;
+        _taskbarUI?.SetActiveButton(id);
+    }
+
+    private void ClearActiveWindow()
+    {
+        _hasActiveWindow = false;
+        _taskbarUI?.ClearActiveButton();
+    }
+
+    private void ActivateMostRecentOpenWindow()
+    {
+        for (int i = _focusOrder.Count - 1; i >= 0; i--)
+        {
+            DesktopWindowId candidateId = _focusOrder[i];
+
+            if (!_registeredWindows.TryGetValue(candidateId, out ProjectWindowUI candidateWindow) || candidateWindow == null)
+            {
+                _focusOrder.RemoveAt(i);
+                continue;
+            }
+
+            if (!_windowStates.TryGetValue(candidateId, out WindowState candidateState) || candidateState != WindowState.Opened || !candidateWindow.IsVisible)
+                continue;
+
+            FocusWindow(candidateWindow);
+            return;
+        }
+
+        ClearActiveWindow();
     }
 
     private void RemoveWindowByInstance(ProjectWindowUI window)

@@ -104,6 +104,15 @@ public class ProjectTaskbarUI : MonoBehaviour
         }
     }
 
+    public void ClearActiveButton()
+    {
+        foreach (KeyValuePair<DesktopWindowId, ProjectTaskbarButtonUI> pair in _buttonsById)
+        {
+            if (pair.Value != null)
+                pair.Value.SetActive(false);
+        }
+    }
+
     public void SetButtonMinimized(DesktopWindowType type, bool isMinimized)
     {
         SetButtonMinimized(DesktopWindowId.ForType(type), isMinimized);
