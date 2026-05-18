@@ -57,8 +57,7 @@ public class ProjectDesktopIconUI : MonoBehaviour
         if (_titleText != null)
             _titleText.text = projectData != null ? projectData.Title : "Untitled";
 
-        if (_iconImage != null && _iconImage.sprite == null && _fallbackIcon != null)
-            _iconImage.sprite = _fallbackIcon;
+        ApplyIcon(projectData != null ? projectData.Icon : null);
 
         SetSelected(false);
     }
@@ -85,5 +84,18 @@ public class ProjectDesktopIconUI : MonoBehaviour
 
         if (isDoubleClick)
             _onOpened?.Invoke(_projectData);
+    }
+
+    private void ApplyIcon(Sprite icon)
+    {
+        if (_iconImage == null)
+            return;
+
+        Sprite sprite = icon != null ? icon : _fallbackIcon;
+        if (sprite == null)
+            return;
+
+        _iconImage.sprite = sprite;
+        _iconImage.enabled = true;
     }
 }

@@ -140,8 +140,9 @@ MonoBehaviour:
   _titleText: {fileID: 1734579646754780540}
   _selectionImage: {fileID: 605997592218810566}
   _fallbackIcon: {fileID: 0}
-  _normalSelectionColor: {r: 0, g: 0, b: 0, a: 0}
-  _selectedSelectionColor: {r: 0, g: 0, b: 0.5, a: 0.45}
+  _normalSelectionColor: {r: 1, g: 1, b: 1, a: 1}
+  _selectedSelectionColor: {r: 0.39607844, g: 0.40784314, b: 0.67058825, a: 0.4509804}
+  _doubleClickThreshold: 0.35
 --- !u!1 &5625235626693171760
 GameObject:
   m_ObjectHideFlags: 0
@@ -252,7 +253,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: -20}
-  m_SizeDelta: {x: 0, y: -40}
+  m_SizeDelta: {x: -6, y: -40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1047072719124988928
 CanvasRenderer:

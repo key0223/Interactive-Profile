@@ -23,6 +23,8 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 {
     [SerializeField] private DesktopWindowType _windowType = DesktopWindowType.Projects;
     [SerializeField] private GameObject _windowRoot;
+    [SerializeField] private Image _iconImage;
+    [SerializeField] private Sprite _fallbackIcon;
     [SerializeField] private TMP_Text _titleBarText;
     [SerializeField] private Button _minimizeButton;
     [SerializeField] private Button _maximizeButton;
@@ -106,6 +108,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         CurrentProjectData = projectData;
         SetRootActive(true);
         SetTitle(projectData.Title);
+        SetIcon(projectData.Icon);
 
         if (_projectViewerUI != null)
             _projectViewerUI.Show(projectData);
@@ -128,6 +131,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     {
         CurrentProjectData = null;
         SetTitle(string.Empty);
+        SetIcon(null);
 
         if (_projectViewerUI != null)
             _projectViewerUI.Clear();
@@ -318,6 +322,23 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     {
         if (_titleBarText != null)
             _titleBarText.text = string.IsNullOrWhiteSpace(title) ? "Project" : title;
+    }
+
+    private void SetIcon(Sprite icon)
+    {
+        if (_iconImage == null)
+            return;
+
+        Sprite sprite = icon != null ? icon : _fallbackIcon;
+        if (sprite == null)
+        {
+            _iconImage.sprite = null;
+            _iconImage.enabled = false;
+            return;
+        }
+
+        _iconImage.sprite = sprite;
+        _iconImage.enabled = true;
     }
 
     private void SetRootActive(bool active)

@@ -21,6 +21,11 @@ public class ProjectTaskbarUI : MonoBehaviour
 
     public void RegisterButton(DesktopWindowId id, string title)
     {
+        RegisterButton(id, title, (Sprite)null);
+    }
+
+    public void RegisterButton(DesktopWindowId id, string title, Sprite icon)
+    {
         if (_buttonsById.ContainsKey(id))
             return;
 
@@ -38,10 +43,15 @@ public class ProjectTaskbarUI : MonoBehaviour
 
         ProjectTaskbarButtonUI button = Instantiate(_buttonPrefab, _buttonRoot);
         button.gameObject.SetActive(true);
-        RegisterButton(id, title, button);
+        RegisterButton(id, title, icon, button);
     }
 
     public void RegisterButton(DesktopWindowId id, string title, ProjectTaskbarButtonUI button)
+    {
+        RegisterButton(id, title, null, button);
+    }
+
+    public void RegisterButton(DesktopWindowId id, string title, Sprite icon, ProjectTaskbarButtonUI button)
     {
         if (button == null)
         {
@@ -56,7 +66,7 @@ public class ProjectTaskbarUI : MonoBehaviour
         }
 
         _buttonsById[id] = button;
-        button.Initialize(id, title, HandleButtonClicked);
+        button.Initialize(id, title, icon, HandleButtonClicked);
         button.SetVisible(true);
         button.SetActive(false);
         button.SetMinimized(false);

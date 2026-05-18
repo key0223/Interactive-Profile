@@ -274,7 +274,7 @@ public sealed class ProjectWindowManager
         window.Restored += HandleWindowRestored;
 
         _openWindows[projectData] = window;
-        RegisterWindow(window, DesktopWindowId.ForProject(projectData), ResolveWindowTitle(projectData, window));
+        RegisterWindow(window, DesktopWindowId.ForProject(projectData), ResolveWindowTitle(projectData, window), projectData.Icon);
         ApplySpawnPosition(window);
         window.ShowProject(projectData);
         FocusWindow(window);
@@ -287,6 +287,11 @@ public sealed class ProjectWindowManager
 
     public void RegisterWindow(ProjectWindowUI window, DesktopWindowId id, string title)
     {
+        RegisterWindow(window, id, title, null);
+    }
+
+    public void RegisterWindow(ProjectWindowUI window, DesktopWindowId id, string title, Sprite icon)
+    {
         if (window == null)
         {
             Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot register a null window.");
@@ -297,7 +302,7 @@ public sealed class ProjectWindowManager
         _idsByWindow[window] = id;
         _windowStates[id] = WindowState.Opened;
 
-        _taskbarUI?.RegisterButton(id, string.IsNullOrWhiteSpace(title) ? id.Key : title);
+        _taskbarUI?.RegisterButton(id, string.IsNullOrWhiteSpace(title) ? id.Key : title, icon);
         SyncTaskbarWindowState(id);
     }
 

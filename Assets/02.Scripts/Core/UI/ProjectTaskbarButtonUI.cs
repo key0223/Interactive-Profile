@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class ProjectTaskbarButtonUI : MonoBehaviour
 {
     [SerializeField] private Button _button;
+    [SerializeField] private Image _iconImage;
     [SerializeField] private TMP_Text _titleText;
     [SerializeField] private GameObject _activeIndicator;
     [SerializeField] private GameObject _minimizedIndicator;
@@ -45,12 +46,19 @@ public class ProjectTaskbarButtonUI : MonoBehaviour
 
     public void Initialize(DesktopWindowId id, string title, Action<DesktopWindowId> onClick)
     {
+        Initialize(id, title, null, onClick);
+    }
+
+    public void Initialize(DesktopWindowId id, string title, Sprite icon, Action<DesktopWindowId> onClick)
+    {
         _windowId = id;
         _windowType = id.Type;
         _onClick = onClick;
 
         if (_titleText != null)
             _titleText.text = string.IsNullOrWhiteSpace(title) ? id.Key : title;
+
+        ApplyIcon(icon);
     }
 
     public void SetVisible(bool visible)
@@ -73,5 +81,21 @@ public class ProjectTaskbarButtonUI : MonoBehaviour
     private void HandleClicked()
     {
         _onClick?.Invoke(_windowId);
+    }
+
+    private void ApplyIcon(Sprite icon)
+    {
+        if (_iconImage == null)
+            return;
+
+        if (icon == null)
+        {
+            _iconImage.sprite = null;
+            _iconImage.enabled = false;
+            return;
+        }
+
+        _iconImage.sprite = icon;
+        _iconImage.enabled = true;
     }
 }
