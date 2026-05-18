@@ -23,14 +23,20 @@ Scene
 │   ├── InteractionPromptRoot
 │   │   └── PromptText
 │   └── ComputerUIRoot
-│       └── ProjectViewer
-│           ├── TitleText
-│           ├── SubtitleText
-│           ├── RoleText
-│           ├── DescriptionText
-│           ├── TechStackText
-│           ├── HighlightsText
-│           └── UrlText
+│       ├── DesktopLayer
+│       │   └── DesktopIconRoot
+│       ├── WindowLayer
+│       │   └── ProjectWindow runtime instances
+│       │       └── ProjectViewer
+│       │           ├── TitleText
+│       │           ├── SubtitleText
+│       │           ├── RoleText
+│       │           ├── DescriptionText
+│       │           ├── TechStackText
+│       │           ├── HighlightsText
+│       │           └── UrlText
+│       └── TaskbarRoot
+│           └── TaskbarButtonRoot
 └── EventSystem
 ```
 
@@ -52,7 +58,7 @@ Scene
 - 현재 foundation 입력:
   - 이동: `WASD`, 방향키
   - 상호작용: `E`
-  - 닫기/취소: `Escape`
+  - focused project window 닫기 또는 fallback 취소: `Escape`
   - 확인: `Return`
 
 ### Player
@@ -166,12 +172,106 @@ Scene
   - `_playerMovement`: Player의 `PlayerMovement` 참조
   - `_inputManager`: Scene의 `InputManager` 참조
   - `_defaultProjectData`: MVP 기본 `ProjectData` asset 참조
-  - `_projectViewerUI`: `ProjectViewer`의 `ProjectViewerUI` 참조
+  - `_projectDesktopUI`: `ComputerUIRoot` 아래 desktop controller의 `ProjectDesktopUI` 참조
+  - `_projectViewerUI`: fallback 단일 표시 경로를 쓸 때만 `ProjectViewerUI` 참조
   - `_interactionPromptUI`: Canvas의 `InteractionPromptUI` 참조
 
 `ComputerUIRoot`는 Play 시작 시 `ComputerUIController.Awake()`에서 비활성화된다. Editor에서는 연결 확인을 위해 임시로 켜고 작업해도 된다.
 
-### ProjectViewer
+### ComputerUIRoot
+
+권장 hierarchy:
+
+```text
+ComputerUIRoot
+├── DesktopLayer
+│   └── DesktopIconRoot
+├── WindowLayer
+└── TaskbarRoot
+    └── TaskbarButtonRoot
+```
+
+- `DesktopLayer`는 desktop background와 project icon runtime parent를 담는다.
+- `WindowLayer`는 runtime `ProjectWindow` instance의 parent다.
+- `TaskbarRoot`는 `ComputerUIRoot`의 마지막 sibling으로 두고 화면 하단에 고정한다.
+- `TaskbarButtonRoot`는 runtime taskbar button instance의 parent다.
+- `WindowLayer`는 taskbar 영역을 제외한 bounds여야 한다.
+
+RectTransform 기준:
+
+```text
+TaskbarRoot Height = 36~44
+WindowLayer Bottom = TaskbarRoot Height
+```
+
+이 기준을 지키면 `ProjectWindowManager`가 `WindowLayer` bounds를 사용해 drag, resize, maximize clamp를 수행할 때 window가 taskbar 영역을 침범하지 않는다.
+
+### ProjectDesktopUI
+
+- `ProjectDesktopUI`
+- Inspector 연결:
+  - `_catalog`: project icon을 만들 `ProjectCatalog` asset
+  - `_iconRoot`: `DesktopLayer/DesktopIconRoot`
+  - `_iconPrefab`: `ProjectDesktopIconUI` prefab 또는 template
+  - `_projectWindowPrefab`: `ProjectWindowUI` prefab 또는 template
+  - `_windowRoot`: `WindowLayer`
+  - `_projectTaskbarUI`: `TaskbarRoot`의 `ProjectTaskbarUI`
+
+주의:
+
+- `_windowRoot`는 반드시 taskbar 제외 영역인 `WindowLayer`를 가리켜야 한다.
+- `_projectTaskbarUI`가 비어 있어도 window 기능은 null-safe하게 동작해야 하지만, taskbar 검증은 이 참조가 필요하다.
+- 같은 `ProjectData`를 다시 열면 기존 window/taskbar button을 restore/focus해야 하며 중복 생성되면 안 된다.
+
+### ProjectWindow
+
+- `ProjectWindowUI`
+- `ProjectViewerUI`
+- TextMeshPro `TMP_Text` 필드 연결:
+  - `_titleText`
+  - `_subtitleText`
+  - `_roleText`
+  - `_descriptionText`
+  - `_techStackText`
+  - `_highlightsText`
+  - `_urlText`
+
+runtime project window는 `ProjectDesktopUI._projectWindowPrefab`에서 instantiate된다. prefab/template root에는 window control button, drag/resize/maximize 대상, 내부 `ProjectViewerUI`가 연결되어 있어야 한다.
+
+### TaskbarRoot
+
+- `ProjectTaskbarUI`
+- Inspector 연결:
+  - `_buttonRoot`: `TaskbarRoot/TaskbarButtonRoot`
+  - `_buttonPrefab`: `ProjectTaskbarButtonTemplate` 또는 `ProjectTaskbarButtonUI` prefab
+
+주의:
+
+- `ProjectTaskbarUI`는 fixed per-type button mapping을 사용하지 않는다.
+- taskbar button은 `DesktopWindowId` 단위로 runtime instantiate된다.
+- `TaskbarButtonRoot`에는 runtime 생성 button만 담는 구조를 권장한다.
+
+### ProjectTaskbarButtonTemplate
+
+- `ProjectTaskbarButtonUI`
+- `Button`
+- `RectTransform`
+- TextMeshPro title text
+- 선택 사항: active indicator, minimized indicator
+
+Inspector 연결:
+
+- `_button`: 같은 GameObject 또는 자식의 `Button`
+- `_titleText`: project title 표시용 `TMP_Text`
+- `_activeIndicator`: focused/opened window 표시용 GameObject
+- `_minimizedIndicator`: minimized window 표시용 GameObject
+
+주의:
+
+- Button OnClick에 수동 listener를 추가하지 않는다.
+- `ProjectTaskbarButtonUI`가 runtime에 click listener를 등록하고 `ProjectWindowManager`로 restore/focus 요청을 중계한다.
+
+### ProjectViewer Fallback
 
 - `ProjectViewerUI`
 - TextMeshPro `TMP_Text` 필드 연결:
@@ -182,6 +282,8 @@ Scene
   - `_techStackText`
   - `_highlightsText`
   - `_urlText`
+
+이 fallback은 `_projectDesktopUI`를 사용하지 않는 단일 프로젝트 표시 경로용이다. 현재 runtime taskbar/window 구조에서는 `ProjectWindow` 내부 `ProjectViewerUI`를 기본으로 사용한다.
 
 ### EventSystem
 
@@ -316,14 +418,25 @@ Foreground
 - Player가 Computer 근처에 가면 Prompt가 표시된다.
 - `E` 입력 시 `ComputerUIRoot`가 표시된다.
 - `ComputerUIController` Console warning이 없어야 한다.
-- `Escape` 입력 시 `ComputerUIRoot`가 숨겨진다.
+- `Escape` 입력은 focused/opened `ProjectWindow`가 있을 때 해당 window 하나를 닫는다.
+- focused/opened `ProjectWindow`가 없으면 desktop 경로에서는 추가 동작이 없어야 한다.
 
 ### UI
 
-- Computer UI가 열릴 때 기본 `ProjectData` 내용이 표시된다.
+- Computer UI가 열릴 때 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`가 표시된다.
+- Project icon을 열면 해당 `ProjectData` 내용이 `ProjectWindow` 내부에 표시된다.
 - 제목, 설명, 기술 스택, 하이라이트, URL Text가 의도한 위치에 보인다.
+- 프로젝트 창을 열면 `TaskbarButtonRoot` 아래 runtime taskbar button이 생성된다.
+- 같은 프로젝트를 다시 열면 window와 taskbar button이 중복 생성되지 않고 기존 window가 restore/focus된다.
+- 서로 다른 프로젝트를 열면 각각 별도 window와 taskbar button이 생성된다.
+- window click 또는 title bar drag 시 해당 window가 최상단 sibling이 되고 taskbar active indicator가 동기화된다.
+- minimize 시 window는 숨겨지고 taskbar button은 유지되며 minimized indicator가 동기화된다.
+- taskbar button click 시 minimized window가 restore/focus된다.
+- close 시 해당 taskbar button이 제거된다.
+- focused window close/minimize 후에는 남은 opened window 중 가장 최근 focus된 window가 active가 된다.
+- Project window maximize 시 taskbar 영역을 침범하지 않는다.
 - UI가 열려 있는 동안 Interaction Prompt가 숨겨진다.
-- UI를 닫으면 ProjectViewer 내용이 비워지고 Prompt 표시가 복구된다.
+- Computer UI를 닫는 별도 버튼 또는 fallback close 흐름을 사용할 경우 window/taskbar cleanup과 Prompt 표시 복구를 함께 확인한다.
 
 ### Prompt
 
@@ -335,7 +448,15 @@ Foreground
 
 - Scene에 `Main Camera`, `Player`, `InteractionRange`, `RoomRoot`, `Walls`, `Furniture`, `Computer`, `Bed`, `Cat`, `Canvas`, `EventSystem`이 존재한다.
 - Player 이동과 벽 충돌이 동작한다.
-- Computer 상호작용으로 Computer UI가 열리고 닫힌다.
-- `ProjectData` 1개가 Computer UI에 표시된다.
+- Computer 상호작용으로 Computer UI가 열린다.
+- `ComputerUIRoot` 아래 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`가 준비되어 있다.
+- `WindowLayer Bottom`이 `TaskbarRoot Height`와 맞는다.
+- `ProjectDesktopUI._projectTaskbarUI`가 `TaskbarRoot`의 `ProjectTaskbarUI`를 참조한다.
+- `ProjectTaskbarUI._buttonRoot`와 `_buttonPrefab`이 연결되어 있다.
+- `ProjectTaskbarButtonUI`의 `_button`, `_titleText`, indicator 참조가 연결되어 있다.
+- `ProjectData`가 `ProjectWindow` 내부 `ProjectViewerUI`에 표시된다.
+- runtime taskbar button 생성, restore/focus, minimize 유지, close 제거가 동작한다.
+- Escape로 focused/opened `ProjectWindow`가 닫힌다.
+- Project window가 maximize/drag/resize 시 taskbar 영역을 침범하지 않는다.
 - Bed와 Cat은 최소 `LogInteractable` 반응을 제공한다.
 - Console에 누락된 Inspector 참조 warning이 남지 않는다.
