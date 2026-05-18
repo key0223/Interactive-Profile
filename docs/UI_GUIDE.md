@@ -60,6 +60,42 @@ Text:    {예: text-neutral-500 hover:text-neutral-300}
 - 정렬: {예: 좌측 정렬 기본. 중앙 정렬 금지}
 - 간격: {예: gap-3~4, 섹션 간 space-y-8}
 
+## Computer UI Layout
+
+기준 hierarchy:
+
+```text
+ComputerUIRoot
+├── DesktopLayer
+│   └── DesktopIconRoot
+├── WindowLayer
+└── TaskbarRoot
+    └── TaskbarButtonRoot
+```
+
+- `TaskbarRoot`는 `ComputerUIRoot`의 마지막 sibling으로 둔다.
+- `TaskbarRoot`는 화면 하단에 고정한다.
+- `WindowLayer`는 taskbar 영역을 제외한다.
+- 기준은 `WindowLayer Bottom = TaskbarRoot Height`다.
+- `ProjectWindow`의 drag, resize, maximize bounds는 `WindowLayer`를 기준으로 한다.
+- fixed per-type taskbar button 배치는 사용하지 않는다. taskbar button은 `ProjectTaskbarUI`가 runtime 생성한다.
+
+## Computer UI Interaction
+
+- 프로젝트 icon open은 해당 `ProjectData`의 project window를 열거나 기존 window를 restore/focus한다.
+- 서로 다른 프로젝트는 각각 독립된 window와 taskbar button을 가진다.
+- visible/opened window를 클릭하거나 title bar를 드래그하면 해당 window가 focus되고 최상단 sibling이 된다.
+- taskbar button click은 minimized window를 restore/focus하거나 visible window를 focus한다.
+- focused window close/minimize 후에는 남은 opened window 중 가장 최근 focus된 window가 active가 된다.
+- 후보가 없으면 active taskbar indicator는 모두 해제된다.
+- Escape는 focused/opened project window 하나를 닫는다. minimized window는 Escape close 대상이 아니다.
+
+## Taskbar Button States
+
+- active indicator는 focused/opened window의 button에만 표시한다.
+- minimized indicator는 minimized window의 button에 표시한다.
+- active와 minimized visual의 최종 스타일 polish는 후속 작업으로 관리한다.
+
 ## 타이포그래피
 | 용도 | 스타일 |
 |------|--------|

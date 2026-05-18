@@ -2,7 +2,7 @@
 
 ## 범위
 
-이 문서는 현재 구현된 Retro Gamified Portfolio MVP foundation을 기준으로 한다. 확정된 범위는 단일 탑다운 방에서의 플레이어 이동, Trigger 기반 상호작용, 컴퓨터 UI 진입, ScriptableObject 기반 프로젝트 1개 표시다.
+이 문서는 현재 구현된 Retro Gamified Portfolio MVP foundation을 기준으로 한다. 확정된 범위는 단일 탑다운 방에서의 플레이어 이동, Trigger 기반 상호작용, 컴퓨터 UI 진입, ScriptableObject 기반 프로젝트 표시, Windows 스타일 desktop/window/taskbar 기반 프로젝트 탐색이다.
 
 전투, 퀘스트, 인벤토리, 저장/로드, 네트워크, 다중 방, 복잡한 대화 시스템은 현재 아키텍처 범위가 아니다.
 
@@ -14,6 +14,7 @@ Assets/
 │   ├── Core/
 │   │   ├── Data/
 │   │   │   └── Portfolio/
+│   │   │       ├── ProjectCatalog.cs
 │   │   │       └── ProjectData.cs
 │   │   ├── Input/
 │   │   │   ├── InputManager.cs
@@ -31,6 +32,12 @@ Assets/
 │   │   │   └── PlayerMovement.cs
 │   │   ├── UI/
 │   │   │   ├── ComputerUIController.cs
+│   │   │   ├── DesktopWindowId.cs
+│   │   │   ├── ProjectDesktopUI.cs
+│   │   │   ├── ProjectDesktopIconUI.cs
+│   │   │   ├── ProjectTaskbarUI.cs
+│   │   │   ├── ProjectTaskbarButtonUI.cs
+│   │   │   ├── ProjectWindowUI.cs
 │   │   │   ├── InteractionPromptUI.cs
 │   │   │   └── ProjectViewerUI.cs
 │   │   └── GameManager.cs
@@ -52,6 +59,9 @@ Assets/
 → IInteractable.Interact()
 → ComputerInteractable
 → ComputerUIController
+→ ProjectDesktopUI
+→ ProjectWindowManager
+→ ProjectWindowUI
 → ProjectViewerUI
 → ProjectData
 ```
@@ -60,8 +70,10 @@ Assets/
 - 상호작용 입력은 `InputManager.IsInteractPressed`로 수집되고 `InteractionDetector`가 소비한다.
 - `InteractionDetector`는 Trigger 범위 안의 `IInteractable` 후보 중 가장 가까운 대상을 현재 상호작용 대상으로 유지한다.
 - 컴퓨터 대상과 상호작용하면 `ComputerInteractable`이 `ComputerUIController.Open()`을 호출한다.
-- 컴퓨터 UI가 열리면 플레이어 이동이 비활성화되고, 상호작용 프롬프트가 숨겨지며, 기본 `ProjectData`가 `ProjectViewerUI`에 표시된다.
-- 취소 입력은 `ComputerUIController`가 받아 UI를 닫고 플레이어 이동과 프롬프트 표시를 복구한다.
+- 컴퓨터 UI가 열리면 플레이어 이동이 비활성화되고, 상호작용 프롬프트가 숨겨지며, `ProjectDesktopUI`가 desktop icon과 project window 흐름을 초기화한다.
+- 프로젝트 icon을 열면 `ProjectWindowManager`가 `ProjectData`별 `ProjectWindowUI`를 만들거나 기존 창을 restore/focus한다.
+- 프로젝트 창 상태는 `DesktopWindowId`와 `WindowState`로 관리되고, runtime taskbar button과 동기화된다.
+- 취소 입력은 `ComputerUIController`가 받는다. Desktop 경로에서는 focused/opened 프로젝트 창을 닫고, fallback 단일 UI 경로에서는 컴퓨터 UI를 닫는다.
 
 ## 핵심 컴포넌트 역할
 
@@ -101,16 +113,34 @@ Assets/
 ### ComputerUIController
 
 - Windows 스타일 컴퓨터 UI의 열기/닫기 상태를 관리한다.
-- UI root 활성화, 플레이어 이동 비활성화/복구, 프롬프트 숨김/복구, 기본 프로젝트 표시/초기화를 담당한다.
-- `Escape` 입력으로 닫기 동작을 처리한다.
-- `_defaultProjectData`와 `_projectViewerUI`를 연결해 MVP의 프로젝트 1개 소개 화면을 구성한다.
+- UI root 활성화, 플레이어 이동 비활성화/복구, 프롬프트 숨김/복구, desktop UI 초기화 또는 fallback 프로젝트 표시를 담당한다.
+- `Escape` 입력을 처리한다. `ProjectDesktopUI`가 연결된 경우 focused/opened `ProjectWindow` 닫기를 먼저 시도하고, fallback 경로에서는 기존 닫기 동작을 유지한다.
+- `_projectDesktopUI`가 있으면 desktop/window/taskbar 기반 프로젝트 탐색을 사용하고, 없으면 `_projectSelectionUI` 또는 `_projectViewerUI` fallback을 사용한다.
+
+### ProjectDesktopUI / ProjectWindowManager
+
+- `ProjectDesktopUI`는 `ProjectCatalog`, desktop icon root, project window prefab, window root, taskbar UI 참조를 보관하는 composition root다.
+- `ProjectWindowManager`는 runtime project window lifecycle, identity, state, focus order, taskbar sync의 source of truth다.
+- project window identity는 `DesktopWindowId`를 사용한다. 프로젝트 창은 `DesktopWindowType.Projects`와 project key로 구분한다.
+- 같은 `ProjectData`를 다시 열면 새 창과 버튼을 만들지 않고 기존 창을 restore/focus한다.
+- 서로 다른 `ProjectData`는 각각 window와 taskbar button을 1:1로 생성한다.
+- visible/opened window를 focus하면 window sibling이 최상단으로 이동하고 taskbar active button도 갱신된다.
+- focused window가 close 또는 minimize되면 `_focusOrder` 기준으로 남아 있는 opened window 중 가장 최근 focus된 창이 active가 된다.
+- minimized window는 focus 대상에서 제외되지만 taskbar button은 유지된다.
+
+### ProjectTaskbarUI / ProjectTaskbarButtonUI
+
+- `ProjectTaskbarUI`는 `DesktopWindowId`별 runtime taskbar button 생성, 제거, active 상태, minimized 상태 표시를 담당한다.
+- `ProjectTaskbarButtonUI`는 title 표시, active/minimized indicator, click callback 전달만 담당한다.
+- taskbar button click은 `ProjectWindowManager.RestoreOrFocusWindow(DesktopWindowId)`로 중계된다.
+- fixed `DesktopWindowType`별 button mapping은 서로 다른 프로젝트 창 여러 개를 표현할 수 없으므로 legacy/폐기 방식이다.
 
 ### ProjectViewerUI
 
 - `ProjectData`를 TextMeshPro 텍스트 필드에 표시한다.
 - 제목, 부제, 역할, 설명, 기술 스택, 하이라이트, URL 필드를 표시한다.
 - 데이터가 없으면 경고 후 표시 내용을 비운다.
-- 프로젝트 선택, 목록 관리, 데이터 로딩은 담당하지 않는다.
+- 프로젝트 선택, 목록 관리, window lifecycle, taskbar sync는 담당하지 않는다.
 
 ### InteractionPromptUI
 
@@ -124,7 +154,7 @@ Assets/
 - 필드는 제목, 부제, 역할, 설명, 기술 스택, 하이라이트, 프로젝트 URL, GitHub URL이다.
 - `CreateAssetMenu` 경로는 `Interactive Profile/Project Data`다.
 
-## PlayerMovement / InteractionDetector / ComputerUIController / ProjectViewerUI 관계
+## PlayerMovement / InteractionDetector / ComputerUIController / Project Desktop 관계
 
 ```text
 Player
@@ -145,28 +175,47 @@ Computer UI
     ├── UI root GameObject 참조
     ├── PlayerMovement 참조
     ├── InputManager 참조
-    ├── ProjectData 참조
-    ├── ProjectViewerUI 참조
+    ├── ProjectDesktopUI 참조
+    ├── ProjectData fallback 참조
+    ├── ProjectViewerUI fallback 참조
     └── InteractionPromptUI 참조
 
-Project Viewer Panel
-└── ProjectViewerUI
-    └── TMP_Text 필드들 참조
+Project Desktop
+└── ProjectDesktopUI
+    ├── ProjectCatalog 참조
+    ├── DesktopIconRoot 참조
+    ├── ProjectDesktopIconUI prefab 참조
+    ├── ProjectWindowUI prefab 참조
+    ├── WindowLayer 참조
+    └── ProjectTaskbarUI 참조
+
+Project Window
+└── ProjectWindowUI
+    └── ProjectViewerUI
+        └── TMP_Text 필드들 참조
+
+Taskbar
+└── ProjectTaskbarUI
+    ├── TaskbarButtonRoot 참조
+    └── ProjectTaskbarButtonUI prefab 참조
 ```
 
-이 관계에서 `InteractionDetector`는 `ComputerUIController`를 알지 못하고, `ProjectViewerUI`는 월드 오브젝트를 알지 못한다. 월드 상호작용과 UI 표시는 `ComputerInteractable`과 `ComputerUIController` 경계에서만 연결된다.
+이 관계에서 `InteractionDetector`는 `ComputerUIController`를 알지 못하고, `ProjectViewerUI`는 월드 오브젝트와 taskbar를 알지 못한다. 월드 상호작용과 UI 표시는 `ComputerInteractable`과 `ComputerUIController` 경계에서만 연결되고, project window/taskbar 조정은 `ProjectWindowManager`가 담당한다.
 
 ## ScriptableObject 데이터 흐름
 
 ```text
 ProjectData asset
-→ ComputerUIController._defaultProjectData
-→ ComputerUIController.Open()
+→ ProjectCatalog
+→ ProjectDesktopUI icon 생성
+→ ProjectDesktopUI.OpenProject(ProjectData)
+→ ProjectWindowManager.OpenWindow(ProjectData)
+→ ProjectWindowUI.ShowProject(ProjectData)
 → ProjectViewerUI.Show(ProjectData)
 → TMP_Text 필드 갱신
 ```
 
-새 프로젝트 소개를 추가할 때의 기본 방향은 코드 조건문 추가가 아니라 새 `ProjectData` 에셋 생성과 UI 선택 흐름 확장이다. 현재 MVP는 기본 프로젝트 1개를 `_defaultProjectData`로 표시한다.
+새 프로젝트 소개를 추가할 때의 기본 방향은 코드 조건문 추가가 아니라 새 `ProjectData` 에셋 생성과 `ProjectCatalog` 등록이다. 현재 MVP 검증 기준은 프로젝트 1개 표시지만, window/taskbar 구조는 여러 프로젝트 창을 동시에 다룰 수 있다.
 
 ## UI Hierarchy 개요
 
@@ -177,18 +226,27 @@ Canvas
 ├── Interaction Prompt Root
 │   └── TMP_Text Prompt Text
 └── Computer UI Root
-    └── Project Viewer
-        ├── TMP_Text Title
-        ├── TMP_Text Subtitle
-        ├── TMP_Text Role
-        ├── TMP_Text Description
-        ├── TMP_Text Tech Stack
-        ├── TMP_Text Highlights
-        └── TMP_Text URL
+    ├── DesktopLayer
+    │   └── DesktopIconRoot
+    ├── WindowLayer
+    │   └── ProjectWindow runtime instances
+    │       └── ProjectViewer
+    │           ├── TMP_Text Title
+    │           ├── TMP_Text Subtitle
+    │           ├── TMP_Text Role
+    │           ├── TMP_Text Description
+    │           ├── TMP_Text Tech Stack
+    │           ├── TMP_Text Highlights
+    │           └── TMP_Text URL
+    └── TaskbarRoot
+        └── TaskbarButtonRoot
 ```
 
 - `Computer UI Root`는 `ComputerUIController`의 `_root`로 연결한다.
-- `Project Viewer`의 텍스트들은 `ProjectViewerUI`의 각 필드로 연결한다.
+- `ProjectDesktopUI._windowRoot`는 taskbar 영역을 제외한 `WindowLayer`를 가리킨다.
+- `WindowLayer Bottom`은 `TaskbarRoot Height`와 맞춰 maximize/drag/resize bounds가 taskbar를 침범하지 않게 한다.
+- `ProjectTaskbarUI._buttonRoot`는 `TaskbarButtonRoot`를 가리키고, `_buttonPrefab`은 `ProjectTaskbarButtonUI` prefab 또는 template을 가리킨다.
+- `Project Viewer`의 텍스트들은 `ProjectWindowUI` 내부 `ProjectViewerUI`의 각 필드로 연결한다.
 - `Interaction Prompt Root` 또는 Prompt Text는 `InteractionPromptUI`가 표시/숨김을 제어한다.
 - 버튼 기반 닫기 UI를 추가할 경우 `ComputerUIController.Close()`를 호출하도록 연결한다.
 
@@ -201,7 +259,9 @@ Canvas
 - Trigger 진입/이탈에 따른 상호작용 후보 관리.
 - `IInteractable` 계약 호출.
 - 컴퓨터 UI 열기/닫기 상태 전환.
-- `ProjectData`를 TextMeshPro 텍스트에 표시.
+- project window 생성, focus, close, minimize, restore 상태 관리.
+- taskbar button runtime 생성/제거와 active/minimized 상태 동기화.
+- `ProjectData`를 ProjectWindow 내부 TextMeshPro 텍스트에 표시.
 - Inspector 참조 누락 시 경고 로그 제공.
 
 Unity Editor에서 연결해야 하는 것:
@@ -210,9 +270,12 @@ Unity Editor에서 연결해야 하는 것:
 - `InteractionDetector` Collider2D의 `isTrigger` 설정과 상호작용 LayerMask 설정.
 - 컴퓨터, 침대, 고양이 등 오브젝트의 Collider2D와 `IInteractable` 구현 컴포넌트 연결.
 - `ComputerInteractable`에 `ComputerUIController` 참조 할당.
-- `ComputerUIController`에 UI root, `PlayerMovement`, `InputManager`, `ProjectViewerUI`, `InteractionPromptUI`, 기본 `ProjectData` 할당.
-- `ProjectViewerUI`에 TextMeshPro 텍스트 필드 할당.
-- `ProjectData` ScriptableObject 에셋 생성과 필드 입력.
+- `ComputerUIController`에 UI root, `PlayerMovement`, `InputManager`, `ProjectDesktopUI`, fallback UI, `InteractionPromptUI`, fallback `ProjectData` 할당.
+- `ProjectDesktopUI`에 `ProjectCatalog`, icon root/prefab, project window prefab, `WindowLayer`, `ProjectTaskbarUI` 할당.
+- `ProjectTaskbarUI`에 `TaskbarButtonRoot`와 `ProjectTaskbarButtonUI` prefab/template 할당.
+- `ProjectTaskbarButtonUI`에 Button, title text, active/minimized indicator 할당.
+- `ProjectWindowUI` 내부 `ProjectViewerUI`에 TextMeshPro 텍스트 필드 할당.
+- `ProjectData` ScriptableObject 에셋 생성과 `ProjectCatalog` 등록.
 
 직접 텍스트 수정하지 않는 것:
 
