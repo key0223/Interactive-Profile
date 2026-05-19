@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Farming
   m_EditorClassIdentifier: 
   _icon: {fileID: 21300000, guid: ebab382719790bf4ca8aebf4a95d6015, type: 3}
+  _previewImage: {fileID: 21300000, guid: b0c276cf002735047bc11a9fda8c0c8c, type: 3}
   _title: Farming's My Vocation
   _subtitle: 2D Farm Simulation Game
   _role: Client / System Programmer

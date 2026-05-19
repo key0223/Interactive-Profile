@@ -916,6 +916,7 @@ MonoBehaviour:
   _closeButton: {fileID: 7300883826516510145}
   _projectViewerUI: {fileID: 7817646058766232293}
   _aboutMeViewerUI: {fileID: 0}
+  _skillsWindowView: {fileID: 0}
   _maximizeBoundsRoot: {fileID: 0}
   _fallbackMaximizedSize: {x: 860, y: 560}
 --- !u!1 &1588421678586475751
@@ -2335,7 +2336,7 @@ MonoBehaviour:
   m_IgnoreLayout: 0
   m_MinWidth: -1
   m_MinHeight: -1
-  m_PreferredWidth: 25
+  m_PreferredWidth: 19
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
@@ -2876,9 +2877,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 90
-  m_PreferredWidth: -1
-  m_PreferredHeight: -1
+  m_MinHeight: -1
+  m_PreferredWidth: 90
+  m_PreferredHeight: 40
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1

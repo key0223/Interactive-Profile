@@ -79,7 +79,7 @@ public class ProjectViewerUI : MonoBehaviour
         _projectUrl = projectData.ProjectUrl;
         _githubUrl = projectData.GithubUrl;
 
-        SetIcon(projectData.Icon);
+        SetPreviewImage(projectData);
         SetText(_titleText, projectData.Title);
         SetSectionText(_subtitleText, _subtitleRoot, projectData.Subtitle);
         SetSectionText(_roleText, _roleRoot, projectData.Role);
@@ -96,7 +96,7 @@ public class ProjectViewerUI : MonoBehaviour
         _projectUrl = null;
         _githubUrl = null;
 
-        SetIcon(null);
+        SetPreviewImage(null);
         SetText(_titleText, string.Empty);
         SetSectionText(_subtitleText, _subtitleRoot, string.Empty);
         SetSectionText(_roleText, _roleRoot, string.Empty);
@@ -175,6 +175,21 @@ public class ProjectViewerUI : MonoBehaviour
 
         _iconImage.sprite = sprite;
         _iconImage.enabled = true;
+    }
+
+    private void SetPreviewImage(ProjectData projectData)
+    {
+        if (projectData == null)
+        {
+            SetIcon(null);
+            return;
+        }
+
+        Sprite previewSprite = projectData.PreviewImage != null
+            ? projectData.PreviewImage
+            : projectData.Icon;
+
+        SetIcon(previewSprite);
     }
 
     private void UpdateLinkButtons()
