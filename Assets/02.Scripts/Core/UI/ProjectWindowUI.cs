@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,6 +20,185 @@ public enum WindowState
     Minimized
 }
 
+public class AboutMeViewerUI : MonoBehaviour
+{
+    [Header("Static Content")]
+    [SerializeField] private string _displayName;
+    [SerializeField] private string _role;
+    [SerializeField] private string _summary;
+    [TextArea(3, 8)]
+    [SerializeField] private string _philosophy;
+    [TextArea(2, 6)]
+    [SerializeField] private string _techInterests;
+    [TextArea(2, 6)]
+    [SerializeField] private string _toolStack;
+    [TextArea(2, 6)]
+    [SerializeField] private string _careerSummary;
+    [TextArea(2, 6)]
+    [SerializeField] private string _projectSummary;
+    [SerializeField] private string _contactLabel;
+    [SerializeField] private string _contactUrl;
+
+    [Header("UI References")]
+    [SerializeField] private Image _avatarImage;
+    [SerializeField] private Sprite _fallbackAvatar;
+    [SerializeField] private TMP_Text _nameText;
+    [SerializeField] private TMP_Text _roleText;
+    [SerializeField] private TMP_Text _summaryText;
+    [SerializeField] private TMP_Text _philosophyText;
+    [SerializeField] private TMP_Text _techInterestsText;
+    [SerializeField] private TMP_Text _toolStackText;
+    [SerializeField] private TMP_Text _careerSummaryText;
+    [SerializeField] private TMP_Text _projectSummaryText;
+    [SerializeField] private TMP_Text _contactText;
+    [SerializeField] private Button _contactButton;
+    [SerializeField] private TMP_Text _contactButtonText;
+    [SerializeField] private ScrollRect _scrollRect;
+
+    private Coroutine _resetScrollCoroutine;
+
+    private void Awake()
+    {
+        if (_scrollRect == null)
+            _scrollRect = GetComponentInChildren<ScrollRect>(true);
+    }
+
+    private void OnEnable()
+    {
+        if (_contactButton != null)
+        {
+            _contactButton.onClick.RemoveListener(OpenContactUrl);
+            _contactButton.onClick.AddListener(OpenContactUrl);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (_resetScrollCoroutine != null)
+        {
+            StopCoroutine(_resetScrollCoroutine);
+            _resetScrollCoroutine = null;
+        }
+
+        if (_contactButton != null)
+            _contactButton.onClick.RemoveListener(OpenContactUrl);
+    }
+
+    public void ShowSerializedContent()
+    {
+        SetAvatar(_fallbackAvatar);
+        SetText(_nameText, _displayName);
+        SetText(_roleText, _role);
+        SetText(_summaryText, _summary);
+        SetText(_philosophyText, _philosophy);
+        SetText(_techInterestsText, _techInterests);
+        SetText(_toolStackText, _toolStack);
+        SetText(_careerSummaryText, _careerSummary);
+        SetText(_projectSummaryText, _projectSummary);
+        SetText(_contactText, _contactLabel);
+        UpdateContactButton();
+        ResetScrollToTop();
+    }
+
+    public void Clear()
+    {
+        SetAvatar(null);
+        SetText(_nameText, string.Empty);
+        SetText(_roleText, string.Empty);
+        SetText(_summaryText, string.Empty);
+        SetText(_philosophyText, string.Empty);
+        SetText(_techInterestsText, string.Empty);
+        SetText(_toolStackText, string.Empty);
+        SetText(_careerSummaryText, string.Empty);
+        SetText(_projectSummaryText, string.Empty);
+        SetText(_contactText, string.Empty);
+        SetText(_contactButtonText, string.Empty);
+
+        if (_contactButton != null)
+            _contactButton.gameObject.SetActive(false);
+
+        ResetScrollToTop();
+    }
+
+    public void ResetScrollToTop()
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        if (_resetScrollCoroutine != null)
+            StopCoroutine(_resetScrollCoroutine);
+
+        ApplyScrollTopAfterLayout();
+        _resetScrollCoroutine = StartCoroutine(ResetScrollToTopNextFrame());
+    }
+
+    private IEnumerator ResetScrollToTopNextFrame()
+    {
+        yield return null;
+        ApplyScrollTopAfterLayout();
+        _resetScrollCoroutine = null;
+    }
+
+    private void ApplyScrollTopAfterLayout()
+    {
+        if (_scrollRect == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+
+        if (_scrollRect.content != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_scrollRect.content);
+
+        _scrollRect.verticalNormalizedPosition = 1f;
+
+        if (_scrollRect.verticalScrollbar != null)
+            _scrollRect.verticalScrollbar.value = 1f;
+    }
+
+    private void UpdateContactButton()
+    {
+        bool hasContactUrl = !string.IsNullOrWhiteSpace(_contactUrl);
+
+        if (_contactButton != null)
+            _contactButton.gameObject.SetActive(hasContactUrl);
+
+        SetText(_contactButtonText, hasContactUrl ? ResolveContactButtonText() : string.Empty);
+    }
+
+    private string ResolveContactButtonText()
+    {
+        return string.IsNullOrWhiteSpace(_contactLabel) ? "Open Contact" : _contactLabel;
+    }
+
+    private void OpenContactUrl()
+    {
+        if (!string.IsNullOrWhiteSpace(_contactUrl))
+            Application.OpenURL(_contactUrl);
+    }
+
+    private void SetAvatar(Sprite avatar)
+    {
+        if (_avatarImage == null)
+            return;
+
+        if (avatar == null)
+        {
+            _avatarImage.sprite = null;
+            _avatarImage.enabled = false;
+            return;
+        }
+
+        _avatarImage.sprite = avatar;
+        _avatarImage.enabled = true;
+    }
+
+    private static void SetText(TMP_Text target, string text)
+    {
+        if (target != null)
+            target.text = text ?? string.Empty;
+    }
+}
+
 public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 {
     [SerializeField] private DesktopWindowType _windowType = DesktopWindowType.Projects;
@@ -30,6 +210,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     [SerializeField] private Button _maximizeButton;
     [SerializeField] private Button _closeButton;
     [SerializeField] private ProjectViewerUI _projectViewerUI;
+    [SerializeField] private AboutMeViewerUI _aboutMeViewerUI;
     [SerializeField] private RectTransform _maximizeBoundsRoot;
     [SerializeField] private Vector2 _fallbackMaximizedSize = new Vector2(860f, 560f);
 
@@ -60,7 +241,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         if (_windowRoot == null)
             _windowRoot = gameObject;
 
-        if (_projectViewerUI == null)
+        if (_windowType == DesktopWindowType.Projects && _projectViewerUI == null)
             Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} requires a {nameof(ProjectViewerUI)} reference.");
 
         if (_minimizeButton == null)
@@ -110,8 +291,27 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         SetTitle(projectData.Title);
         SetIcon(projectData.Icon);
 
+        if (_aboutMeViewerUI != null)
+            _aboutMeViewerUI.Clear();
+
         if (_projectViewerUI != null)
             _projectViewerUI.Show(projectData);
+
+        RequestFocus();
+    }
+
+    public void ShowAboutMe(string title, Sprite icon)
+    {
+        CurrentProjectData = null;
+        SetRootActive(true);
+        SetTitle(string.IsNullOrWhiteSpace(title) ? "About Me" : title);
+        SetIcon(icon);
+
+        if (_projectViewerUI != null)
+            _projectViewerUI.Clear();
+
+        if (_aboutMeViewerUI != null)
+            _aboutMeViewerUI.ShowSerializedContent();
 
         RequestFocus();
     }
@@ -135,6 +335,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
         if (_projectViewerUI != null)
             _projectViewerUI.Clear();
+
+        if (_aboutMeViewerUI != null)
+            _aboutMeViewerUI.Clear();
     }
 
     public void OnPointerDown(PointerEventData eventData)
@@ -151,15 +354,23 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     public void RestoreFromMinimized()
     {
         SetRootActive(true);
-        ResetProjectScrollToTop();
+        ResetWindowScrollToTop();
         Restored?.Invoke(this);
         RequestFocus();
     }
 
     public void ResetProjectScrollToTop()
     {
+        ResetWindowScrollToTop();
+    }
+
+    public void ResetWindowScrollToTop()
+    {
         if (_projectViewerUI != null)
             _projectViewerUI.ResetScrollToTop();
+
+        if (_aboutMeViewerUI != null)
+            _aboutMeViewerUI.ResetScrollToTop();
     }
 
     public void SetBoundsRoot(RectTransform boundsRoot)

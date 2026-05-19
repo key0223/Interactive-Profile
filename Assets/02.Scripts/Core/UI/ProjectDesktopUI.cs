@@ -14,6 +14,9 @@ public class ProjectDesktopUI : MonoBehaviour
     [SerializeField] private int _maxWindowCascadeSteps = 6;
     [SerializeField] private ProjectWindowUI _projectWindowUI;
     [SerializeField] private ProjectTaskbarUI _projectTaskbarUI;
+    [SerializeField] private ProjectWindowUI _aboutMeWindowPrefab;
+    [SerializeField] private Sprite _aboutMeWindowIcon;
+    [SerializeField] private string _aboutMeWindowTitle = "About Me";
     [SerializeField] private bool _openDefaultOnStart;
 
     private readonly List<ProjectDesktopIconUI> _icons = new List<ProjectDesktopIconUI>();
@@ -94,6 +97,19 @@ public class ProjectDesktopUI : MonoBehaviour
             _projectWindowManager.OpenWindow(projectData);
         else if (_projectWindowUI != null)
             _projectWindowUI.ShowProject(projectData);
+    }
+
+    public void OpenAboutMeWindow()
+    {
+        ClearSelection();
+
+        if (_projectWindowManager == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} cannot open AboutMe without multi-window mode. Assign a project window prefab and window root.");
+            return;
+        }
+
+        _projectWindowManager.OpenAboutMeWindow(_aboutMeWindowPrefab, _aboutMeWindowTitle, _aboutMeWindowIcon);
     }
 
     public void SelectProject(ProjectData projectData)
@@ -457,7 +473,7 @@ public sealed class ProjectWindowManager
 
     public void CloseAll()
     {
-        List<ProjectWindowUI> windows = new List<ProjectWindowUI>(_openWindows.Values);
+        List<ProjectWindowUI> windows = new List<ProjectWindowUI>(_registeredWindows.Values);
         _openWindows.Clear();
         _registeredWindows.Clear();
         _windowStates.Clear();
@@ -487,6 +503,42 @@ public sealed class ProjectWindowManager
         int cascadeStep = _maxCascadeSteps > 0 ? _spawnCount % _maxCascadeSteps : 0;
         window.WindowRectTransform.anchoredPosition = _spawnPosition + _spawnOffset * cascadeStep;
         _spawnCount++;
+    }
+
+    public void OpenAboutMeWindow(ProjectWindowUI aboutMeWindowPrefab, string title, Sprite icon)
+    {
+        DesktopWindowId id = DesktopWindowId.ForType(DesktopWindowType.AboutMe);
+
+        if (_registeredWindows.TryGetValue(id, out ProjectWindowUI existingWindow) && existingWindow != null)
+        {
+            if (!existingWindow.IsVisible)
+                RestoreWindow(id);
+            else
+                existingWindow.ResetWindowScrollToTop();
+
+            FocusWindow(existingWindow);
+            return;
+        }
+
+        if (aboutMeWindowPrefab == null || _windowRoot == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot open AboutMe without an AboutMe window prefab and window root.");
+            return;
+        }
+
+        ProjectWindowUI window = UnityEngine.Object.Instantiate(aboutMeWindowPrefab, _windowRoot);
+        RectTransform boundsRoot = ResolveWindowBoundsRoot(window);
+        window.SetBoundsRoot(boundsRoot);
+        window.Closed += HandleWindowClosed;
+        window.FocusRequested += FocusWindow;
+        window.Minimized += HandleWindowMinimized;
+        window.Restored += HandleWindowRestored;
+
+        string resolvedTitle = ResolveAboutMeWindowTitle(title);
+        RegisterWindow(window, id, resolvedTitle, icon);
+        ApplySpawnPosition(window);
+        window.ShowAboutMe(resolvedTitle, icon);
+        FocusWindow(window);
     }
 
     private void FocusWindow(ProjectWindowUI window)
@@ -707,5 +759,13 @@ public sealed class ProjectWindowManager
         }
 
         return window != null ? window.WindowType.ToString() : "Window";
+    }
+
+    private static string ResolveAboutMeWindowTitle(string title)
+    {
+        if (!string.IsNullOrWhiteSpace(title))
+            return title;
+
+        return "About Me";
     }
 }
