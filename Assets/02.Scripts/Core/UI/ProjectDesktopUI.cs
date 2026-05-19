@@ -20,10 +20,17 @@ public class ProjectDesktopUI : MonoBehaviour
     [SerializeField] private ProjectWindowUI _aboutMeWindowPrefab;
     [SerializeField] private Sprite _aboutMeWindowIcon;
     [SerializeField] private string _aboutMeWindowTitle = "ABOUT_ME.TXT";
+    [SerializeField] private bool _showSkillsDesktopIcon = true;
+    [SerializeField] private string _skillsDesktopTitle = "SYSTEM.LOG";
+    [SerializeField] private Sprite _skillsDesktopIcon;
+    [SerializeField] private ProjectWindowUI _skillsWindowPrefab;
+    [SerializeField] private string _skillsWindowTitle = "SYSTEM.LOG";
+    [SerializeField] private Sprite _skillsWindowIcon;
     [SerializeField] private bool _openDefaultOnStart;
 
     private readonly List<ProjectDesktopIconUI> _icons = new List<ProjectDesktopIconUI>();
     private ProjectDesktopIconUI _aboutMeIcon;
+    private ProjectDesktopIconUI _skillsIcon;
     private ProjectDesktopIconUI _selectedIcon;
     private ProjectWindowManager _projectWindowManager;
     private ProjectData _selectedProjectData;
@@ -116,6 +123,19 @@ public class ProjectDesktopUI : MonoBehaviour
         _projectWindowManager.OpenAboutMeWindow(_aboutMeWindowPrefab, _aboutMeWindowTitle, _aboutMeWindowIcon);
     }
 
+    public void OpenSkillsWindow()
+    {
+        SelectSkillsIcon();
+
+        if (_projectWindowManager == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} cannot open Skills without multi-window mode. Assign a project window prefab and window root.");
+            return;
+        }
+
+        _projectWindowManager.OpenSkillsWindow(_skillsWindowPrefab, _skillsWindowTitle, _skillsWindowIcon);
+    }
+
     public void SelectProject(ProjectData projectData)
     {
         SelectProjectIcon(projectData, FindIconForProject(projectData));
@@ -150,6 +170,7 @@ public class ProjectDesktopUI : MonoBehaviour
         }
 
         CreateAboutMeIcon();
+        CreateSkillsIcon();
 
         if (_catalog == null || _catalog.Count == 0)
         {
@@ -184,6 +205,17 @@ public class ProjectDesktopUI : MonoBehaviour
         _icons.Add(icon);
     }
 
+    private void CreateSkillsIcon()
+    {
+        if (!_showSkillsDesktopIcon)
+            return;
+
+        ProjectDesktopIconUI icon = Instantiate(_iconPrefab, _iconRoot);
+        icon.Setup(_skillsDesktopIcon, _skillsDesktopTitle, SelectSkillsIcon, OpenSkillsWindow);
+        _skillsIcon = icon;
+        _icons.Add(icon);
+    }
+
     private void ClearIcons()
     {
         for (int i = 0; i < _icons.Count; i++)
@@ -194,6 +226,7 @@ public class ProjectDesktopUI : MonoBehaviour
 
         _icons.Clear();
         _aboutMeIcon = null;
+        _skillsIcon = null;
         _selectedIcon = null;
         _selectedProjectData = null;
     }
@@ -209,6 +242,13 @@ public class ProjectDesktopUI : MonoBehaviour
     {
         _selectedProjectData = null;
         _selectedIcon = _aboutMeIcon;
+        UpdateSelectionVisuals();
+    }
+
+    private void SelectSkillsIcon()
+    {
+        _selectedProjectData = null;
+        _selectedIcon = _skillsIcon;
         UpdateSelectionVisuals();
     }
 
@@ -592,6 +632,42 @@ public sealed class ProjectWindowManager
         FocusWindow(window);
     }
 
+    public void OpenSkillsWindow(ProjectWindowUI skillsWindowPrefab, string title, Sprite icon)
+    {
+        DesktopWindowId id = DesktopWindowId.ForType(DesktopWindowType.Skills);
+
+        if (_registeredWindows.TryGetValue(id, out ProjectWindowUI existingWindow) && existingWindow != null)
+        {
+            if (!existingWindow.IsVisible)
+                RestoreWindow(id);
+            else
+                existingWindow.ResetWindowScrollToTop();
+
+            FocusWindow(existingWindow);
+            return;
+        }
+
+        if (skillsWindowPrefab == null || _windowRoot == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot open Skills without a Skills window prefab and window root.");
+            return;
+        }
+
+        ProjectWindowUI window = UnityEngine.Object.Instantiate(skillsWindowPrefab, _windowRoot);
+        RectTransform boundsRoot = ResolveWindowBoundsRoot(window);
+        window.SetBoundsRoot(boundsRoot);
+        window.Closed += HandleWindowClosed;
+        window.FocusRequested += FocusWindow;
+        window.Minimized += HandleWindowMinimized;
+        window.Restored += HandleWindowRestored;
+
+        string resolvedTitle = ResolveSkillsWindowTitle(title);
+        RegisterWindow(window, id, resolvedTitle, icon);
+        ApplySpawnPosition(window);
+        window.ShowSkills(resolvedTitle, icon);
+        FocusWindow(window);
+    }
+
     private void FocusWindow(ProjectWindowUI window)
     {
         if (window == null)
@@ -818,5 +894,13 @@ public sealed class ProjectWindowManager
             return title;
 
         return "About Me";
+    }
+
+    private static string ResolveSkillsWindowTitle(string title)
+    {
+        if (!string.IsNullOrWhiteSpace(title))
+            return title;
+
+        return "SYSTEM.LOG";
     }
 }

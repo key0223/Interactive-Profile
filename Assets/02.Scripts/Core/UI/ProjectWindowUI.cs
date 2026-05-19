@@ -31,6 +31,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     [SerializeField] private Button _closeButton;
     [SerializeField] private ProjectViewerUI _projectViewerUI;
     [SerializeField] private AboutMeViewerUI _aboutMeViewerUI;
+    [SerializeField] private SkillsWindowView _skillsWindowView;
     [SerializeField] private RectTransform _maximizeBoundsRoot;
     [SerializeField] private Vector2 _fallbackMaximizedSize = new Vector2(860f, 560f);
 
@@ -114,6 +115,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         if (_aboutMeViewerUI != null)
             _aboutMeViewerUI.Clear();
 
+        if (_skillsWindowView != null)
+            _skillsWindowView.Clear();
+
         if (_projectViewerUI != null)
             _projectViewerUI.Show(projectData);
 
@@ -130,8 +134,30 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         if (_projectViewerUI != null)
             _projectViewerUI.Clear();
 
+        if (_skillsWindowView != null)
+            _skillsWindowView.Clear();
+
         if (_aboutMeViewerUI != null)
             _aboutMeViewerUI.Initialize();
+
+        RequestFocus();
+    }
+
+    public void ShowSkills(string title, Sprite icon)
+    {
+        CurrentProjectData = null;
+        SetRootActive(true);
+        SetTitle(string.IsNullOrWhiteSpace(title) ? "SYSTEM.LOG" : title);
+        SetIcon(icon);
+
+        if (_projectViewerUI != null)
+            _projectViewerUI.Clear();
+
+        if (_aboutMeViewerUI != null)
+            _aboutMeViewerUI.Clear();
+
+        if (_skillsWindowView != null)
+            _skillsWindowView.Initialize();
 
         RequestFocus();
     }
@@ -158,6 +184,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
         if (_aboutMeViewerUI != null)
             _aboutMeViewerUI.Clear();
+
+        if (_skillsWindowView != null)
+            _skillsWindowView.Clear();
     }
 
     public void OnPointerDown(PointerEventData eventData)
@@ -191,6 +220,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
         if (_aboutMeViewerUI != null)
             _aboutMeViewerUI.ResetScrollToTop();
+
+        if (_skillsWindowView != null)
+            _skillsWindowView.ResetScrollToTop();
     }
 
     public void SetBoundsRoot(RectTransform boundsRoot)
