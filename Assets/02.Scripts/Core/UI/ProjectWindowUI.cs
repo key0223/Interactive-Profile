@@ -32,6 +32,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     [SerializeField] private ProjectViewerUI _projectViewerUI;
     [SerializeField] private AboutMeViewerUI _aboutMeViewerUI;
     [SerializeField] private SkillsWindowView _skillsWindowView;
+    [SerializeField] private ContactWindowView _contactWindowView;
     [SerializeField] private RectTransform _maximizeBoundsRoot;
     [SerializeField] private Vector2 _fallbackMaximizedSize = new Vector2(860f, 560f);
 
@@ -64,6 +65,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
         if (_windowType == DesktopWindowType.Projects && _projectViewerUI == null)
             Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} requires a {nameof(ProjectViewerUI)} reference.");
+
+        if (_windowType == DesktopWindowType.Contact && _contactWindowView == null)
+            Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} requires a {nameof(ContactWindowView)} reference.");
 
         if (_minimizeButton == null)
             Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} can minimize the project window when a minimize button reference is assigned.");
@@ -118,6 +122,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         if (_skillsWindowView != null)
             _skillsWindowView.Clear();
 
+        if (_contactWindowView != null)
+            _contactWindowView.Clear();
+
         if (_projectViewerUI != null)
             _projectViewerUI.Show(projectData);
 
@@ -136,6 +143,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
         if (_skillsWindowView != null)
             _skillsWindowView.Clear();
+
+        if (_contactWindowView != null)
+            _contactWindowView.Clear();
 
         if (_aboutMeViewerUI != null)
             _aboutMeViewerUI.Initialize();
@@ -156,8 +166,33 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         if (_aboutMeViewerUI != null)
             _aboutMeViewerUI.Clear();
 
+        if (_contactWindowView != null)
+            _contactWindowView.Clear();
+
         if (_skillsWindowView != null)
             _skillsWindowView.Initialize();
+
+        RequestFocus();
+    }
+
+    public void ShowContact(string title, Sprite icon)
+    {
+        CurrentProjectData = null;
+        SetRootActive(true);
+        SetTitle(string.IsNullOrWhiteSpace(title) ? "CONTACT.EXE" : title);
+        SetIcon(icon);
+
+        if (_projectViewerUI != null)
+            _projectViewerUI.Clear();
+
+        if (_aboutMeViewerUI != null)
+            _aboutMeViewerUI.Clear();
+
+        if (_skillsWindowView != null)
+            _skillsWindowView.Clear();
+
+        if (_contactWindowView != null)
+            _contactWindowView.Initialize();
 
         RequestFocus();
     }
@@ -187,6 +222,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
         if (_skillsWindowView != null)
             _skillsWindowView.Clear();
+
+        if (_contactWindowView != null)
+            _contactWindowView.Clear();
     }
 
     public void OnPointerDown(PointerEventData eventData)
@@ -223,6 +261,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
         if (_skillsWindowView != null)
             _skillsWindowView.ResetScrollToTop();
+
+        if (_contactWindowView != null)
+            _contactWindowView.ResetScrollToTop();
     }
 
     public void SetBoundsRoot(RectTransform boundsRoot)

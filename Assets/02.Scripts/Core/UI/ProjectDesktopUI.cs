@@ -26,11 +26,18 @@ public class ProjectDesktopUI : MonoBehaviour
     [SerializeField] private ProjectWindowUI _skillsWindowPrefab;
     [SerializeField] private string _skillsWindowTitle = "SYSTEM.LOG";
     [SerializeField] private Sprite _skillsWindowIcon;
+    [SerializeField] private bool _showContactDesktopIcon = true;
+    [SerializeField] private string _contactDesktopTitle = "CONTACT.EXE";
+    [SerializeField] private Sprite _contactDesktopIcon;
+    [SerializeField] private ProjectWindowUI _contactWindowPrefab;
+    [SerializeField] private string _contactWindowTitle = "CONTACT.EXE";
+    [SerializeField] private Sprite _contactWindowIcon;
     [SerializeField] private bool _openDefaultOnStart;
 
     private readonly List<ProjectDesktopIconUI> _icons = new List<ProjectDesktopIconUI>();
     private ProjectDesktopIconUI _aboutMeIcon;
     private ProjectDesktopIconUI _skillsIcon;
+    private ProjectDesktopIconUI _contactIcon;
     private ProjectDesktopIconUI _selectedIcon;
     private ProjectWindowManager _projectWindowManager;
     private ProjectData _selectedProjectData;
@@ -136,6 +143,19 @@ public class ProjectDesktopUI : MonoBehaviour
         _projectWindowManager.OpenSkillsWindow(_skillsWindowPrefab, _skillsWindowTitle, _skillsWindowIcon);
     }
 
+    public void OpenContactWindow()
+    {
+        SelectContactIcon();
+
+        if (_projectWindowManager == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} cannot open Contact without multi-window mode. Assign a project window prefab and window root.");
+            return;
+        }
+
+        _projectWindowManager.OpenContactWindow(_contactWindowPrefab, _contactWindowTitle, _contactWindowIcon);
+    }
+
     public void SelectProject(ProjectData projectData)
     {
         SelectProjectIcon(projectData, FindIconForProject(projectData));
@@ -171,6 +191,7 @@ public class ProjectDesktopUI : MonoBehaviour
 
         CreateAboutMeIcon();
         CreateSkillsIcon();
+        CreateContactIcon();
 
         if (_catalog == null || _catalog.Count == 0)
         {
@@ -216,6 +237,17 @@ public class ProjectDesktopUI : MonoBehaviour
         _icons.Add(icon);
     }
 
+    private void CreateContactIcon()
+    {
+        if (!_showContactDesktopIcon)
+            return;
+
+        ProjectDesktopIconUI icon = Instantiate(_iconPrefab, _iconRoot);
+        icon.Setup(_contactDesktopIcon, _contactDesktopTitle, SelectContactIcon, OpenContactWindow);
+        _contactIcon = icon;
+        _icons.Add(icon);
+    }
+
     private void ClearIcons()
     {
         for (int i = 0; i < _icons.Count; i++)
@@ -227,6 +259,7 @@ public class ProjectDesktopUI : MonoBehaviour
         _icons.Clear();
         _aboutMeIcon = null;
         _skillsIcon = null;
+        _contactIcon = null;
         _selectedIcon = null;
         _selectedProjectData = null;
     }
@@ -249,6 +282,13 @@ public class ProjectDesktopUI : MonoBehaviour
     {
         _selectedProjectData = null;
         _selectedIcon = _skillsIcon;
+        UpdateSelectionVisuals();
+    }
+
+    private void SelectContactIcon()
+    {
+        _selectedProjectData = null;
+        _selectedIcon = _contactIcon;
         UpdateSelectionVisuals();
     }
 
@@ -668,6 +708,42 @@ public sealed class ProjectWindowManager
         FocusWindow(window);
     }
 
+    public void OpenContactWindow(ProjectWindowUI contactWindowPrefab, string title, Sprite icon)
+    {
+        DesktopWindowId id = DesktopWindowId.ForType(DesktopWindowType.Contact);
+
+        if (_registeredWindows.TryGetValue(id, out ProjectWindowUI existingWindow) && existingWindow != null)
+        {
+            if (!existingWindow.IsVisible)
+                RestoreWindow(id);
+            else
+                existingWindow.ResetWindowScrollToTop();
+
+            FocusWindow(existingWindow);
+            return;
+        }
+
+        if (contactWindowPrefab == null || _windowRoot == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot open Contact without a Contact window prefab and window root.");
+            return;
+        }
+
+        ProjectWindowUI window = UnityEngine.Object.Instantiate(contactWindowPrefab, _windowRoot);
+        RectTransform boundsRoot = ResolveWindowBoundsRoot(window);
+        window.SetBoundsRoot(boundsRoot);
+        window.Closed += HandleWindowClosed;
+        window.FocusRequested += FocusWindow;
+        window.Minimized += HandleWindowMinimized;
+        window.Restored += HandleWindowRestored;
+
+        string resolvedTitle = ResolveContactWindowTitle(title);
+        RegisterWindow(window, id, resolvedTitle, icon);
+        ApplySpawnPosition(window);
+        window.ShowContact(resolvedTitle, icon);
+        FocusWindow(window);
+    }
+
     private void FocusWindow(ProjectWindowUI window)
     {
         if (window == null)
@@ -902,5 +978,13 @@ public sealed class ProjectWindowManager
             return title;
 
         return "SYSTEM.LOG";
+    }
+
+    private static string ResolveContactWindowTitle(string title)
+    {
+        if (!string.IsNullOrWhiteSpace(title))
+            return title;
+
+        return "CONTACT.EXE";
     }
 }
