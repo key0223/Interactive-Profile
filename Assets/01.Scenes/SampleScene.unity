@@ -2619,6 +2619,13 @@ MonoBehaviour:
     type: 3}
   _skillsWindowTitle: SYSTEM.LOG
   _skillsWindowIcon: {fileID: 21300000, guid: f60ea14244959b64588d1df1e250f49c, type: 3}
+  _showContactDesktopIcon: 1
+  _contactDesktopTitle: CONTACT.EXE
+  _contactDesktopIcon: {fileID: 0}
+  _contactWindowPrefab: {fileID: 3144021637577238876, guid: 01eee7fcd4d3bdd46a135e99e18e1633,
+    type: 3}
+  _contactWindowTitle: CONTACT.EXE
+  _contactWindowIcon: {fileID: 0}
   _openDefaultOnStart: 0
 --- !u!1 &1705677051
 GameObject:
