@@ -244,36 +244,39 @@ Taskbar button:
 
 ```text
 ProjectViewerRoot
-└── ScrollView
-    ├── Viewport
-    │   └── Content
-    │       ├── MainGrid
-    │       │   ├── LeftColumn
-    │       │   │   ├── ProjectImageFrame
-    │       │   │   │   └── IconImage
-    │       │   │   └── TechStackSection
-    │       │   │       └── TechStackText
-    │       │   └── RightColumn
-    │       │       ├── TitleText
-    │       │       ├── SubtitleText
-    │       │       ├── Divider
-    │       │       ├── RoleSection
-    │       │       ├── DescriptionSection
-    │       │       └── HighlightsSection
-    │       ├── BottomDivider
-    │       └── LinksRoot
-    │           ├── ProjectLinkButton
-    │           └── GithubLinkButton
-    └── VerticalScrollbar
+├── FixedHeaderArea
+│   ├── TitleText
+│   └── SubtitleRoot
+│       └── SubtitleText
+├── MainGrid
+│   ├── LeftColumn
+│   │   ├── ProjectImageFrame
+│   │   │   └── IconImage
+│   │   └── TechStackSection
+│   │       └── TechStackText
+│   └── RightColumn
+│       └── ScrollableContentArea
+│           └── ScrollView
+│               ├── Viewport
+│               │   └── Content
+│               │       ├── RoleSection
+│               │       ├── DescriptionSection
+│               │       └── HighlightsSection
+│               └── VerticalScrollbar
+└── FixedFooterArea
+    └── LinksRoot
+        ├── ProjectLinkButton
+        └── GithubLinkButton
 ```
 
 현재 `ProjectViewerUI` field만으로 가능한 것:
 
 - 좌측 큰 이미지 슬롯: `_iconImage`를 크게 배치.
 - 좌측 tech stack: `_techStackText`, `_techStackRoot`.
-- 우측 title/subtitle/role/description/highlights: 기존 TMP fields.
-- 하단 links/buttons: `_linksRoot`, `_projectLinkButton`, `_githubLinkButton`.
-- 전체 scroll reset: 기존 `_scrollRect`와 `ResetScrollToTop()`.
+- 고정 header: `_titleText`, `_subtitleText`, `_subtitleRoot`.
+- 우측 scroll content: `_roleText`, `_roleRoot`, `_descriptionText`, `_descriptionRoot`, `_highlightsText`, `_highlightsRoot`.
+- 고정 footer links/buttons: `_linksRoot`, `_projectLinkButton`, `_githubLinkButton`.
+- 우측 scroll reset: 기존 `_scrollRect`와 `ResetScrollToTop()`.
 
 권장 레이아웃 값:
 
@@ -283,8 +286,9 @@ ProjectViewerRoot
 - RightColumn flexible width.
 - ProjectImageFrame aspect ratio: 1:1 또는 4:3.
 - Tech stack은 image 아래에 배치하고, 항목은 bullet list 유지.
-- RightColumn title은 1~2줄, subtitle은 2줄 이내.
-- LinksRoot는 content 하단에 두되, 항상 ScrollView 안에 포함한다.
+- FixedHeaderArea의 title은 1~2줄, subtitle은 2줄 이내.
+- LinksRoot는 FixedFooterArea에 두고 ScrollView 밖에서 항상 보이게 한다.
+- ScrollView는 RightColumn의 Role/Description/Highlights만 담당한다.
 
 후속 데이터 확장 후보:
 
@@ -384,18 +388,19 @@ Unity Editor에서 사람이 직접 수행할 항목:
 5. `WindowLayer`가 `TaskbarRoot` 높이를 제외하도록 RectTransform bottom 값을 유지한다.
 6. `ProjectWindow` prefab/template의 frame Image, titlebar Image, button sprites/colors를 Windows 95/98 스타일로 교체한다.
 7. `ProjectWindowUI`의 `_iconImage`, `_titleBarText`, `_minimizeButton`, `_maximizeButton`, `_closeButton`, `_projectViewerUI` 연결이 유지되는지 확인한다.
-8. `ProjectViewerRoot` 내부를 ScrollView 기반 2-column Content로 재배치한다.
+8. `ProjectViewerRoot` 내부를 FixedHeaderArea, MainGrid, FixedFooterArea로 재배치한다.
 9. `_iconImage`를 좌측 `ProjectImageFrame` 안에 크게 배치한다.
 10. `_techStackText`를 좌측 column 하단에 배치한다.
-11. `_titleText`, `_subtitleText`, `_roleText`, `_descriptionText`, `_highlightsText`를 우측 column에 배치한다.
-12. `_linksRoot`와 link buttons를 content 하단에 배치한다.
-13. `_scrollRect`가 실제 ScrollView를 가리키는지 Inspector에서 확인한다.
-14. `TaskbarRoot`를 회색 3D bevel bar로 만들고 `StartButton`, `TaskbarButtonRoot`, `TrayRoot`를 배치한다.
-15. `ProjectTaskbarUI._buttonRoot`, `_buttonPrefab` 연결을 유지한다.
-16. `ProjectTaskbarButtonUI` prefab/template에 icon, title, active/minimized indicator가 연결되어 있는지 확인한다.
-17. 모든 TMP_Text에 pixel TMP Font Asset을 적용한다.
-18. `CRTOverlayLayer`의 scanline/vignette/noise Image는 raycast target을 끈다.
-19. Play Mode에서 project open, reopen, minimize, restore, close, Escape close, scroll reset을 확인한다.
+11. `_titleText`, `_subtitleText`를 FixedHeaderArea에 배치한다.
+12. `_roleText`, `_descriptionText`, `_highlightsText`를 우측 ScrollView Content 아래에 배치한다.
+13. `_linksRoot`와 link buttons를 FixedFooterArea에 배치한다.
+14. `_scrollRect`가 우측 Role/Description/Highlights 전용 ScrollView를 가리키는지 Inspector에서 확인한다.
+15. `TaskbarRoot`를 회색 3D bevel bar로 만들고 `StartButton`, `TaskbarButtonRoot`, `TrayRoot`를 배치한다.
+16. `ProjectTaskbarUI._buttonRoot`, `_buttonPrefab` 연결을 유지한다.
+17. `ProjectTaskbarButtonUI` prefab/template에 icon, title, active/minimized indicator가 연결되어 있는지 확인한다.
+18. 모든 TMP_Text에 pixel TMP Font Asset을 적용한다.
+19. `CRTOverlayLayer`의 scanline/vignette/noise Image는 raycast target을 끈다.
+20. Play Mode에서 project open, reopen, minimize, restore, close, Escape close, scroll reset을 확인한다.
 
 ## C# Change Assessment
 
@@ -406,6 +411,7 @@ Unity Editor에서 사람이 직접 수행할 항목:
 - desktop icon icon/text/selection은 `ProjectDesktopIconUI` 기존 fields로 충분하다.
 - ProjectWindow titlebar icon/title/buttons는 `ProjectWindowUI` 기존 fields로 충분하다.
 - ProjectViewer 2-column 배치는 기존 `_iconImage`, TMP fields, section roots, buttons, `_scrollRect`를 재배치하면 된다.
+- `_scrollRect`는 전체 viewer가 아니라 우측 Role/Description/Highlights 전용 ScrollView를 가리키면 된다.
 - taskbar runtime button icon/title/state는 `ProjectTaskbarButtonUI` 기존 fields로 충분하다.
 - CRT scanline/vignette/noise는 Image overlay로 처리 가능하다.
 
