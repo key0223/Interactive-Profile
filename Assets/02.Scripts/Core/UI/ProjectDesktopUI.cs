@@ -24,6 +24,7 @@ public class ProjectDesktopUI : MonoBehaviour
 
     private readonly List<ProjectDesktopIconUI> _icons = new List<ProjectDesktopIconUI>();
     private ProjectDesktopIconUI _aboutMeIcon;
+    private ProjectDesktopIconUI _selectedIcon;
     private ProjectWindowManager _projectWindowManager;
     private ProjectData _selectedProjectData;
     private bool _initialized;
@@ -94,8 +95,7 @@ public class ProjectDesktopUI : MonoBehaviour
             return;
         }
 
-        _selectedProjectData = projectData;
-        UpdateSelectionVisuals();
+        SelectProjectIcon(projectData, FindIconForProject(projectData));
 
         if (_projectWindowManager != null)
             _projectWindowManager.OpenWindow(projectData);
@@ -105,7 +105,7 @@ public class ProjectDesktopUI : MonoBehaviour
 
     public void OpenAboutMeWindow()
     {
-        ClearSelection();
+        SelectAboutMeIcon();
 
         if (_projectWindowManager == null)
         {
@@ -118,15 +118,7 @@ public class ProjectDesktopUI : MonoBehaviour
 
     public void SelectProject(ProjectData projectData)
     {
-        if (projectData == null)
-        {
-            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} received null {nameof(ProjectData)}.");
-            ClearSelection();
-            return;
-        }
-
-        _selectedProjectData = projectData;
-        UpdateSelectionVisuals();
+        SelectProjectIcon(projectData, FindIconForProject(projectData));
     }
 
     public void Clear()
@@ -172,7 +164,11 @@ public class ProjectDesktopUI : MonoBehaviour
                 continue;
 
             ProjectDesktopIconUI icon = Instantiate(_iconPrefab, _iconRoot);
-            icon.Setup(projectData, SelectProject, OpenProject);
+            ProjectDesktopIconUI capturedIcon = icon;
+            icon.Setup(
+                projectData,
+                selectedProject => SelectProjectIcon(selectedProject, capturedIcon),
+                OpenProject);
             _icons.Add(icon);
         }
     }
@@ -185,13 +181,11 @@ public class ProjectDesktopUI : MonoBehaviour
         ProjectDesktopIconUI icon = Instantiate(_iconPrefab, _iconRoot);
         icon.Setup(_aboutMeDesktopIcon, _aboutMeDesktopTitle, SelectAboutMeIcon, OpenAboutMeWindow);
         _aboutMeIcon = icon;
+        _icons.Add(icon);
     }
 
     private void ClearIcons()
     {
-        if (_aboutMeIcon != null)
-            Destroy(_aboutMeIcon.gameObject);
-
         for (int i = 0; i < _icons.Count; i++)
         {
             if (_icons[i] != null)
@@ -200,25 +194,36 @@ public class ProjectDesktopUI : MonoBehaviour
 
         _icons.Clear();
         _aboutMeIcon = null;
+        _selectedIcon = null;
         _selectedProjectData = null;
     }
 
     private void ClearSelection()
     {
         _selectedProjectData = null;
-        if (_aboutMeIcon != null)
-            _aboutMeIcon.SetSelected(false);
-
+        _selectedIcon = null;
         UpdateSelectionVisuals();
     }
 
     private void SelectAboutMeIcon()
     {
         _selectedProjectData = null;
+        _selectedIcon = _aboutMeIcon;
         UpdateSelectionVisuals();
+    }
 
-        if (_aboutMeIcon != null)
-            _aboutMeIcon.SetSelected(true);
+    private void SelectProjectIcon(ProjectData projectData, ProjectDesktopIconUI icon)
+    {
+        if (projectData == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} received null {nameof(ProjectData)}.");
+            ClearSelection();
+            return;
+        }
+
+        _selectedProjectData = projectData;
+        _selectedIcon = icon;
+        UpdateSelectionVisuals();
     }
 
     private void UpdateSelectionVisuals()
@@ -228,8 +233,22 @@ public class ProjectDesktopUI : MonoBehaviour
             if (_icons[i] == null)
                 continue;
 
-            _icons[i].SetSelected(_icons[i].ProjectData == _selectedProjectData);
+            _icons[i].SetSelected(_icons[i] == _selectedIcon);
         }
+    }
+
+    private ProjectDesktopIconUI FindIconForProject(ProjectData projectData)
+    {
+        if (projectData == null)
+            return null;
+
+        for (int i = 0; i < _icons.Count; i++)
+        {
+            if (_icons[i] != null && _icons[i].ProjectData == projectData)
+                return _icons[i];
+        }
+
+        return null;
     }
 }
 

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,34 +8,36 @@ public class AboutMeViewerUI : MonoBehaviour
     private const string DefaultDocumentText =
         "********************************************************\n" +
         "*                                                      *\n" +
-        "*                  A B O U T   M E                    *\n" +
         "*                    README.TXT                       *\n" +
         "*                                                      *\n" +
         "********************************************************\n" +
         "\n" +
-        "PROFILE\n" +
+        "> PROFILE\n" +
         "--------------------------------------------------------\n" +
-        "Name      : Your Name\n" +
-        "Role      : Unity / Interactive UI Developer\n" +
-        "Location  : Portfolio Desktop\n" +
+        "이름      : 길은영\n" +
+        "역할      : 클라이언트\n" +
+        "위치      : 경산\n" +
         "\n" +
-        "SUMMARY\n" +
+        "> SUMMARY\n" +
         "--------------------------------------------------------\n" +
-        "I build small, polished interactive systems with a focus\n" +
-        "on readable UI, clear feedback, and maintainable code.\n" +
+        "이전에는 전혀 다른 분야의 일을 했지만,\n쉬는 기간 동안 우연히 프로그래밍을 접하면서\n개발 공부를 시작하게 되었습니다.\n" +
+        "처음에는 게임을 플레이하는 것을 좋아했지만,\n점차 기능이 동작하는 원리를 이해하고\n직접 시스템을 구현하는 과정 자체에 더 큰\n흥미를 느끼게 되었습니다.\n" +
+        "특히 2023년 게임 개발 멘토링 과정에서\n발표 직전까지 모바일 빌드 오류를 해결했던 경험은\n개발자로서의 방향을 확신하게 된 계기였습니다.\n" +
+        "발표 장소로 이동하는 중에도 계속 로그를 확인하고,\n원인을 수정하며 빌드를 반복했습니다.\n" +
+        "결국 발표 직전에 빌드에 성공했고,\n직접 만든 결과물을 실행해 보여줄 수 있었습니다.\n" +
+        "그 경험 이후 저는 게임을 플레이하는 것만큼이나,\n시스템을 구현하고 문제를 해결하며 결과물을\n완성해가는 과정을 즐긴다는 것을 확신하게 되었습니다.\n" +
         "\n" +
-        "PHILOSOPHY\n" +
+        "> DEVELOPMENT_PHILOSOPHY\n" +
         "--------------------------------------------------------\n" +
-        "Good interfaces should feel simple on the surface and\n" +
-        "predictable underneath. I prefer small components, clear\n" +
-        "state ownership, and interactions that are easy to test.\n" +
+        "프로젝트 규모가 커질수록 기능 간 의존성과\n수정 범위 역시 함께 커진다고 생각합니다.\n" +
+        "그래서 단순히 기능만 구현하는 것이 아니라,\n유지보수성과 확장성, 데이터 흐름까지 함께\n고려하는 방향으로 개발하려 노력하고 있습니다.\n" +
+        "최근에는 특히 아래와 같은 방향에 관심이 많습니다.\n" +
         "\n" +
-        "INTERESTS\n" +
-        "--------------------------------------------------------\n" +
-        "- Retro desktop interfaces\n" +
-        "- Unity UI and interaction design\n" +
-        "- Tooling for creative workflows\n" +
-        "- Game-like portfolio experiences\n" +
+        "- 데이터 기반 구조\n" +
+        "- 재사용 가능한 게임플레이 시스템\n" +
+        "- 확장 가능한 프로젝트 설계\n" +
+        "- 반복 작업을 줄이는 워크플로우\n" +
+        "새로운 콘텐츠를 추가할 때\n기존 코드를 최대한 수정하지 않아도 되는 구조를\n좋은 시스템이라고 생각합니다.\n" +
         "\n" +
         "TECH STACK\n" +
         "--------------------------------------------------------\n" +

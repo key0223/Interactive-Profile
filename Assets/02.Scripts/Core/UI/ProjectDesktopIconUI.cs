@@ -15,10 +15,8 @@ public class ProjectDesktopIconUI : MonoBehaviour
     [SerializeField] private float _doubleClickThreshold = 0.35f;
 
     private ProjectData _projectData;
-    private Action<ProjectData> _onSelected;
-    private Action<ProjectData> _onOpened;
-    private Action _onAppSelected;
-    private Action _onAppOpened;
+    private Action _onSelected;
+    private Action _onOpened;
     private float _lastClickTime = -1f;
 
     public ProjectData ProjectData => _projectData;
@@ -35,7 +33,10 @@ public class ProjectDesktopIconUI : MonoBehaviour
     private void OnEnable()
     {
         if (_button != null)
+        {
+            _button.onClick.RemoveListener(HandleClicked);
             _button.onClick.AddListener(HandleClicked);
+        }
     }
 
     private void OnDisable()
@@ -52,10 +53,8 @@ public class ProjectDesktopIconUI : MonoBehaviour
     public void Setup(ProjectData projectData, Action<ProjectData> onSelected, Action<ProjectData> onOpened)
     {
         _projectData = projectData;
-        _onSelected = onSelected;
-        _onOpened = onOpened;
-        _onAppSelected = null;
-        _onAppOpened = null;
+        _onSelected = () => onSelected?.Invoke(projectData);
+        _onOpened = () => onOpened?.Invoke(projectData);
         _lastClickTime = -1f;
 
         if (_titleText != null)
@@ -68,16 +67,14 @@ public class ProjectDesktopIconUI : MonoBehaviour
 
     public void Setup(Sprite icon, string title, Action onOpen)
     {
-        Setup(icon, title, onOpen, onOpen);
+        Setup(icon, title, null, onOpen);
     }
 
     public void Setup(Sprite icon, string title, Action onSelected, Action onOpened)
     {
         _projectData = null;
-        _onSelected = null;
-        _onOpened = null;
-        _onAppSelected = onSelected;
-        _onAppOpened = onOpened;
+        _onSelected = onSelected;
+        _onOpened = onOpened;
         _lastClickTime = -1f;
 
         if (_titleText != null)
@@ -99,20 +96,10 @@ public class ProjectDesktopIconUI : MonoBehaviour
         bool isDoubleClick = _lastClickTime >= 0f && clickTime - _lastClickTime <= _doubleClickThreshold;
         _lastClickTime = isDoubleClick ? -1f : clickTime;
 
-        if (_projectData != null)
-        {
-            _onSelected?.Invoke(_projectData);
-
-            if (isDoubleClick)
-                _onOpened?.Invoke(_projectData);
-
-            return;
-        }
-
-        _onAppSelected?.Invoke();
+        _onSelected?.Invoke();
 
         if (isDoubleClick)
-            _onAppOpened?.Invoke();
+            _onOpened?.Invoke();
     }
 
     private void ApplyIcon(Sprite icon)
