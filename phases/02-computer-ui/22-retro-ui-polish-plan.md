@@ -243,51 +243,56 @@ Taskbar button:
 목표 구조:
 
 ```text
-ProjectViewerRoot
-├── FixedHeaderArea
-│   ├── TitleText
-│   └── SubtitleRoot
-│       └── SubtitleText
-├── MainGrid
-│   ├── LeftColumn
-│   │   ├── ProjectImageFrame
-│   │   │   └── IconImage
-│   │   └── TechStackSection
-│   │       └── TechStackText
-│   └── RightColumn
-│       └── ScrollableContentArea
-│           └── ScrollView
-│               ├── Viewport
-│               │   └── Content
-│               │       ├── RoleSection
-│               │       ├── DescriptionSection
-│               │       └── HighlightsSection
-│               └── VerticalScrollbar
-└── FixedFooterArea
-    └── LinksRoot
-        ├── ProjectLinkButton
-        └── GithubLinkButton
+ProjectWindow
+├── TitleBar
+├── WindowBody
+│   ├── MainArea
+│   │   ├── LeftColumn
+│   │   │   ├── ProjectImageFrame
+│   │   │   │   └── IconImage
+│   │   │   └── TechStackSection
+│   │   │       └── TechStackText
+│   │   └── RightColumn
+│   │       ├── FixedTitleArea
+│   │       │   ├── TitleText
+│   │       │   └── SubtitleRoot
+│   │       │       └── SubtitleText
+│   │       └── ScrollView
+│   │           ├── Viewport
+│   │           │   └── Content
+│   │           │       ├── RoleSection
+│   │           │       ├── DescriptionSection
+│   │           │       └── HighlightsSection
+│   │           └── VerticalScrollbar
+│   └── BottomLinksArea
+│       └── LinksRoot
+│           ├── ProjectLinkButton
+│           └── GithubLinkButton
+├── Footer
+├── Background
+└── ResizeHandle
 ```
 
 현재 `ProjectViewerUI` field만으로 가능한 것:
 
 - 좌측 큰 이미지 슬롯: `_iconImage`를 크게 배치.
 - 좌측 tech stack: `_techStackText`, `_techStackRoot`.
-- 고정 header: `_titleText`, `_subtitleText`, `_subtitleRoot`.
+- 오른쪽 column 상단 고정 title 영역: `_titleText`, `_subtitleText`, `_subtitleRoot`.
 - 우측 scroll content: `_roleText`, `_roleRoot`, `_descriptionText`, `_descriptionRoot`, `_highlightsText`, `_highlightsRoot`.
-- 고정 footer links/buttons: `_linksRoot`, `_projectLinkButton`, `_githubLinkButton`.
+- 하단 고정 links/buttons: `_linksRoot`, `_projectLinkButton`, `_githubLinkButton`.
 - 우측 scroll reset: 기존 `_scrollRect`와 `ResetScrollToTop()`.
 
 권장 레이아웃 값:
 
 - Window body padding: 12~16.
-- MainGrid horizontal spacing: 18~28.
+- WindowBody는 MainArea와 BottomLinksArea만 세로로 배치한다.
+- MainArea horizontal spacing: 18~28.
 - LeftColumn width: 260~320.
 - RightColumn flexible width.
 - ProjectImageFrame aspect ratio: 1:1 또는 4:3.
 - Tech stack은 image 아래에 배치하고, 항목은 bullet list 유지.
-- FixedHeaderArea의 title은 1~2줄, subtitle은 2줄 이내.
-- LinksRoot는 FixedFooterArea에 두고 ScrollView 밖에서 항상 보이게 한다.
+- FixedTitleArea는 RightColumn 안에 두고 title은 1~2줄, subtitle은 2줄 이내로 제한한다.
+- LinksRoot는 BottomLinksArea에 두고 ScrollView 밖에서 항상 보이게 한다.
 - ScrollView는 RightColumn의 Role/Description/Highlights만 담당한다.
 
 후속 데이터 확장 후보:
@@ -388,13 +393,13 @@ Unity Editor에서 사람이 직접 수행할 항목:
 5. `WindowLayer`가 `TaskbarRoot` 높이를 제외하도록 RectTransform bottom 값을 유지한다.
 6. `ProjectWindow` prefab/template의 frame Image, titlebar Image, button sprites/colors를 Windows 95/98 스타일로 교체한다.
 7. `ProjectWindowUI`의 `_iconImage`, `_titleBarText`, `_minimizeButton`, `_maximizeButton`, `_closeButton`, `_projectViewerUI` 연결이 유지되는지 확인한다.
-8. `ProjectViewerRoot` 내부를 FixedHeaderArea, MainGrid, FixedFooterArea로 재배치한다.
+8. `WindowBody` 내부를 `MainArea`, `BottomLinksArea` 중심으로 재배치한다.
 9. `_iconImage`를 좌측 `ProjectImageFrame` 안에 크게 배치한다.
 10. `_techStackText`를 좌측 column 하단에 배치한다.
-11. `_titleText`, `_subtitleText`를 FixedHeaderArea에 배치한다.
+11. `_titleText`, `_subtitleText`를 `RightColumn/FixedTitleArea`에 배치한다.
 12. `_roleText`, `_descriptionText`, `_highlightsText`를 우측 ScrollView Content 아래에 배치한다.
-13. `_linksRoot`와 link buttons를 FixedFooterArea에 배치한다.
-14. `_scrollRect`가 우측 Role/Description/Highlights 전용 ScrollView를 가리키는지 Inspector에서 확인한다.
+13. `_linksRoot`와 link buttons를 `WindowBody/BottomLinksArea`에 배치한다.
+14. `_scrollRect`가 `RightColumn/ScrollView`를 가리키는지 Inspector에서 확인한다.
 15. `TaskbarRoot`를 회색 3D bevel bar로 만들고 `StartButton`, `TaskbarButtonRoot`, `TrayRoot`를 배치한다.
 16. `ProjectTaskbarUI._buttonRoot`, `_buttonPrefab` 연결을 유지한다.
 17. `ProjectTaskbarButtonUI` prefab/template에 icon, title, active/minimized indicator가 연결되어 있는지 확인한다.

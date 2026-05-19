@@ -1,4 +1,4 @@
-# Step: Project Viewer Fixed Header And Partial Scroll Layout
+# Step: Project Viewer Reference Two Column Partial Scroll Layout
 
 ## Status
 
@@ -6,16 +6,16 @@ pending
 
 ## Goal
 
-`ProjectWindow` 내부 `ProjectViewerUI`를 전체 ScrollView 방식에서 fixed 영역과 partial scroll 영역으로 분리한다. 제목, 부제, 좌측 이미지/tech stack, links는 항상 보이고, 우측의 role, description, highlights만 스크롤되도록 Unity Editor hierarchy와 layout 기준을 정의한다.
+`ProjectWindow` 내부를 레퍼런스 이미지처럼 좌우 2-column 레이아웃으로 구성한다. 왼쪽 column은 project image/icon과 tech stack을 고정 표시하고, 오른쪽 column은 상단 title/subtitle을 고정 표시한 뒤 role, description, highlights만 ScrollView로 스크롤한다. links는 window body 하단에 고정한다.
 
 ## Scope
 
 - 포함:
-  - `ProjectViewerUI` fixed 영역과 scroll 영역 책임 분리.
-  - `ScrollRect` 담당 범위 축소 기준.
-  - 현재 serialized field 유지 기준.
-  - 필요한 Inspector 재연결 목록.
-  - 긴 content에서 layout이 깨지지 않는 RectTransform/Layout Group 기준.
+  - 레퍼런스형 `ProjectWindow/WindowBody` hierarchy 기준.
+  - fixed 영역과 scroll 영역 분리.
+  - `ScrollRect` 담당 범위를 `RightColumn/ScrollView`로 제한.
+  - 기존 `ProjectViewerUI` serialized field 유지 기준.
+  - Unity Editor에서 이동해야 할 오브젝트와 Layout Group 설정.
   - 기존 scroll reset 정책 유지 기준.
 - 제외:
   - C# 코드 수정.
@@ -26,11 +26,11 @@ pending
 
 ## Tasks
 
-- `ProjectViewerUI._scrollRect`가 전체 viewer가 아니라 우측 scroll content 전용 ScrollRect를 가리키도록 기준을 변경한다.
-- fixed 영역에 title, subtitle, left column, links를 배치한다.
-- scroll 영역에는 role, description, highlights section만 배치한다.
-- 기존 `_iconImage`, `_techStackText`, `_titleText`, `_subtitleText`, `_roleText`, `_descriptionText`, `_highlightsText`, `_linksRoot`, button fields를 유지한다.
-- `ScrollRect.content` layout rebuild 후 top reset이 계속 동작하는지 확인한다.
+- 전역 `ProjectHeader` 또는 `FixedHeaderArea` 구조를 사용하지 않는 기준으로 문서를 정리한다.
+- `TitleText`와 `SubtitleText`를 `RightColumn/FixedTitleArea`로 이동하는 기준을 작성한다.
+- `LeftColumn` 전체와 `BottomLinksArea`를 ScrollRect 밖의 fixed 영역으로 둔다.
+- `RoleSection`, `DescriptionSection`, `HighlightsSection`만 `RightColumn/ScrollView/Viewport/Content` 아래에 둔다.
+- `_scrollRect`를 전체 viewer나 window body가 아니라 `RightColumn/ScrollView`에 연결하도록 명시한다.
 
 ## Guardrails
 
@@ -38,23 +38,24 @@ pending
 - `ProjectWindowUI`, `ProjectDesktopUI`, `ProjectTaskbarUI` 흐름은 변경하지 않는다.
 - `.unity`, `.prefab`, `.asset`, `.meta` 파일은 직접 텍스트로 수정하지 않는다.
 - ScrollView를 중첩하지 않는다.
-- 전체 `ProjectViewerRoot`에 ScrollRect를 두지 않는다.
+- 전체 `ProjectViewerRoot`, `WindowBody`, `MainArea`를 ScrollRect 대상으로 설명하지 않는다.
+- `ProjectHeader`, `FixedHeaderArea`를 `WindowBody` 상단에 별도로 만들지 않는다.
 - `LinksRoot`를 ScrollView Content 아래에 두지 않는다.
 - `LeftColumn`을 ScrollView Content 아래에 두지 않는다.
-- `_scrollRect`는 반드시 `ScrollableContentArea/ScrollView`를 가리킨다.
+- `_scrollRect`는 반드시 `RightColumn/ScrollView`를 가리킨다.
 
 ## Acceptance Criteria
 
-- 이 문서가 fixed 영역과 scroll 영역을 명확히 구분한다.
+- 이 문서는 전역 `ProjectHeader` 또는 `FixedHeaderArea`를 사용하지 않는다.
+- `TitleText`와 `SubtitleText`가 `RightColumn/FixedTitleArea`에 배치된다.
 - `RoleSection`, `DescriptionSection`, `HighlightsSection`만 ScrollRect content 아래에 배치된다.
-- `Project title`, `Subtitle`, `LeftColumn`, `LinksRoot`는 ScrollRect 밖에 배치된다.
-- 기존 `ProjectViewerUI` serialized field를 유지하는 연결 기준이 포함된다.
-- C# 수정 없이 기존 scroll reset 정책을 유지할 수 있음이 기록된다.
-- Unity Editor에서 직접 수정해야 할 항목이 분리된다.
+- `LeftColumn`과 `BottomLinksArea`는 ScrollRect 밖에 배치된다.
+- C# 수정 없이 기존 scroll reset 정책을 `RightColumn/ScrollView`에만 적용할 수 있음이 기록된다.
+- Unity Editor에서 직접 이동해야 할 오브젝트 목록이 포함된다.
 
 ## Current Code Assessment
 
-현재 `ProjectViewerUI`는 다음 serialized field를 가진다.
+현재 `ProjectViewerUI`는 field의 hierarchy 위치를 가정하지 않고 연결된 TMP/Image/Button만 갱신한다.
 
 ```text
 _iconImage
@@ -78,91 +79,87 @@ _githubLinkButtonText
 _scrollRect
 ```
 
-현재 코드 변경 없이 가능한 이유:
+C# 변경 없이 가능한 이유:
 
-- `ProjectViewerUI.Show(ProjectData)`는 field 위치를 가정하지 않고 연결된 TMP/Image/Button만 갱신한다.
-- `_scrollRect`는 표시 데이터와 독립적으로 scroll reset 대상만 가리킨다.
-- 따라서 `_scrollRect`를 새 우측 본문 전용 ScrollRect로 재연결하면 reset 정책은 그대로 유지된다.
-- `ResetScrollToTop()`은 `Canvas.ForceUpdateCanvases()`, `LayoutRebuilder.ForceRebuildLayoutImmediate(_scrollRect.content)`, `verticalNormalizedPosition = 1f`를 적용하므로 새 scroll content에도 그대로 유효하다.
+- `_titleText`와 `_subtitleText`는 `RightColumn/FixedTitleArea`로 옮겨도 `ProjectViewerUI.Show(ProjectData)`가 그대로 갱신한다.
+- `_iconImage`와 `_techStackText`는 `LeftColumn`으로 옮겨도 기존 binding이 유지된다.
+- `_roleText`, `_descriptionText`, `_highlightsText`는 `RightColumn/ScrollView/Viewport/Content` 아래로 옮겨도 기존 binding이 유지된다.
+- `_linksRoot`와 button fields는 `BottomLinksArea`로 옮겨도 기존 URL button 표시/숨김이 유지된다.
+- `_scrollRect`만 `RightColumn/ScrollView`로 명시 연결하면 기존 reset 정책이 우측 본문에만 적용된다.
 
 주의:
 
 - `Awake()`에서 `_scrollRect`가 비어 있으면 `GetComponentInChildren<ScrollRect>(true)`로 fallback 한다.
-- 새 hierarchy에 ScrollRect가 1개만 있으면 안전하다.
-- legacy outer ScrollView가 남아 있거나 ScrollRect가 2개 이상이면 `_scrollRect`를 Inspector에서 명시 연결해야 한다.
+- 레퍼런스형 구조에는 ScrollRect가 1개만 있어야 한다.
+- legacy outer ScrollView가 남아 있거나 ScrollRect가 2개 이상이면 `_scrollRect`를 Inspector에서 반드시 명시 연결한다.
 
 ## Recommended Hierarchy
 
-권장 구조:
+권장 최종 구조:
 
 ```text
-ProjectViewerRoot
-├── FixedHeaderArea
-│   ├── TitleText
-│   └── SubtitleRoot
-│       └── SubtitleText
-├── MainArea
-│   ├── LeftColumn
-│   │   ├── ProjectImageFrame
-│   │   │   └── IconImage
-│   │   └── TechStackSection
-│   │       ├── TechStackLabelText
-│   │       └── TechStackText
-│   └── RightColumn
-│       └── ScrollableContentArea
-│           └── ScrollView
-│               ├── Viewport
-│               │   └── Content
-│               │       ├── RoleSection
-│               │       │   ├── RoleLabelText
-│               │       │   └── RoleText
-│               │       ├── DescriptionSection
-│               │       │   ├── DescriptionLabelText
-│               │       │   └── DescriptionText
-│               │       └── HighlightsSection
-│               │           ├── HighlightsLabelText
-│               │           └── HighlightsText
-│               └── VerticalScrollbar
-└── FixedFooterArea
-    └── LinksRoot
-        ├── ProjectLinkButton
-        └── GithubLinkButton
+ProjectWindow
+├── TitleBar
+├── WindowBody
+│   ├── MainArea
+│   │   ├── LeftColumn
+│   │   │   ├── ProjectImageFrame
+│   │   │   │   └── IconImage
+│   │   │   └── TechStackSection
+│   │   │       ├── TechStackLabelText
+│   │   │       └── TechStackText
+│   │   └── RightColumn
+│   │       ├── FixedTitleArea
+│   │       │   ├── TitleText
+│   │       │   └── SubtitleRoot
+│   │       │       └── SubtitleText
+│   │       └── ScrollView
+│   │           ├── Viewport
+│   │           │   └── Content
+│   │           │       ├── RoleSection
+│   │           │       │   ├── RoleLabelText
+│   │           │       │   └── RoleText
+│   │           │       ├── DescriptionSection
+│   │           │       │   ├── DescriptionLabelText
+│   │           │       │   └── DescriptionText
+│   │           │       └── HighlightsSection
+│   │           │           ├── HighlightsLabelText
+│   │           │           └── HighlightsText
+│   │           └── VerticalScrollbar
+│   └── BottomLinksArea
+│       └── LinksRoot
+│           ├── ProjectLinkButton
+│           └── GithubLinkButton
+├── Footer
+├── Background
+└── ResizeHandle
 ```
 
-Optional:
-
-```text
-ProjectViewerRoot
-├── FixedHeaderArea
-├── MainArea
-└── FixedFooterArea
-```
-
-`FixedFooterArea`는 window body 하단에 고정한다. `LinksRoot`가 비어 있을 때 `ProjectViewerUI.UpdateLinkButtons()`가 `_linksRoot.SetActive(false)`를 호출하므로 footer height가 어색하면 `FixedFooterArea`에 `Layout Element Preferred Height`를 낮게 잡거나, `_linksRoot`만 비활성화되도록 내부 padding을 조정한다.
+`ProjectViewerUI` 컴포넌트는 `WindowBody` 또는 `WindowBody` 안의 controller용 root에 붙일 수 있다. 중요한 기준은 field 연결 대상이며, `ProjectViewerUI` GameObject 자체가 시각 hierarchy의 특정 위치에 있을 필요는 없다.
 
 ## Fixed Areas
 
 고정 영역:
 
-- `FixedHeaderArea`
-  - `_titleText`
-  - `_subtitleRoot`
-  - `_subtitleText`
 - `LeftColumn`
   - `_iconImage`
   - `_techStackRoot`
   - `_techStackText`
-- `FixedFooterArea`
+- `RightColumn/FixedTitleArea`
+  - `_titleText`
+  - `_subtitleRoot`
+  - `_subtitleText`
+- `BottomLinksArea`
   - `_linksRoot`
   - `_projectLinkButton`
   - `_githubLinkButton`
 
 고정 정책:
 
-- title/subtitle은 window body 상단에서 항상 보인다.
-- left column은 main area 왼쪽에서 항상 보인다.
-- links는 window body 하단에서 항상 보인다.
-- fixed 영역은 ScrollRect Content의 preferred height 변화에 밀려 사라지면 안 된다.
+- `LeftColumn`은 `MainArea` 왼쪽에서 항상 보인다.
+- project title/subtitle은 `WindowBody` 전체 상단이 아니라 `RightColumn` 상단에만 고정된다.
+- links는 `MainArea` 아래 `BottomLinksArea`에 고정된다.
+- fixed 영역은 `ScrollView Content`의 preferred height 변화에 밀려 사라지면 안 된다.
 
 ## Scroll Area
 
@@ -178,7 +175,7 @@ ProjectViewerRoot
 ScrollRect 기준:
 
 ```text
-ProjectViewerUI._scrollRect: RightColumn/ScrollableContentArea/ScrollView
+ProjectViewerUI._scrollRect: WindowBody/MainArea/RightColumn/ScrollView
 ScrollRect.viewport: ScrollView/Viewport
 ScrollRect.content: ScrollView/Viewport/Content
 ScrollRect.verticalScrollbar: ScrollView/VerticalScrollbar
@@ -192,11 +189,11 @@ ScrollRect 설정:
 - Inertia: off 권장.
 - Viewport: `RectMask2D`.
 - Content: `Vertical Layout Group` + `Content Size Fitter Vertical Fit = Preferred Size`.
-- Scrollbar visibility: Auto Hide 또는 Permanent 중 선택. Windows 95/98 느낌은 Permanent가 더 명확하다.
+- Scrollbar visibility: Windows 95/98 느낌을 위해 Permanent 권장. 공간이 부족하면 Auto Hide.
 
 ## Layout Component Policy
 
-### ProjectViewerRoot
+### WindowBody
 
 권장 component:
 
@@ -206,27 +203,13 @@ ScrollRect 설정:
 설정:
 
 - Padding: left/right 12~16, top 10~14, bottom 10~14.
-- Spacing: 8~10.
+- Spacing: 10~14.
 - Child Control Width: on.
 - Child Control Height: on.
 - Child Force Expand Width: on.
 - Child Force Expand Height: off.
 - Content Size Fitter는 붙이지 않는다.
-
-### FixedHeaderArea
-
-권장 component:
-
-- `Vertical Layout Group`
-- `Layout Element`
-
-설정:
-
-- Flexible Height: 0.
-- Preferred Height: 56~76.
-- title은 1줄 또는 최대 2줄.
-- subtitle은 1~2줄.
-- overflow는 Ellipsis 또는 Truncate.
+- 자식은 `MainArea`, `BottomLinksArea`만 둔다.
 
 ### MainArea
 
@@ -238,12 +221,13 @@ ScrollRect 설정:
 설정:
 
 - Flexible Height: 1.
-- Min Height: 240.
+- Min Height: 260.
 - Spacing: 18~28.
 - Child Control Width: on.
 - Child Control Height: on.
 - Child Force Expand Width: off.
 - Child Force Expand Height: on.
+- 자식은 `LeftColumn`, `RightColumn`만 둔다.
 
 ### LeftColumn
 
@@ -254,10 +238,11 @@ ScrollRect 설정:
 
 설정:
 
-- Min Width: 220.
 - Preferred Width: 260~320.
+- Min Width: 220.
 - Flexible Width: 0.
 - Flexible Height: 1.
+- Spacing: 12~16.
 - ProjectImageFrame aspect ratio: 1:1 또는 4:3.
 - TechStackSection은 image 아래 고정.
 - 긴 tech stack은 항목 수를 줄이는 콘텐츠 정책을 우선한다. LeftColumn 내부에 별도 ScrollRect를 만들지 않는다.
@@ -273,34 +258,74 @@ ScrollRect 설정:
 
 - Flexible Width: 1.
 - Flexible Height: 1.
-- Child Force Expand Height: on.
-- RightColumn 안에는 `ScrollableContentArea` 하나만 둔다.
+- Spacing: 10~14.
+- Child Control Width: on.
+- Child Control Height: on.
+- Child Force Expand Width: on.
+- Child Force Expand Height: off.
+- 자식은 `FixedTitleArea`, `ScrollView`만 둔다.
 
-### ScrollableContentArea
-
-권장 component:
-
-- `Layout Element`
-
-설정:
-
-- Flexible Width: 1.
-- Flexible Height: 1.
-- Min Height: 180.
-- Preferred Height: 260~340.
-
-### FixedFooterArea
+### FixedTitleArea
 
 권장 component:
 
-- `Horizontal Layout Group` 또는 `Vertical Layout Group`
+- `Vertical Layout Group`
 - `Layout Element`
 
 설정:
 
 - Flexible Height: 0.
+- Preferred Height: 64~92.
+- TitleText는 1줄 또는 최대 2줄.
+- SubtitleText는 1~2줄.
+- overflow는 Ellipsis 또는 Truncate.
+- 이 영역은 `RightColumn` 안에만 존재한다.
+
+### ScrollView
+
+권장 component:
+
+- `ScrollRect`
+- `Layout Element`
+
+설정:
+
+- Flexible Height: 1.
+- Min Height: 180.
+- Preferred Height: 260~340.
+- Horizontal off, Vertical on.
+- Content Size Fitter는 ScrollView에 붙이지 않는다.
+
+### ScrollView Content
+
+권장 component:
+
+- `Vertical Layout Group`
+- `Content Size Fitter`
+
+설정:
+
+- Vertical Fit: Preferred Size.
+- Horizontal Fit: Unconstrained.
+- Child Control Width: on.
+- Child Control Height: on.
+- Child Force Expand Width: on.
+- Child Force Expand Height: off.
+- Padding right는 scrollbar와 텍스트가 겹치지 않도록 16~24.
+
+### BottomLinksArea
+
+권장 component:
+
+- `Layout Element`
+- 내부 `LinksRoot`에는 `Horizontal Layout Group`
+
+설정:
+
+- Flexible Height: 0.
 - Preferred Height: 54~70.
-- link button 높이: 34~42.
+- LinksRoot spacing: 12~16.
+- link button height: 34~42.
 - link button은 Windows button bevel 스타일.
 
 ## Field Mapping
@@ -309,65 +334,68 @@ Inspector 연결 기준:
 
 ```text
 ProjectViewerUI
-├── _iconImage: Fixed/MainArea/LeftColumn/ProjectImageFrame/IconImage
-├── _titleText: FixedHeaderArea/TitleText
-├── _subtitleRoot: FixedHeaderArea/SubtitleRoot
-├── _subtitleText: FixedHeaderArea/SubtitleRoot/SubtitleText
-├── _roleRoot: RightColumn/ScrollableContentArea/ScrollView/Viewport/Content/RoleSection
+├── _iconImage: WindowBody/MainArea/LeftColumn/ProjectImageFrame/IconImage
+├── _titleText: WindowBody/MainArea/RightColumn/FixedTitleArea/TitleText
+├── _subtitleRoot: WindowBody/MainArea/RightColumn/FixedTitleArea/SubtitleRoot
+├── _subtitleText: WindowBody/MainArea/RightColumn/FixedTitleArea/SubtitleRoot/SubtitleText
+├── _roleRoot: WindowBody/MainArea/RightColumn/ScrollView/Viewport/Content/RoleSection
 ├── _roleText: RoleSection/RoleText
 ├── _descriptionRoot: Content/DescriptionSection
 ├── _descriptionText: DescriptionSection/DescriptionText
-├── _techStackRoot: LeftColumn/TechStackSection
-├── _techStackText: LeftColumn/TechStackSection/TechStackText
+├── _techStackRoot: WindowBody/MainArea/LeftColumn/TechStackSection
+├── _techStackText: WindowBody/MainArea/LeftColumn/TechStackSection/TechStackText
 ├── _highlightsRoot: Content/HighlightsSection
 ├── _highlightsText: HighlightsSection/HighlightsText
-├── _linksRoot: FixedFooterArea/LinksRoot
-├── _projectLinkButton: FixedFooterArea/LinksRoot/ProjectLinkButton
+├── _linksRoot: WindowBody/BottomLinksArea/LinksRoot
+├── _projectLinkButton: WindowBody/BottomLinksArea/LinksRoot/ProjectLinkButton
 ├── _projectLinkButtonText: ProjectLinkButton/Text
-├── _githubLinkButton: FixedFooterArea/LinksRoot/GithubLinkButton
+├── _githubLinkButton: WindowBody/BottomLinksArea/LinksRoot/GithubLinkButton
 ├── _githubLinkButtonText: GithubLinkButton/Text
-└── _scrollRect: RightColumn/ScrollableContentArea/ScrollView
+└── _scrollRect: WindowBody/MainArea/RightColumn/ScrollView
 ```
 
 `_urlText` 정책:
 
-- 현재 요구사항의 fixed/scroll 구분에는 URL 텍스트가 포함되지 않는다.
-- 링크 버튼이 고정 영역으로 유지되므로 `_urlText`는 비워 두거나 숨김 대상 TMP로 연결한다.
-- raw URL 표시가 필요하면 `FixedFooterArea` 안의 작은 ellipsis TMP로 두되, 긴 URL 때문에 footer가 커지지 않도록 height를 제한한다.
+- 현재 레퍼런스형 구조에서는 URL raw text를 주요 표시 대상으로 두지 않는다.
+- 링크 버튼이 `BottomLinksArea`에 고정되므로 `_urlText`는 숨김 TMP로 연결하거나 사용하지 않는 빈 TMP에 연결한다.
+- raw URL 표시가 필요하면 `BottomLinksArea` 안의 작은 ellipsis TMP로 두되 footer height를 늘리지 않는다.
 
 ## Existing Scroll Reset Policy
 
 유지되는 동작:
 
-- `Show(ProjectData)` 후 `ResetScrollToTop()` 호출.
-- `Clear()` 후 `ResetScrollToTop()` 호출.
+- `ProjectViewerUI.Show(ProjectData)` 후 `ResetScrollToTop()` 호출.
+- `ProjectViewerUI.Clear()` 후 `ResetScrollToTop()` 호출.
 - `ProjectWindowUI.RestoreFromMinimized()` 시 `ResetProjectScrollToTop()` 호출.
 - 같은 project reopen 시 visible window도 `ResetProjectScrollToTop()` 호출.
 
 변경되는 의미:
 
-- 기존 `_scrollRect`가 전체 ProjectViewer scroll이었다면, 이제 우측 `Role/Description/Highlights` 전용 scroll이다.
-- top reset은 title/left column/links에는 영향을 주지 않고 우측 본문 scroll position만 top으로 되돌린다.
+- 기존 `_scrollRect`가 전체 ProjectViewer scroll이었다면, 이제 `RightColumn/ScrollView` 전용 scroll이다.
+- top reset은 `LeftColumn`, `FixedTitleArea`, `BottomLinksArea`에는 영향을 주지 않는다.
+- layout rebuild와 `verticalNormalizedPosition = 1f`는 `Role/Description/Highlights` content에만 적용된다.
 
 ## Editor Manual Work
 
 Unity Editor에서 사람이 직접 수행할 항목:
 
 1. 기존 `ProjectViewerRoot` 전체를 감싸던 outer ScrollView가 있다면 제거하거나 ScrollRect component를 비활성/삭제한다.
-2. `ProjectViewerRoot` 아래 `FixedHeaderArea`, `MainArea`, `FixedFooterArea`를 만든다.
-3. `TitleText`, `SubtitleRoot/SubtitleText`를 `FixedHeaderArea`로 이동한다.
-4. `MainArea` 아래 `LeftColumn`, `RightColumn`을 만든다.
-5. `IconImage`와 `TechStackSection/TechStackText`를 `LeftColumn`으로 이동한다.
-6. `RightColumn` 아래 `ScrollableContentArea/ScrollView/Viewport/Content`를 만든다.
-7. `RoleSection`, `DescriptionSection`, `HighlightsSection`만 ScrollView Content 아래로 이동한다.
-8. `LinksRoot`와 link buttons를 `FixedFooterArea`로 이동한다.
-9. `ScrollView`의 `ScrollRect.content`, `viewport`, `verticalScrollbar`를 다시 연결한다.
-10. `ProjectViewerUI._scrollRect`를 새 `RightColumn/ScrollableContentArea/ScrollView`로 명시 연결한다.
-11. `ProjectViewerUI`의 모든 TMP/Image/Button/root fields가 새 위치를 가리키는지 확인한다.
-12. `Viewport`에 `RectMask2D`가 있는지 확인한다.
-13. ScrollView Content에 `Vertical Layout Group`과 `Content Size Fitter Vertical Fit = Preferred Size`를 적용한다.
-14. `ProjectViewerRoot`, `MainArea`, `RightColumn`, `ScrollableContentArea`에는 `Content Size Fitter`를 붙이지 않는다.
-15. Play Mode에서 긴 description/highlights project를 열고 우측 영역만 스크롤되는지 확인한다.
+2. `WindowBody` 아래 자식을 `MainArea`, `BottomLinksArea` 중심으로 정리한다.
+3. `WindowBody`에 `Vertical Layout Group`을 적용해 `MainArea`와 `BottomLinksArea`만 세로 배치한다.
+4. 전역 `ProjectHeader` 또는 `FixedHeaderArea`가 있다면 제거한다.
+5. `MainArea` 아래 `LeftColumn`, `RightColumn`을 만든다.
+6. `IconImage`와 `TechStackSection/TechStackText`를 `LeftColumn`으로 이동한다.
+7. `RightColumn` 아래 `FixedTitleArea`, `ScrollView`를 만든다.
+8. `TitleText`, `SubtitleRoot/SubtitleText`를 `RightColumn/FixedTitleArea`로 이동한다.
+9. `RoleSection`, `DescriptionSection`, `HighlightsSection`만 `RightColumn/ScrollView/Viewport/Content` 아래로 이동한다.
+10. `LinksRoot`와 link buttons를 `WindowBody/BottomLinksArea`로 이동한다.
+11. `ScrollView`의 `ScrollRect.content`, `viewport`, `verticalScrollbar`를 다시 연결한다.
+12. `ProjectViewerUI._scrollRect`를 `WindowBody/MainArea/RightColumn/ScrollView`로 명시 연결한다.
+13. `ProjectViewerUI`의 모든 TMP/Image/Button/root fields가 새 위치를 가리키는지 확인한다.
+14. `Viewport`에 `RectMask2D`가 있는지 확인한다.
+15. ScrollView Content에 `Vertical Layout Group`과 `Content Size Fitter Vertical Fit = Preferred Size`를 적용한다.
+16. `WindowBody`, `MainArea`, `LeftColumn`, `RightColumn`, `ScrollView`에는 `Content Size Fitter`를 붙이지 않는다.
+17. Play Mode에서 긴 description/highlights project를 열고 우측 본문만 스크롤되는지 확인한다.
 
 ## Verification
 
@@ -379,9 +407,9 @@ Unity Editor에서 사람이 직접 수행할 항목:
 
 기대 결과:
 
-- title/subtitle이 상단에 고정 표시된다.
-- left image/tech stack이 항상 보인다.
-- links가 하단에 고정 표시된다.
+- 왼쪽에 image/icon과 tech stack이 고정 표시된다.
+- 오른쪽 column 상단에 title/subtitle이 고정 표시된다.
+- links가 window body 하단에 고정 표시된다.
 - right content scroll position은 top에서 시작한다.
 
 ### Case 2: Long Description
@@ -394,7 +422,7 @@ Unity Editor에서 사람이 직접 수행할 항목:
 기대 결과:
 
 - role/description/highlights만 스크롤된다.
-- title/subtitle, left column, links는 움직이지 않는다.
+- left column, fixed title area, bottom links area는 움직이지 않는다.
 - Scrollbar는 우측 content 높이만 기준으로 동작한다.
 
 ### Case 3: Reopen And Restore
@@ -407,7 +435,7 @@ Unity Editor에서 사람이 직접 수행할 항목:
 기대 결과:
 
 - 우측 scroll이 top으로 reset된다.
-- fixed 영역에는 jump나 layout 흔들림이 없다.
+- left column, fixed title area, links에는 jump나 layout 흔들림이 없다.
 
 ### Case 4: Empty Optional Sections
 
@@ -418,7 +446,7 @@ Unity Editor에서 사람이 직접 수행할 항목:
 기대 결과:
 
 - 빈 section root가 숨겨져도 fixed/scroll 영역 높이가 비정상적으로 붕괴하지 않는다.
-- links가 없으면 footer가 과도한 빈 공간을 남기지 않는다.
+- links가 없으면 `BottomLinksArea`가 과도한 빈 공간을 남기지 않는다.
 
 ## C# Change Assessment
 
@@ -429,7 +457,7 @@ Unity Editor에서 사람이 직접 수행할 항목:
 - `ProjectViewerUI`는 field의 hierarchy 위치를 알 필요가 없다.
 - `_scrollRect`는 serialized field로 이미 분리되어 있다.
 - 기존 scroll reset은 `_scrollRect.content`에만 layout rebuild와 top reset을 적용한다.
-- 새 구조에서도 `_scrollRect`만 우측 ScrollView로 연결하면 정책이 유지된다.
+- 새 구조에서도 `_scrollRect`만 `RightColumn/ScrollView`로 연결하면 정책이 유지된다.
 
 후속 C# 후보:
 
@@ -439,12 +467,13 @@ Unity Editor에서 사람이 직접 수행할 항목:
 
 ## Completed Step Summary
 
-아직 실행 전이다. 완료 시 이 문서는 `ProjectViewerUI` prefab을 fixed header, fixed left column, right-only scroll, fixed footer 구조로 바꾸는 Editor 작업 기준으로 사용한다. C#은 기존 `_scrollRect` 연결만 새 우측 ScrollView로 재지정하면 유지 가능하다.
+아직 실행 전이다. 완료 시 이 문서는 `ProjectWindow` prefab을 레퍼런스 이미지 같은 2-column 구조로 바꾸는 Editor 작업 기준으로 사용한다. title/subtitle은 전역 header가 아니라 `RightColumn/FixedTitleArea`에 있고, C#은 기존 `_scrollRect` 연결만 `RightColumn/ScrollView`로 재지정하면 유지 가능하다.
 
 ## Retry / Recovery
 
+- title/subtitle이 window body 전체 상단에 보이면 전역 `ProjectHeader` 또는 `FixedHeaderArea`가 남아 있는지 확인한다.
 - fixed 영역이 스크롤되면 outer ScrollRect가 남아 있는지 확인한다.
 - Scrollbar가 전체 viewer 높이를 기준으로 움직이면 `ProjectViewerUI._scrollRect`와 `ScrollRect.content` 연결을 확인한다.
 - right content가 스크롤되지 않으면 Content Size Fitter와 Vertical Layout Group이 Content에만 붙어 있는지 확인한다.
-- links가 밀려 사라지면 `FixedFooterArea Flexible Height = 0`인지 확인한다.
+- links가 밀려 사라지면 `BottomLinksArea Flexible Height = 0`인지 확인한다.
 - left tech stack이 너무 길면 LeftColumn에 scroll을 추가하지 말고 project data의 tech stack 항목 수를 줄인다.
