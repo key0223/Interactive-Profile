@@ -14,12 +14,16 @@ public class ProjectDesktopUI : MonoBehaviour
     [SerializeField] private int _maxWindowCascadeSteps = 6;
     [SerializeField] private ProjectWindowUI _projectWindowUI;
     [SerializeField] private ProjectTaskbarUI _projectTaskbarUI;
+    [SerializeField] private bool _showAboutMeDesktopIcon = true;
+    [SerializeField] private string _aboutMeDesktopTitle = "README.TXT";
+    [SerializeField] private Sprite _aboutMeDesktopIcon;
     [SerializeField] private ProjectWindowUI _aboutMeWindowPrefab;
     [SerializeField] private Sprite _aboutMeWindowIcon;
-    [SerializeField] private string _aboutMeWindowTitle = "About Me";
+    [SerializeField] private string _aboutMeWindowTitle = "ABOUT_ME.TXT";
     [SerializeField] private bool _openDefaultOnStart;
 
     private readonly List<ProjectDesktopIconUI> _icons = new List<ProjectDesktopIconUI>();
+    private ProjectDesktopIconUI _aboutMeIcon;
     private ProjectWindowManager _projectWindowManager;
     private ProjectData _selectedProjectData;
     private bool _initialized;
@@ -147,15 +151,17 @@ public class ProjectDesktopUI : MonoBehaviour
     {
         ClearIcons();
 
-        if (_catalog == null || _catalog.Count == 0)
-        {
-            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} has no projects to display.");
-            return;
-        }
-
         if (_iconRoot == null || _iconPrefab == null)
         {
             Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} cannot build desktop icons without icon root and icon prefab references.");
+            return;
+        }
+
+        CreateAboutMeIcon();
+
+        if (_catalog == null || _catalog.Count == 0)
+        {
+            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} has no projects to display.");
             return;
         }
 
@@ -171,8 +177,21 @@ public class ProjectDesktopUI : MonoBehaviour
         }
     }
 
+    private void CreateAboutMeIcon()
+    {
+        if (!_showAboutMeDesktopIcon)
+            return;
+
+        ProjectDesktopIconUI icon = Instantiate(_iconPrefab, _iconRoot);
+        icon.Setup(_aboutMeDesktopIcon, _aboutMeDesktopTitle, SelectAboutMeIcon, OpenAboutMeWindow);
+        _aboutMeIcon = icon;
+    }
+
     private void ClearIcons()
     {
+        if (_aboutMeIcon != null)
+            Destroy(_aboutMeIcon.gameObject);
+
         for (int i = 0; i < _icons.Count; i++)
         {
             if (_icons[i] != null)
@@ -180,13 +199,26 @@ public class ProjectDesktopUI : MonoBehaviour
         }
 
         _icons.Clear();
+        _aboutMeIcon = null;
         _selectedProjectData = null;
     }
 
     private void ClearSelection()
     {
         _selectedProjectData = null;
+        if (_aboutMeIcon != null)
+            _aboutMeIcon.SetSelected(false);
+
         UpdateSelectionVisuals();
+    }
+
+    private void SelectAboutMeIcon()
+    {
+        _selectedProjectData = null;
+        UpdateSelectionVisuals();
+
+        if (_aboutMeIcon != null)
+            _aboutMeIcon.SetSelected(true);
     }
 
     private void UpdateSelectionVisuals()

@@ -915,6 +915,7 @@ MonoBehaviour:
   _maximizeButton: {fileID: 5418882329746450425}
   _closeButton: {fileID: 7300883826516510145}
   _projectViewerUI: {fileID: 7817646058766232293}
+  _aboutMeViewerUI: {fileID: 0}
   _maximizeBoundsRoot: {fileID: 0}
   _fallbackMaximizedSize: {x: 860, y: 560}
 --- !u!1 &1588421678586475751
@@ -1957,7 +1958,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 3909544309233884466}
   m_Direction: 2
   m_Value: 0.5
-  m_Size: 0.77597606
+  m_Size: 0.7586507
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
