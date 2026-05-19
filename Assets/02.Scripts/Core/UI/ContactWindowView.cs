@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -41,6 +42,8 @@ public class ContactWindowView : MonoBehaviour
     [SerializeField] private Button _connectButton;
     [SerializeField] private ScrollRect _messageScrollRect;
     [SerializeField] private ScrollRect _previewScrollRect;
+    [SerializeField] private Transform _messageRowRoot;
+    [SerializeField] private ContactMessageRowUI _messageRowPrefab;
 
     [Header("Content")]
     [SerializeField] private ContactEntry[] _entries =
@@ -79,6 +82,7 @@ public class ContactWindowView : MonoBehaviour
 
     private const int NoSelection = -1;
 
+    private readonly List<ContactMessageRowUI> _messageRows = new List<ContactMessageRowUI>();
     private readonly StringBuilder _messageListBuilder = new StringBuilder();
     private Coroutine _resetScrollCoroutine;
     private int _selectedIndex = NoSelection;
@@ -115,6 +119,7 @@ public class ContactWindowView : MonoBehaviour
 
     public void Initialize()
     {
+        RebuildMessageRows();
         RefreshMessageList();
 
         if (_entries != null && _entries.Length > 0)
@@ -128,6 +133,7 @@ public class ContactWindowView : MonoBehaviour
     public void Clear()
     {
         _selectedIndex = NoSelection;
+        ClearMessageRows();
 
         if (_messageListText != null)
             _messageListText.text = string.Empty;
@@ -155,6 +161,7 @@ public class ContactWindowView : MonoBehaviour
 
         _selectedIndex = index;
         RefreshMessageList();
+        UpdateRowSelection();
         RefreshPreview(_entries[index]);
         ResetPreviewScrollToTop();
     }
@@ -184,6 +191,12 @@ public class ContactWindowView : MonoBehaviour
     {
         if (_messageListText == null)
             return;
+
+        if (CanUseMessageRows())
+        {
+            _messageListText.text = string.Empty;
+            return;
+        }
 
         _messageListBuilder.Clear();
         _messageListBuilder.AppendLine("FROM       SUBJECT                         STATUS");
@@ -229,6 +242,7 @@ public class ContactWindowView : MonoBehaviour
     {
         _selectedIndex = NoSelection;
         RefreshMessageList();
+        UpdateRowSelection();
 
         if (_previewTitleText != null)
             _previewTitleText.text = "No message selected";
@@ -240,6 +254,46 @@ public class ContactWindowView : MonoBehaviour
             _statusText.text = "0 item(s)";
 
         SetConnectButtonActive(false);
+    }
+
+    private void RebuildMessageRows()
+    {
+        ClearMessageRows();
+
+        if (!CanUseMessageRows() || _entries == null)
+            return;
+
+        for (int i = 0; i < _entries.Length; i++)
+        {
+            ContactEntry entry = _entries[i];
+            ContactMessageRowUI row = Instantiate(_messageRowPrefab, _messageRowRoot);
+            if (row == null)
+                continue;
+
+            row.Initialize(i, entry.DisplayName, entry.Subject, entry.Status, SelectEntry);
+            row.SetSelected(i == _selectedIndex);
+            _messageRows.Add(row);
+        }
+    }
+
+    private void ClearMessageRows()
+    {
+        for (int i = 0; i < _messageRows.Count; i++)
+        {
+            if (_messageRows[i] != null)
+                Destroy(_messageRows[i].gameObject);
+        }
+
+        _messageRows.Clear();
+    }
+
+    private void UpdateRowSelection()
+    {
+        for (int i = 0; i < _messageRows.Count; i++)
+        {
+            if (_messageRows[i] != null)
+                _messageRows[i].SetSelected(i == _selectedIndex);
+        }
     }
 
     private void OpenSelectedUrl()
@@ -304,5 +358,10 @@ public class ContactWindowView : MonoBehaviour
         return string.IsNullOrEmpty(text)
             ? string.Empty
             : text.Replace("\r\n", "\n").Replace("\r", "\n");
+    }
+
+    private bool CanUseMessageRows()
+    {
+        return _messageRowRoot != null && _messageRowPrefab != null;
     }
 }
