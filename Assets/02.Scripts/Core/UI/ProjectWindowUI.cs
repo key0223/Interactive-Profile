@@ -22,37 +22,65 @@ public enum WindowState
 
 public class AboutMeViewerUI : MonoBehaviour
 {
-    [Header("Static Content")]
-    [SerializeField] private string _displayName;
-    [SerializeField] private string _role;
-    [SerializeField] private string _summary;
-    [TextArea(3, 8)]
-    [SerializeField] private string _philosophy;
-    [TextArea(2, 6)]
-    [SerializeField] private string _techInterests;
-    [TextArea(2, 6)]
-    [SerializeField] private string _toolStack;
-    [TextArea(2, 6)]
-    [SerializeField] private string _careerSummary;
-    [TextArea(2, 6)]
-    [SerializeField] private string _projectSummary;
-    [SerializeField] private string _contactLabel;
-    [SerializeField] private string _contactUrl;
+    private const string DefaultDocumentText =
+        "********************************************************\n" +
+        "*                                                      *\n" +
+        "*                  A B O U T   M E                    *\n" +
+        "*                    README.TXT                       *\n" +
+        "*                                                      *\n" +
+        "********************************************************\n" +
+        "\n" +
+        "PROFILE\n" +
+        "--------------------------------------------------------\n" +
+        "Name      : Your Name\n" +
+        "Role      : Unity / Interactive UI Developer\n" +
+        "Location  : Portfolio Desktop\n" +
+        "\n" +
+        "SUMMARY\n" +
+        "--------------------------------------------------------\n" +
+        "I build small, polished interactive systems with a focus\n" +
+        "on readable UI, clear feedback, and maintainable code.\n" +
+        "\n" +
+        "PHILOSOPHY\n" +
+        "--------------------------------------------------------\n" +
+        "Good interfaces should feel simple on the surface and\n" +
+        "predictable underneath. I prefer small components, clear\n" +
+        "state ownership, and interactions that are easy to test.\n" +
+        "\n" +
+        "INTERESTS\n" +
+        "--------------------------------------------------------\n" +
+        "- Retro desktop interfaces\n" +
+        "- Unity UI and interaction design\n" +
+        "- Tooling for creative workflows\n" +
+        "- Game-like portfolio experiences\n" +
+        "\n" +
+        "TECH STACK\n" +
+        "--------------------------------------------------------\n" +
+        "- Unity / C#\n" +
+        "- uGUI / TextMeshPro\n" +
+        "- JavaScript / TypeScript\n" +
+        "- HTML / CSS\n" +
+        "\n" +
+        "EXPERIENCE\n" +
+        "--------------------------------------------------------\n" +
+        "- Designed interactive project viewers and desktop UI.\n" +
+        "- Built reusable window, taskbar, and focus systems.\n" +
+        "- Created UI flows that can expand through data or\n" +
+        "  component composition instead of one-off hardcoding.\n" +
+        "\n" +
+        "CONTACT\n" +
+        "--------------------------------------------------------\n" +
+        "Email     : your.email@example.com\n" +
+        "GitHub    : https://github.com/your-handle\n" +
+        "Portfolio : https://your-site.example\n" +
+        "\n" +
+        "EOF\n";
 
     [Header("UI References")]
-    [SerializeField] private Image _avatarImage;
-    [SerializeField] private Sprite _fallbackAvatar;
-    [SerializeField] private TMP_Text _nameText;
-    [SerializeField] private TMP_Text _roleText;
-    [SerializeField] private TMP_Text _summaryText;
-    [SerializeField] private TMP_Text _philosophyText;
-    [SerializeField] private TMP_Text _techInterestsText;
-    [SerializeField] private TMP_Text _toolStackText;
-    [SerializeField] private TMP_Text _careerSummaryText;
-    [SerializeField] private TMP_Text _projectSummaryText;
-    [SerializeField] private TMP_Text _contactText;
-    [SerializeField] private Button _contactButton;
-    [SerializeField] private TMP_Text _contactButtonText;
+    [TextArea(12, 30)]
+    [SerializeField] private string _documentText = DefaultDocumentText;
+    [SerializeField] private TextMeshProUGUI _textArea;
+    [SerializeField] private TMP_FontAsset _monoFont;
     [SerializeField] private ScrollRect _scrollRect;
 
     private Coroutine _resetScrollCoroutine;
@@ -63,13 +91,21 @@ public class AboutMeViewerUI : MonoBehaviour
             _scrollRect = GetComponentInChildren<ScrollRect>(true);
     }
 
-    private void OnEnable()
+    public void Initialize(string documentText = null)
     {
-        if (_contactButton != null)
+        string resolvedDocumentText = string.IsNullOrWhiteSpace(documentText)
+            ? ResolveDocumentText()
+            : documentText;
+
+        if (_textArea != null)
         {
-            _contactButton.onClick.RemoveListener(OpenContactUrl);
-            _contactButton.onClick.AddListener(OpenContactUrl);
+            if (_monoFont != null)
+                _textArea.font = _monoFont;
+
+            _textArea.text = NormalizeLineEndings(resolvedDocumentText);
         }
+
+        ResetScroll();
     }
 
     private void OnDisable()
@@ -79,48 +115,27 @@ public class AboutMeViewerUI : MonoBehaviour
             StopCoroutine(_resetScrollCoroutine);
             _resetScrollCoroutine = null;
         }
-
-        if (_contactButton != null)
-            _contactButton.onClick.RemoveListener(OpenContactUrl);
     }
 
     public void ShowSerializedContent()
     {
-        SetAvatar(_fallbackAvatar);
-        SetText(_nameText, _displayName);
-        SetText(_roleText, _role);
-        SetText(_summaryText, _summary);
-        SetText(_philosophyText, _philosophy);
-        SetText(_techInterestsText, _techInterests);
-        SetText(_toolStackText, _toolStack);
-        SetText(_careerSummaryText, _careerSummary);
-        SetText(_projectSummaryText, _projectSummary);
-        SetText(_contactText, _contactLabel);
-        UpdateContactButton();
-        ResetScrollToTop();
+        Initialize();
     }
 
     public void Clear()
     {
-        SetAvatar(null);
-        SetText(_nameText, string.Empty);
-        SetText(_roleText, string.Empty);
-        SetText(_summaryText, string.Empty);
-        SetText(_philosophyText, string.Empty);
-        SetText(_techInterestsText, string.Empty);
-        SetText(_toolStackText, string.Empty);
-        SetText(_careerSummaryText, string.Empty);
-        SetText(_projectSummaryText, string.Empty);
-        SetText(_contactText, string.Empty);
-        SetText(_contactButtonText, string.Empty);
+        if (_textArea != null)
+            _textArea.text = string.Empty;
 
-        if (_contactButton != null)
-            _contactButton.gameObject.SetActive(false);
-
-        ResetScrollToTop();
+        ResetScroll();
     }
 
     public void ResetScrollToTop()
+    {
+        ResetScroll();
+    }
+
+    public void ResetScroll()
     {
         if (!isActiveAndEnabled)
             return;
@@ -129,10 +144,10 @@ public class AboutMeViewerUI : MonoBehaviour
             StopCoroutine(_resetScrollCoroutine);
 
         ApplyScrollTopAfterLayout();
-        _resetScrollCoroutine = StartCoroutine(ResetScrollToTopNextFrame());
+        _resetScrollCoroutine = StartCoroutine(ResetScrollNextFrame());
     }
 
-    private IEnumerator ResetScrollToTopNextFrame()
+    private IEnumerator ResetScrollNextFrame()
     {
         yield return null;
         ApplyScrollTopAfterLayout();
@@ -155,47 +170,16 @@ public class AboutMeViewerUI : MonoBehaviour
             _scrollRect.verticalScrollbar.value = 1f;
     }
 
-    private void UpdateContactButton()
+    private string ResolveDocumentText()
     {
-        bool hasContactUrl = !string.IsNullOrWhiteSpace(_contactUrl);
-
-        if (_contactButton != null)
-            _contactButton.gameObject.SetActive(hasContactUrl);
-
-        SetText(_contactButtonText, hasContactUrl ? ResolveContactButtonText() : string.Empty);
+        return string.IsNullOrWhiteSpace(_documentText) ? DefaultDocumentText : _documentText;
     }
 
-    private string ResolveContactButtonText()
+    private static string NormalizeLineEndings(string text)
     {
-        return string.IsNullOrWhiteSpace(_contactLabel) ? "Open Contact" : _contactLabel;
-    }
-
-    private void OpenContactUrl()
-    {
-        if (!string.IsNullOrWhiteSpace(_contactUrl))
-            Application.OpenURL(_contactUrl);
-    }
-
-    private void SetAvatar(Sprite avatar)
-    {
-        if (_avatarImage == null)
-            return;
-
-        if (avatar == null)
-        {
-            _avatarImage.sprite = null;
-            _avatarImage.enabled = false;
-            return;
-        }
-
-        _avatarImage.sprite = avatar;
-        _avatarImage.enabled = true;
-    }
-
-    private static void SetText(TMP_Text target, string text)
-    {
-        if (target != null)
-            target.text = text ?? string.Empty;
+        return string.IsNullOrEmpty(text)
+            ? string.Empty
+            : text.Replace("\r\n", "\n").Replace("\r", "\n");
     }
 }
 
@@ -311,7 +295,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
             _projectViewerUI.Clear();
 
         if (_aboutMeViewerUI != null)
-            _aboutMeViewerUI.ShowSerializedContent();
+            _aboutMeViewerUI.Initialize();
 
         RequestFocus();
     }
