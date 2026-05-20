@@ -3,8 +3,8 @@
 ## Document Metadata
 
 - Status: Active
-- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Window Transition Guide](./35-window-transition-guide.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md), [Future Transition Polish](./38-future-transition-polish.md)
-- Last Reviewed Phase: 39 Computer UI Polish Roadmap
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Window Transition Guide](./35-window-transition-guide.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md), [Future Transition Polish](./38-future-transition-polish.md), [Desktop Clock System Info Guide](./41-desktop-clock-system-info-guide.md), [Fake OS Ambience Guide](./42-fake-os-ambience-guide.md)
+- Last Reviewed Phase: 42 Fake OS Ambience Guide
 
 ## Goal
 
@@ -31,6 +31,8 @@ Computer UI polish를 작은 단계로 나누고, 현재 안정화된 startup, s
 - startup/shutdown transition은 별도 screen root 흐름으로 구현되어 있다.
 - window open/close transition은 `WindowTransitionUI`를 통해 처리한다.
 - desktop icon interaction polish와 taskbar interaction polish는 기능별 phase 문서로 분리되어 있다.
+- desktop clock/system info는 `DesktopSystemInfoUI`와 [Desktop Clock System Info Guide](./41-desktop-clock-system-info-guide.md)로 분리되어 있다.
+- fake OS ambience는 `DesktopAmbienceUI`와 [Fake OS Ambience Guide](./42-fake-os-ambience-guide.md)로 분리되어 있다.
 - Unity Editor 연결 작업은 사용자가 직접 수행하고, Codex는 연결 기준 문서만 작성한다.
 
 ## Phase 1: Window Minimize UX
@@ -94,6 +96,11 @@ Computer UI polish를 작은 단계로 나누고, 현재 안정화된 startup, s
 - `docs: add desktop clock editor guide`
 
 ## Phase 3: Fake OS Ambience
+
+상태:
+
+- 구현 완료: `DesktopAmbienceUI`
+- Editor 연결 기준: [Fake OS Ambience Guide](./42-fake-os-ambience-guide.md)
 
 목표:
 
