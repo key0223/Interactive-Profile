@@ -1,5 +1,24 @@
 # Step: Shutdown Transition Plan
 
+## Related Documents
+
+- [UI Guide](../../docs/UI_GUIDE.md) — Computer UI 공통 hierarchy, transition 원칙, WebGL 제약.
+- [Boot Screen Editor Guide](./33-boot-screen-editor-guide.md) — startup boot root와 shutdown root 분리 기준.
+- [Future Transition Polish](./38-future-transition-polish.md) — shutdown 이후 추가 polish 후보.
+
+## Depends On
+
+- `ComputerUIController`
+- `BootScreenUI`
+- `StartMenuUI`
+- `ComputerUIRoot`, `DesktopLayer`, `WindowLayer`, `TaskbarRoot`
+
+## Related Systems
+
+- faux OS shutdown lifecycle
+- Start Menu shutdown action
+- Computer UI reopen 안정성
+
 ## Status
 
 pending
@@ -217,21 +236,8 @@ shutdown transition이 끝난 뒤:
 
 ### WebGL Compatibility
 
-shutdown transition은 다음 범위 안에서 구현할 수 있다.
-
-- Unity coroutine.
-- `Time.deltaTime`.
-- `CanvasGroup.alpha`.
-- `TMP_Text`.
-- `GameObject.SetActive`.
-
-사용하지 않을 것:
-
-- native plugin.
-- thread.
-- blocking sleep.
-- platform-specific API.
-- WebGL 비호환 file/system calls.
+- 공통 WebGL 제약은 [UI Guide](../../docs/UI_GUIDE.md)의 `WebGL UI 제약`을 따른다.
+- shutdown transition은 Unity coroutine, `Time.deltaTime`, `CanvasGroup.alpha`, `TMP_Text`, `GameObject.SetActive` 범위에서 구현한다.
 
 ## Recommended Shutdown Transition Flow
 
@@ -298,7 +304,8 @@ ComputerUIRoot
 │   └── ShutdownText
 ├── DesktopLayer
 ├── WindowLayer
-└── TaskbarRoot
+├── TaskbarRoot
+└── CRTOverlayLayer
 ```
 
 기준:
@@ -308,6 +315,7 @@ ComputerUIRoot
 - desktop shell의 자식으로 넣지 않는다.
 - sibling order는 desktop shell보다 위에 둔다.
 - CRT overlay/frame이 별도 계층이면 shutdown screen에도 동일하게 적용되는지 확인한다.
+- CRT overlay를 별도 layer로 쓰는 경우 shutdown 화면보다 위에 렌더링되도록 sibling order를 둔다.
 
 ## Inspector Field Candidates
 
@@ -354,14 +362,14 @@ public void CloseImmediate();
 
 ```text
 ComputerUIRoot
-├── DesktopLayer
-├── WindowLayer
-├── TaskbarRoot
-│   └── StartMenuRoot
 ├── BootScreenRoot
 ├── ShutdownScreenRoot
 │   ├── ShutdownPanel
 │   └── ShutdownText
+├── DesktopLayer
+├── WindowLayer
+├── TaskbarRoot
+│   └── StartMenuRoot
 └── CRTOverlayLayer
 ```
 
@@ -395,8 +403,8 @@ RectTransform 권장값:
 `ShutdownScreenUI` Inspector 연결:
 
 - `_root` → `ShutdownScreenRoot`
-- `_logText` → `ShutdownText`의 `TMP_Text`
 - `_canvasGroup` → `ShutdownScreenRoot`의 `CanvasGroup`
+- `_messageText` → `ShutdownText`의 `TMP_Text`
 - `_shutdownLines` → `SHUTTING DOWN...`, `SAVING SESSION...`, `GOODBYE.`
 - `_lineDelay` → `0.12`~`0.2`
 - `_completionDelay` → `0.15`~`0.3`
@@ -436,7 +444,7 @@ Editor 작업 순서:
 5. `ShutdownScreenRoot`에 `CanvasGroup`을 추가한다.
 6. `ShutdownScreenRoot`에 `ShutdownScreenUI`를 추가한다.
 7. `ShutdownScreenUI._root`에 `ShutdownScreenRoot`를 연결한다.
-8. `ShutdownScreenUI._logText`에 `ShutdownText`를 연결한다.
+8. `ShutdownScreenUI._messageText`에 `ShutdownText`를 연결한다.
 9. `ShutdownScreenUI._canvasGroup`에 `ShutdownScreenRoot`의 `CanvasGroup`을 연결한다.
 10. shutdown line과 timing 값을 설정한다.
 11. `ComputerUIController._shutdownScreenUI`에 `ShutdownScreenUI`를 연결한다.
@@ -536,7 +544,7 @@ MVP 권장:
 
 - `ShutdownScreenRoot`가 기본 inactive인 것은 정상이다. `RequestShutdown()` 시 active가 되어야 한다.
 - `ShutdownScreenUI._root`가 `ShutdownScreenRoot`로 연결되어 있는지 확인한다.
-- `ShutdownScreenUI._logText`가 `ShutdownText` TMP로 연결되어 있는지 확인한다.
+- `ShutdownScreenUI._messageText`가 `ShutdownText` TMP로 연결되어 있는지 확인한다.
 - `CanvasGroup.alpha`가 수동으로 `0`에 머물러 있지 않은지 확인한다.
 - sibling order에서 `ShutdownScreenRoot`가 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`보다 위에 보이는지 확인한다.
 - `CRTOverlayLayer`가 최상단이면 shutdown 화면이 overlay 아래에서 보이는지 확인한다.
@@ -585,3 +593,14 @@ MVP 권장:
 ## Completed Step Summary
 
 이 step은 현재 Computer UI startup boot sequence와 즉시 close shutdown 흐름을 분석하고, startup 구조를 깨지 않는 shutdown transition 설계를 제안한다. 권장 방향은 `BootScreenUI`를 재사용하지 않고 전용 `ShutdownScreenUI`를 추가해 짧은 shutdown text, CanvasGroup fade, 완료 후 immediate close cleanup을 수행하는 것이다.
+
+## Next Recommended Step
+
+- 구현 step에서는 `ShutdownScreenUI` 추가와 `ComputerUIController.RequestShutdown()` 연결을 코드 변경 범위로 분리한다.
+- Editor wiring step에서는 `ShutdownScreenRoot` 생성과 Inspector 연결만 다룬다.
+
+## Related Guides
+
+- [UI Guide](../../docs/UI_GUIDE.md)
+- [Boot Screen Editor Guide](./33-boot-screen-editor-guide.md)
+- [Future Transition Polish](./38-future-transition-polish.md)

@@ -1,5 +1,23 @@
 # Step: Taskbar Interaction Guide
 
+## Related Documents
+
+- [UI Guide](../../docs/UI_GUIDE.md) — taskbar hierarchy, window lifecycle, 공통 Play Mode 검증 기준.
+- [Window Transition Guide](./35-window-transition-guide.md) — close animation과 taskbar button 제거 타이밍.
+
+## Depends On
+
+- `ProjectTaskbarUI`
+- `ProjectTaskbarButtonUI`
+- `ProjectWindowManager`
+- `WindowTransitionUI`
+
+## Related Systems
+
+- runtime taskbar button lifecycle
+- window focus, minimize, restore, close state
+- EventSystem pointer interaction
+
 ## Status
 
 completed
@@ -98,18 +116,18 @@ Taskbar Editor 연결 기준:
 - Escape focused close 후 close animation 완료 시 taskbar button이 제거된다.
 - close 중 taskbar click 시 window가 복구되거나 상태가 꼬이지 않는다.
 - 여러 window를 연속 open/focus해도 active button과 sibling order가 정상이다.
-- WebGL에서 taskbar interaction 관련 thread, native plugin, platform-specific API, 외부 tween 라이브러리 문제가 없어야 한다.
+- 공통 WebGL 제약 위반이 없는지 [UI Guide](../../docs/UI_GUIDE.md) 기준으로 확인한다.
 
-## Related Documents
+## Additional References
 
-- Runtime wiring 기준: `phases/02-computer-ui/20-taskbar-editor-wiring.md`
-- 실행 체크리스트: `phases/02-computer-ui/21-taskbar-editor-implementation-checklist.md`
-- window state 설계: `phases/02-computer-ui/18-taskbar-window-management.md`
+- [Runtime wiring 기준](./20-taskbar-editor-wiring.md)
+- [실행 체크리스트](./21-taskbar-editor-implementation-checklist.md)
+- [window state 설계](./18-taskbar-window-management.md)
 
 ## WebGL Compatibility
 
-- EventSystem pointer event와 Unity UI `Image.color`만 사용한다.
-- Thread, native plugin, platform-specific API, 외부 tween 라이브러리는 사용하지 않는다.
+- 공통 WebGL 제약은 [UI Guide](../../docs/UI_GUIDE.md)의 `WebGL UI 제약`을 따른다.
+- taskbar visual state는 EventSystem pointer event와 Unity UI `Image.color` 범위에서 유지한다.
 
 ## Acceptance Criteria
 
@@ -118,3 +136,11 @@ Taskbar Editor 연결 기준:
 - close transition 완료 후 taskbar 제거 정책이 문서화되어 있다.
 - WebGL 호환성 기준이 포함되어 있다.
 
+## Next Recommended Step
+
+- taskbar state 검증 후 desktop icon selection과 double click open 흐름은 [Desktop Icon Interaction Guide](./37-desktop-icon-guide.md)에서 확인한다.
+
+## Related Guides
+
+- [UI Guide](../../docs/UI_GUIDE.md)
+- [Window Transition Guide](./35-window-transition-guide.md)

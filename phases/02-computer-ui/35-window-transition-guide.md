@@ -1,5 +1,24 @@
 # Step: Window Transition Guide
 
+## Related Documents
+
+- [UI Guide](../../docs/UI_GUIDE.md) — window lifecycle, transition 공통 원칙, CanvasGroup fallback 정책.
+- [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md) — close animation 중 taskbar state와 click 복구 기준.
+- [Desktop Icon Interaction Guide](./37-desktop-icon-guide.md) — icon double click과 window open transition 연동 기준.
+
+## Depends On
+
+- `WindowTransitionUI`
+- `ProjectWindowUI`
+- `ProjectWindowManager`
+- window prefab root의 `CanvasGroup`
+
+## Related Systems
+
+- desktop window open/close lifecycle
+- taskbar button register/remove lifecycle
+- Escape focused window close 정책
+
 ## Status
 
 completed
@@ -93,7 +112,7 @@ completed
 - focused window close 후 남은 opened window가 있으면 가장 최근 focus window가 active가 된다.
 - `CanvasGroup`을 임시로 연결 해제하면 fade 없이 scale 또는 즉시 fallback이 동작한다. 테스트 후 다시 연결한다.
 - `WindowTransitionUI`를 임시로 연결 해제하면 기존 즉시 open/close fallback이 동작한다. 테스트 후 다시 연결한다.
-- WebGL에서 thread, native plugin, platform-specific API, 외부 tween 라이브러리 관련 문제가 없어야 한다.
+- 공통 WebGL 제약 위반이 없는지 [UI Guide](../../docs/UI_GUIDE.md) 기준으로 확인한다.
 
 ## Troubleshooting
 
@@ -125,8 +144,8 @@ completed
 
 ## WebGL Compatibility
 
-- WebGL 호환성을 위해 coroutine, `Time.unscaledDeltaTime`, `CanvasGroup.alpha`, `RectTransform.localScale`만 사용한다.
-- Thread, native plugin, platform-specific API, 외부 tween 라이브러리는 사용하지 않는다.
+- 공통 WebGL 제약은 [UI Guide](../../docs/UI_GUIDE.md)의 `WebGL UI 제약`을 따른다.
+- window transition은 coroutine, `Time.unscaledDeltaTime`, `CanvasGroup.alpha`, `RectTransform.localScale` 범위에서 유지한다.
 
 ## Acceptance Criteria
 
@@ -135,3 +154,11 @@ completed
 - close 중 reopen/focus 복구 검증 항목이 포함되어 있다.
 - WebGL 호환성 기준이 포함되어 있다.
 
+## Next Recommended Step
+
+- window transition 검증 후 taskbar active/minimized/closing state는 [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md)에서 확인한다.
+
+## Related Guides
+
+- [UI Guide](../../docs/UI_GUIDE.md)
+- [Window Controls Editor Wiring](./16-window-controls-editor-wiring.md)

@@ -1,5 +1,26 @@
 # Step: Future Transition Polish
 
+## Related Documents
+
+- [UI Guide](../../docs/UI_GUIDE.md) — transition 공통 원칙과 WebGL 제약.
+- [Boot Screen Editor Guide](./33-boot-screen-editor-guide.md) — startup boot 완료 후 shell 표시 기준.
+- [Shutdown Transition Plan](./34-shutdown-transition-plan.md) — shutdown transition과 reopen 안정성 기준.
+- [Window Transition Guide](./35-window-transition-guide.md) — 현재 안정화된 window open/close transition.
+
+## Depends On
+
+- startup boot 안정화
+- shutdown transition 안정화
+- window open/close transition 안정화
+- taskbar/icon runtime lifecycle 검증
+
+## Related Systems
+
+- Computer UI shell reveal
+- runtime icon generation
+- taskbar reveal
+- CRT frame, mask, overlay polish
+
 ## Status
 
 pending
@@ -49,18 +70,13 @@ Computer UI의 startup, shutdown, desktop shell, taskbar, icon reveal 관련 후
 - icon reveal은 runtime icon 생성 흐름과 직접 결합되므로 `ProjectDesktopUI` 변경 범위를 먼저 설계한다.
 - taskbar reveal은 taskbar button 생성/제거와 충돌하지 않아야 한다.
 - CRT flicker는 읽기성과 조작 가능성을 해치지 않아야 한다.
-- Thread, native plugin, platform-specific API, 외부 tween 라이브러리는 사용하지 않는다.
+- WebGL 공통 금지 항목은 [UI Guide](../../docs/UI_GUIDE.md)의 `WebGL UI 제약`을 따른다.
 
 ## WebGL Compatibility
 
+- 공통 WebGL 제약은 [UI Guide](../../docs/UI_GUIDE.md)의 `WebGL UI 제약`을 따른다.
 - 후보 transition은 coroutine, `CanvasGroup.alpha`, `Image.color`, `RectTransform` 범위에서만 설계한다.
 - WebGL에서 frame rate가 낮아져도 state cleanup이 완료되어야 한다.
-
-## Related Documents
-
-- Boot screen 기준: `phases/02-computer-ui/33-boot-screen-editor-guide.md`
-- Shutdown 기준: `phases/02-computer-ui/34-shutdown-transition-plan.md`
-- Window transition 기준: `phases/02-computer-ui/35-window-transition-guide.md`
 
 ## Acceptance Criteria
 
@@ -68,3 +84,13 @@ Computer UI의 startup, shutdown, desktop shell, taskbar, icon reveal 관련 후
 - 구현하지 않는 항목이 명확히 분리되어 있다.
 - WebGL 호환성 guardrails가 포함되어 있다.
 
+## Next Recommended Step
+
+- 후보를 구현하기 전에 desktop fade in, taskbar delayed reveal, icon delayed reveal 중 하나만 선택해 별도 phase로 분리한다.
+- 각 phase는 코드 변경 step과 Unity Editor wiring step을 분리한다.
+
+## Related Guides
+
+- [UI Guide](../../docs/UI_GUIDE.md)
+- [Desktop Icon Interaction Guide](./37-desktop-icon-guide.md)
+- [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md)

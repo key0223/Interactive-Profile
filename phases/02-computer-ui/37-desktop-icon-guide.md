@@ -1,5 +1,24 @@
 # Step: Desktop Icon Interaction Guide
 
+## Related Documents
+
+- [UI Guide](../../docs/UI_GUIDE.md) — desktop layer, app naming, visual direction 공통 기준.
+- [Desktop Icon Editor Wiring](./10-desktop-icon-editor-wiring.md) — 기존 desktop icon prefab wiring 기준.
+- [Window Transition Guide](./35-window-transition-guide.md) — icon double click 이후 window open transition 기준.
+
+## Depends On
+
+- `ProjectDesktopUI`
+- `ProjectDesktopIconUI`
+- `ProjectWindowManager`
+- app/project data source
+
+## Related Systems
+
+- runtime desktop icon lifecycle
+- icon selection and double click interaction
+- desktop background click selection clear
+
 ## Status
 
 completed
@@ -81,15 +100,10 @@ Editor 연결 기준:
 - 빠른 double click에도 동일 project/app window가 중복 생성되지 않는다.
 - hover, selected, double click 처리에서 WebGL 호환성 문제가 없어야 한다.
 
-## Related Documents
-
-- 기존 desktop icon wiring 기준: `phases/02-computer-ui/10-desktop-icon-editor-wiring.md`
-- window transition 기준: `phases/02-computer-ui/35-window-transition-guide.md`
-
 ## WebGL Compatibility
 
-- EventSystem pointer event, `Image.color`, `Time.unscaledTime`만 사용한다.
-- Thread, native plugin, platform-specific API, 외부 tween 라이브러리는 사용하지 않는다.
+- 공통 WebGL 제약은 [UI Guide](../../docs/UI_GUIDE.md)의 `WebGL UI 제약`을 따른다.
+- desktop icon interaction은 EventSystem pointer event, `Image.color`, `Time.unscaledTime` 범위에서 유지한다.
 
 ## Acceptance Criteria
 
@@ -98,3 +112,11 @@ Editor 연결 기준:
 - desktop background click selection clear 조건이 문서화되어 있다.
 - WebGL 호환성 기준이 포함되어 있다.
 
+## Next Recommended Step
+
+- icon interaction 안정화 후 reveal animation은 [Future Transition Polish](./38-future-transition-polish.md)에 별도 후보로 유지한다.
+
+## Related Guides
+
+- [UI Guide](../../docs/UI_GUIDE.md)
+- [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md)

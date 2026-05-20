@@ -1,5 +1,23 @@
 # Step: Boot Screen Editor Guide
 
+## Related Documents
+
+- [UI Guide](../../docs/UI_GUIDE.md) — Computer UI 공통 hierarchy, transition 원칙, WebGL 제약.
+- [Shutdown Transition Plan](./34-shutdown-transition-plan.md) — startup boot와 shutdown root 분리 기준.
+- [Future Transition Polish](./38-future-transition-polish.md) — desktop fade in, taskbar reveal, icon reveal 후보.
+
+## Depends On
+
+- `BootScreenUI`
+- `ComputerUIController`
+- `ComputerUIRoot`, `DesktopLayer`, `WindowLayer`, `TaskbarRoot`
+
+## Related Systems
+
+- startup boot sequence
+- Computer UI open/close lifecycle
+- CRT frame, mask, overlay 계층
+
 ## Status
 
 pending
@@ -31,6 +49,7 @@ Unity Editor에서 `BootScreenRoot`를 만들고 `BootScreenUI`, `ComputerUICont
 
 - `BootScreenRoot`는 `ComputerUIRoot` 하위에 둔다.
 - `BootScreenRoot`는 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`와 같은 레벨의 별도 overlay 계층으로 둔다.
+- shutdown 화면은 `ShutdownScreenRoot` 전용 문서에서 다루며, boot 문서에서는 startup boot 상태만 다룬다.
 - `BootScreenRoot`는 desktop shell보다 위에 렌더링되어야 한다.
 - `DesktopLayer`, `WindowLayer`, `TaskbarRoot`는 기존 역할과 hierarchy를 유지한다.
 - `StartMenuRoot`가 `TaskbarRoot` 하위에 있다면 `TaskbarRoot` 숨김으로 함께 숨겨지는 구조를 우선한다.
@@ -45,6 +64,7 @@ ComputerUIRoot
 ├── BootScreenRoot
 │   ├── BootPanel
 │   └── BootLogText
+├── ShutdownScreenRoot
 ├── DesktopLayer
 │   └── DesktopIconRoot
 ├── WindowLayer
@@ -57,7 +77,7 @@ ComputerUIRoot
 설명:
 
 - `BootScreenRoot`는 `ComputerUIRoot` 바로 아래에 만든다.
-- `BootScreenRoot`는 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`와 같은 레벨이다.
+- `BootScreenRoot`는 `ShutdownScreenRoot`, `DesktopLayer`, `WindowLayer`, `TaskbarRoot`와 같은 레벨이다.
 - `BootScreenRoot`는 별도 overlay 역할을 한다. desktop icon, window, taskbar의 자식으로 넣지 않는다.
 - 같은 Canvas 안에서는 sibling order를 조정해 `BootScreenRoot`가 desktop shell보다 위에 보이게 한다.
 - `BootScreenRoot`는 `DesktopLayer`보다 위쪽 sibling으로 배치하는 것을 권장한다.
@@ -259,7 +279,7 @@ cursor blink 기준:
 
 ## Desktop Transition Guide
 
-현재 구현 기준 transition:
+현재 startup transition:
 
 ```text
 boot complete
@@ -270,35 +290,7 @@ boot complete
 → ProjectDesktopUI.Initialize()
 ```
 
-권장 후속 transition 흐름:
-
-```text
-READY. 표시
-→ completion delay
-→ BootScreenRoot fade out
-→ DesktopLayer show
-→ WindowLayer show
-→ TaskbarRoot show
-→ ProjectDesktopUI.Initialize()
-```
-
-작게 추가하기 좋은 순서:
-
-1. `READY.` 이후 `_completionDelay`로 짧게 hold한다.
-2. boot screen fade out은 `CanvasGroup` 기반으로 추가한다.
-3. desktop fade in도 `CanvasGroup` 기반으로 추가한다.
-4. taskbar delayed reveal은 desktop shell이 안정화된 뒤 별도 step으로 분리한다.
-5. icon delayed reveal은 `ProjectDesktopUI` runtime icon lifecycle과 결합되므로 별도 구현 step으로 분리한다.
-
-이번 구조에서 바로 구현하지 않는 후보:
-
-- desktop fade in.
-- taskbar delayed reveal.
-- icon delayed reveal.
-- CRT overlay flicker.
-- monitor power-on scan animation.
-
-이 연출들은 `ComputerUIController`의 shell 표시 순서나 CRT overlay 계층과 결합되므로, Play Mode 검증이 끝난 현재 boot open/close 안정성을 유지하려면 별도 phase로 다룬다.
+후속 desktop fade in, taskbar delayed reveal, icon delayed reveal, CRT flicker 후보는 이 문서에 중복 작성하지 않는다. 후보와 guardrails는 [Future Transition Polish](./38-future-transition-polish.md)를 따른다.
 
 ## Fade Out Behavior
 
@@ -389,13 +381,8 @@ Close() 또는 Escape
 
 ## WebGL Compatibility
 
-- fade out은 Unity coroutine 기반으로 실행한다.
-- 시간 누적은 `Time.deltaTime`을 사용한다.
-- 시각 변화는 `CanvasGroup.alpha`만 사용한다.
-- native plugin을 사용하지 않는다.
-- thread를 사용하지 않는다.
-- WebGL 비호환 API를 사용하지 않는다.
-- WebGL에서 tab throttling이나 frame rate 저하가 있어도 fade 시간만 늘어날 수 있고 상태 전이는 coroutine 안에서 유지된다.
+- 공통 WebGL 제약은 [UI Guide](../../docs/UI_GUIDE.md)의 `WebGL UI 제약`을 따른다.
+- boot fade out은 Unity coroutine, `Time.deltaTime`, `CanvasGroup.alpha` 범위에서 유지한다.
 - `Close()` 또는 Escape로 `BootScreenUI.Hide()`가 호출되면 coroutine이 중단되고 alpha가 `1`로 복구되어 reopen 상태가 안정적이어야 한다.
 
 ## Common Issues
@@ -444,3 +431,13 @@ Close() 또는 Escape
 ## Completed Step Summary
 
 이 step은 Unity Editor에서 `BootScreenRoot`를 만들고 `BootScreenUI`와 `ComputerUIController` 참조를 연결하는 절차를 정의한다. `BootScreenRoot`는 `ComputerUIRoot` 하위의 overlay 계층이며, 기본 inactive 상태로 둔다. Play Mode에서는 boot screen 표시, 로그 순차 출력, desktop shell 숨김/표시, Escape close, reopen 재생을 검증한다.
+
+## Next Recommended Step
+
+- shutdown 연출을 추가할 때는 [Shutdown Transition Plan](./34-shutdown-transition-plan.md)을 먼저 적용한다.
+- boot 이후 desktop/taskbar/icon reveal을 다룰 때는 [Future Transition Polish](./38-future-transition-polish.md)에 별도 phase를 만든다.
+
+## Related Guides
+
+- [UI Guide](../../docs/UI_GUIDE.md)
+- [CRT Frame And Mask Guide](./25-crt-frame-screen-mask-editor-guide.md)
