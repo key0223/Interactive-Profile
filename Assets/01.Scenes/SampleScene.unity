@@ -2621,11 +2621,12 @@ MonoBehaviour:
   _skillsWindowIcon: {fileID: 21300000, guid: f60ea14244959b64588d1df1e250f49c, type: 3}
   _showContactDesktopIcon: 1
   _contactDesktopTitle: CONTACT.EXE
-  _contactDesktopIcon: {fileID: 0}
+  _contactDesktopIcon: {fileID: 21300000, guid: d3dd5a76635553942a4e3307dbc4ea7e,
+    type: 3}
   _contactWindowPrefab: {fileID: 3144021637577238876, guid: 01eee7fcd4d3bdd46a135e99e18e1633,
     type: 3}
   _contactWindowTitle: CONTACT.EXE
-  _contactWindowIcon: {fileID: 0}
+  _contactWindowIcon: {fileID: 21300000, guid: d3dd5a76635553942a4e3307dbc4ea7e, type: 3}
   _openDefaultOnStart: 0
 --- !u!1 &1705677051
 GameObject:
