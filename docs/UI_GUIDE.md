@@ -114,13 +114,17 @@ Boot visual polish 기준:
 
 ## Shutdown Sequence
 
-- 현재 Computer UI shutdown은 즉시 close 흐름이며 별도 transition이 없다.
 - shutdown transition은 startup `BootScreenUI`와 분리된 전용 UI로 설계한다.
 - 권장 방향은 `ShutdownScreenRoot`와 `ShutdownScreenUI`를 별도 계층/컴포넌트로 두는 것이다.
 - shutdown 문구는 `SHUTTING DOWN...`, `SAVING SESSION...`, `GOODBYE.`처럼 짧게 유지한다.
 - shutdown transition은 startup보다 빠른 `0.6`~`1.2`초 범위를 우선한다.
 - fade는 `CanvasGroup.alpha`와 coroutine만 사용해 WebGL 호환성을 유지한다.
 - desktop 상태 Escape는 기존 focused window close 우선 정책을 유지하고, Start Menu `Shut Down...`만 shutdown transition 진입점으로 둔다.
+- `ComputerUIController._shutdownScreenUI`가 연결되어 있으면 Start Menu shutdown은 transition을 재생한 뒤 close cleanup을 수행한다.
+- `_shutdownScreenUI`가 비어 있으면 기존 즉시 close 흐름으로 fallback 된다.
+- `Close()`는 즉시 종료 API이고 `RequestShutdown()`은 shutdown transition API다.
+- desktop 상태에서 shutdown 연출을 보려면 외부 버튼이나 단축키도 `RequestShutdown()` 경로를 사용해야 한다.
+- `ShutdownScreenRoot`는 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`보다 위에 표시하고, `CRTOverlayLayer`를 최상단 overlay로 쓰는 경우 그 아래에 둔다.
 - 자세한 설계는 `phases/02-computer-ui/34-shutdown-transition-plan.md`를 따른다.
 
 ## Window Lifecycle Interaction
@@ -216,6 +220,15 @@ ContactWindow
 - `_canvasGroup` 미연결 fallback을 테스트한 경우 fade 없이 즉시 hide되는지 확인하고, 테스트 후 다시 연결한다.
 - cursor 사용 시 완료 후 cursor 잔상이 남지 않는다.
 - `_bootScreenUI`가 null이어도 기존 desktop 초기화 흐름이 정상 동작한다.
+- desktop 상태에서 Start Menu `Shut Down...` 클릭 시 shutdown screen이 표시된다.
+- shutdown log가 순서대로 출력된다.
+- shutdown 중 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`가 숨겨진다.
+- shutdown 완료 후 `ShutdownScreenRoot`와 `ComputerUIRoot`가 inactive가 된다.
+- shutdown 완료 후 player movement가 복구된다.
+- shutdown 중 Escape 또는 중복 shutdown 요청으로 상태가 꼬이지 않는다.
+- shutdown 직후 reopen 시 startup boot가 정상 재생된다.
+- `_shutdownScreenUI`가 null이면 즉시 close fallback이 동작한다.
+- shutdown `_canvasGroup`이 null이면 fade 없이 즉시 hide fallback이 동작한다.
 - runtime desktop icon이 생성된다.
 - Computer UI open 시 boot screen이 먼저 표시되고 완료 후 desktop shell이 표시된다.
 - project icon과 `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE` icon이 표시된다.

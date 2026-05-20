@@ -348,6 +348,129 @@ public void CloseImmediate();
 
 기존 `Close()` API는 제거하지 않는다.
 
+## Editor Wiring Guide
+
+권장 hierarchy:
+
+```text
+ComputerUIRoot
+├── DesktopLayer
+├── WindowLayer
+├── TaskbarRoot
+│   └── StartMenuRoot
+├── BootScreenRoot
+├── ShutdownScreenRoot
+│   ├── ShutdownPanel
+│   └── ShutdownText
+└── CRTOverlayLayer
+```
+
+계층 기준:
+
+- `ShutdownScreenRoot`는 `ComputerUIRoot` 바로 아래에 둔다.
+- `ShutdownScreenRoot`는 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`, `BootScreenRoot`와 같은 레벨이다.
+- `ShutdownScreenRoot`는 desktop shell의 자식으로 넣지 않는다.
+- `ShutdownScreenRoot`는 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`보다 위에 표시되어야 한다.
+- `CRTOverlayLayer`를 최상단 overlay로 쓰는 경우 `ShutdownScreenRoot`보다 뒤쪽 sibling에 둘 수 있다.
+- `CRTOverlayLayer`가 `ShutdownScreenRoot` 뒤쪽에 있으면 shutdown 화면에도 scanline/frame 효과가 적용된다.
+- `ShutdownScreenRoot`가 `CRTOverlayLayer`보다 뒤쪽에 있으면 shutdown 화면이 CRT overlay를 덮어 평면 UI처럼 보일 수 있다.
+
+`ShutdownScreenRoot` 필수/권장 컴포넌트:
+
+- `RectTransform`: full screen stretch 배치.
+- `CanvasRenderer`: UI 렌더링용.
+- `Image` 또는 하위 `ShutdownPanel`: 어두운 배경 표시용.
+- `CanvasGroup`: shutdown fade out alpha 제어용.
+- `ShutdownScreenUI`: shutdown line 출력, fade out, 완료 callback 담당.
+
+RectTransform 권장값:
+
+- `ShutdownScreenRoot`: Stretch / Full Screen, Left `0`, Right `0`, Top `0`, Bottom `0`.
+- `ShutdownPanel`: Stretch / Full Screen, 어두운 background image 또는 panel.
+- `ShutdownText`: 좌측 상단 또는 중앙 좌측 배치.
+- `ShutdownText` padding: left `32`~`48`, top `32`~`48`.
+- `ShutdownText`는 3~5줄 shutdown log가 들어갈 충분한 width/height를 가진다.
+- font는 boot/system log와 같은 terminal 계열 TMP font를 우선한다.
+
+`ShutdownScreenUI` Inspector 연결:
+
+- `_root` → `ShutdownScreenRoot`
+- `_logText` → `ShutdownText`의 `TMP_Text`
+- `_canvasGroup` → `ShutdownScreenRoot`의 `CanvasGroup`
+- `_shutdownLines` → `SHUTTING DOWN...`, `SAVING SESSION...`, `GOODBYE.`
+- `_lineDelay` → `0.12`~`0.2`
+- `_completionDelay` → `0.15`~`0.3`
+- `_useFadeOut` → enabled 권장
+- `_fadeOutDuration` → `0.15`~`0.3`
+
+권장 Inspector 값:
+
+- `_shutdownLines`: `SHUTTING DOWN...`, `SAVING SESSION...`, `GOODBYE.`
+- `_lineDelay`: `0.12`~`0.2`
+- `_completionDelay`: `0.15`~`0.3`
+- `_useFadeOut`: true
+- `_fadeOutDuration`: `0.15`~`0.35`
+
+`ComputerUIController` Inspector 연결:
+
+- `_shutdownScreenUI` → `ShutdownScreenRoot`에 붙은 `ShutdownScreenUI`
+
+기본 상태:
+
+- `ShutdownScreenRoot`는 기본 inactive 권장.
+- `CanvasGroup.alpha`는 기본 `1`로 둔다.
+- `ShutdownScreenUI.Play()`와 `Hide()`는 alpha를 `1`로 복구해야 한다.
+
+fallback 기준:
+
+- `_shutdownScreenUI`가 null이면 shutdown 요청은 기존 즉시 close로 fallback 된다.
+- `_canvasGroup`이 null이면 fade out 없이 즉시 hide로 fallback 된다.
+- `_useFadeOut`이 false이거나 `_fadeOutDuration <= 0`이면 fade out 없이 즉시 hide로 fallback 된다.
+
+Editor 작업 순서:
+
+1. `ComputerUIRoot` 하위에 `ShutdownScreenRoot`를 만든다.
+2. `ShutdownScreenRoot`를 full screen stretch로 설정한다.
+3. `ShutdownPanel`을 만들고 full screen stretch로 설정한다.
+4. `ShutdownPanel` 또는 `ShutdownScreenRoot` 하위에 `ShutdownText` TMP UI를 만든다.
+5. `ShutdownScreenRoot`에 `CanvasGroup`을 추가한다.
+6. `ShutdownScreenRoot`에 `ShutdownScreenUI`를 추가한다.
+7. `ShutdownScreenUI._root`에 `ShutdownScreenRoot`를 연결한다.
+8. `ShutdownScreenUI._logText`에 `ShutdownText`를 연결한다.
+9. `ShutdownScreenUI._canvasGroup`에 `ShutdownScreenRoot`의 `CanvasGroup`을 연결한다.
+10. shutdown line과 timing 값을 설정한다.
+11. `ComputerUIController._shutdownScreenUI`에 `ShutdownScreenUI`를 연결한다.
+12. `ShutdownScreenRoot`를 기본 inactive로 둔다.
+
+기본 inactive 권장 이유:
+
+- scene 시작 직후 shutdown 화면이 노출되지 않게 한다.
+- `RequestShutdown()`이 shutdown 화면 표시 시작점을 단일하게 제어한다.
+- shutdown 후 reopen 시 이전 shutdown text나 alpha 상태가 보이는 것을 막는다.
+
+## Close And RequestShutdown Policy
+
+현재 API 의미:
+
+- `Close()`: 즉시 종료 API다.
+- `RequestShutdown()`: shutdown transition API다.
+- `CloseImmediate()`: 내부 cleanup용 즉시 종료 경로다.
+
+사용 기준:
+
+- Start Menu의 `Shut Down...`은 `RequestShutdown()` 경로에 연결되어야 shutdown transition을 볼 수 있다.
+- boot 중 Escape는 기존처럼 `Close()`를 사용해 즉시 종료한다.
+- desktop 상태에서 shutdown 연출을 보고 싶다면 `Close()`가 아니라 `RequestShutdown()`을 호출해야 한다.
+- 외부 버튼, 단축키, 디버그 명령을 추가할 경우 의도에 따라 `Close()` 또는 `RequestShutdown()`을 선택한다.
+- 즉시 닫아야 하는 emergency path, boot cancel, 테스트 cleanup은 `Close()`가 적합하다.
+- 사용자에게 faux OS shutdown을 보여주는 UI action은 `RequestShutdown()`이 적합하다.
+
+주의:
+
+- `Close()`를 직접 호출하면 `ShutdownScreenUI`는 재생되지 않는다.
+- `_shutdownScreenUI`가 연결되지 않으면 `RequestShutdown()`도 기존 즉시 close로 fallback 된다.
+- shutdown 중 `RequestShutdown()`이 반복 호출되어도 transition은 중복 시작되지 않아야 한다.
+
 ## Startup And Shutdown Separation Rules
 
 - `BootScreenUI`는 startup 전용으로 유지한다.
@@ -374,17 +497,64 @@ MVP 권장:
 
 ## Play Mode Verification
 
-- Start Menu `Shut Down...` 클릭 시 shutdown transition이 시작된다.
-- shutdown 중 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`가 보이지 않는다.
-- `SHUTTING DOWN...`, `SAVING SESSION...`, `GOODBYE.`가 짧게 표시된다.
-- shutdown fade 후 `ComputerUIRoot`가 inactive가 된다.
-- shutdown 후 player movement가 복구된다.
-- shutdown 후 interaction prompt block이 해제된다.
-- shutdown 후 reopen 시 startup boot sequence가 처음부터 실행된다.
-- reopen 시 boot screen alpha가 `1`이다.
-- reopen 시 shutdown screen alpha도 다음 shutdown을 위해 `1`로 복구되어 있다.
-- shutdown 중 Escape 정책이 의도대로 동작한다.
-- shutdown 중 중복 `Shut Down...` 요청이 transition을 중복 시작하지 않는다.
+순서형 검증:
+
+1. Play Mode를 시작한다.
+2. Computer와 상호작용해 `ComputerUIRoot`를 연다.
+3. startup boot sequence가 정상 재생되는지 확인한다.
+4. boot 완료 후 desktop이 표시되는지 확인한다.
+5. Start button을 눌러 Start Menu를 연다.
+6. `Shut Down...`을 클릭한다.
+7. `DesktopLayer`, `WindowLayer`, `TaskbarRoot`가 숨겨지는지 확인한다.
+8. `ShutdownScreenRoot`가 active가 되는지 확인한다.
+9. `SHUTTING DOWN...`, `SAVING SESSION...`, `GOODBYE.`가 순서대로 출력되는지 확인한다.
+10. shutdown log 이후 fade out이 실행되는지 확인한다.
+11. fade out 완료 후 `ShutdownScreenRoot`가 inactive가 되는지 확인한다.
+12. shutdown 완료 후 `ComputerUIRoot`가 inactive가 되는지 확인한다.
+13. player movement가 복구되는지 확인한다.
+14. shutdown 직후 다시 Computer와 상호작용한다.
+15. startup boot sequence가 처음부터 정상 재생되는지 확인한다.
+16. boot screen alpha가 `1`로 시작하는지 확인한다.
+17. shutdown screen alpha도 다음 shutdown을 위해 `1`로 복구되어 있는지 확인한다.
+18. shutdown 중 Escape를 눌러도 상태가 꼬이지 않는지 확인한다.
+19. shutdown 중 `Shut Down...`을 다시 누를 수 있는 경로가 있다면 중복 transition이 시작되지 않는지 확인한다.
+20. boot 중 Escape는 기존처럼 즉시 close되는지 확인한다.
+21. 테스트 목적으로 `_shutdownScreenUI`를 비우면 즉시 close fallback이 동작하는지 확인한다. 테스트 후 다시 연결한다.
+22. 테스트 목적으로 `_canvasGroup`을 비우면 fade 없이 즉시 hide fallback이 동작하는지 확인한다. 테스트 후 다시 연결한다.
+23. WebGL 비호환 API 사용이 없는지 코드 리뷰 기준으로 확인한다.
+
+## Troubleshooting
+
+### Shut Down...을 눌러도 바로 닫힘
+
+- `ComputerUIController._shutdownScreenUI` 연결이 누락되었을 수 있다.
+- Start Menu callback이 `RequestShutdown()` 경로인지 확인한다.
+- 현재 코드에서는 `StartMenuUI.Initialize(RequestShutdown)`이어야 한다.
+- 외부 버튼이 `Close()`를 직접 호출하면 transition 없이 즉시 닫힌다.
+
+### shutdown 화면이 안 보임
+
+- `ShutdownScreenRoot`가 기본 inactive인 것은 정상이다. `RequestShutdown()` 시 active가 되어야 한다.
+- `ShutdownScreenUI._root`가 `ShutdownScreenRoot`로 연결되어 있는지 확인한다.
+- `ShutdownScreenUI._logText`가 `ShutdownText` TMP로 연결되어 있는지 확인한다.
+- `CanvasGroup.alpha`가 수동으로 `0`에 머물러 있지 않은지 확인한다.
+- sibling order에서 `ShutdownScreenRoot`가 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`보다 위에 보이는지 확인한다.
+- `CRTOverlayLayer`가 최상단이면 shutdown 화면이 overlay 아래에서 보이는지 확인한다.
+
+### reopen 시 startup boot가 안 보임
+
+- `BootScreenRoot` alpha가 `1`로 복구되어 있는지 확인한다.
+- `ShutdownScreenRoot`가 active 상태로 남아 boot screen을 덮고 있지 않은지 확인한다.
+- `ShutdownScreenUI.Hide()`가 shutdown 완료 또는 immediate close 중 호출되는지 확인한다.
+- `ComputerUIController._bootScreenUI` 연결이 유지되어 있는지 확인한다.
+
+### fade가 안 됨
+
+- `ShutdownScreenRoot`에 `CanvasGroup`이 있는지 확인한다.
+- `ShutdownScreenUI._canvasGroup`이 연결되어 있는지 확인한다.
+- `_useFadeOut`이 enabled인지 확인한다.
+- `_fadeOutDuration`이 `0`보다 큰지 확인한다.
+- `_canvasGroup` fallback 테스트 후 연결을 복구했는지 확인한다.
 
 ## Implementation Recommendation
 

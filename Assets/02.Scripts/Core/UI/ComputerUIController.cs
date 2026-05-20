@@ -12,6 +12,7 @@ public class ComputerUIController : MonoBehaviour
     [SerializeField] private InteractionPromptUI _interactionPromptUI;
     [SerializeField] private StartMenuUI _startMenuUI;
     [SerializeField] private BootScreenUI _bootScreenUI;
+    [SerializeField] private ShutdownScreenUI _shutdownScreenUI;
     [SerializeField] private GameObject _desktopLayer;
     [SerializeField] private GameObject _windowLayer;
     [SerializeField] private GameObject _taskbarRoot;
@@ -19,6 +20,7 @@ public class ComputerUIController : MonoBehaviour
     public bool IsOpen { get; private set; }
 
     private bool _isBooting;
+    private bool _isShuttingDown;
 
     private void Awake()
     {
@@ -41,13 +43,16 @@ public class ComputerUIController : MonoBehaviour
             Debug.LogWarning($"{nameof(ComputerUIController)} on {name} can hide prompts when an {nameof(InteractionPromptUI)} reference is assigned.");
 
         if (_startMenuUI != null)
-            _startMenuUI.Initialize(Close);
+            _startMenuUI.Initialize(RequestShutdown);
 
         if (_bootScreenUI != null && _desktopLayer == null && _windowLayer == null && _taskbarRoot == null)
             Debug.LogWarning($"{nameof(ComputerUIController)} on {name} has a {nameof(BootScreenUI)} but no desktop shell layer references. Desktop shell cannot be hidden during boot.");
 
         if (_bootScreenUI != null)
             _bootScreenUI.Hide();
+
+        if (_shutdownScreenUI != null)
+            _shutdownScreenUI.Hide();
 
         SetDesktopShellActive(false);
         SetRootActive(false);
@@ -63,6 +68,8 @@ public class ComputerUIController : MonoBehaviour
         {
             if (_isBooting)
                 Close();
+            else if (_isShuttingDown)
+                return;
             else if (_projectDesktopUI != null)
                 _projectDesktopUI.CloseFocusedWindow();
             else
@@ -75,6 +82,7 @@ public class ComputerUIController : MonoBehaviour
         if (IsOpen)
             return;
 
+        _isShuttingDown = false;
         IsOpen = true;
         SetRootActive(true);
         SetDesktopShellActive(false);
@@ -99,16 +107,57 @@ public class ComputerUIController : MonoBehaviour
         }
     }
 
+    public void RequestShutdown()
+    {
+        if (!IsOpen)
+            return;
+
+        if (_isBooting)
+        {
+            Close();
+            return;
+        }
+
+        if (_isShuttingDown)
+            return;
+
+        if (_shutdownScreenUI == null)
+        {
+            CloseImmediate();
+            return;
+        }
+
+        _isShuttingDown = true;
+
+        if (_bootScreenUI != null)
+            _bootScreenUI.Hide();
+
+        if (_startMenuUI != null)
+            _startMenuUI.Hide();
+
+        SetDesktopShellActive(false);
+        _shutdownScreenUI.Play(HandleShutdownComplete);
+    }
+
     public void Close()
+    {
+        CloseImmediate();
+    }
+
+    private void CloseImmediate()
     {
         if (!IsOpen)
             return;
 
         IsOpen = false;
         _isBooting = false;
+        _isShuttingDown = false;
 
         if (_bootScreenUI != null)
             _bootScreenUI.Hide();
+
+        if (_shutdownScreenUI != null)
+            _shutdownScreenUI.Hide();
 
         if (_startMenuUI != null)
             _startMenuUI.Hide();
@@ -141,6 +190,9 @@ public class ComputerUIController : MonoBehaviour
         if (!IsOpen)
             return;
 
+        if (_isShuttingDown)
+            return;
+
         _isBooting = false;
         SetDesktopShellActive(true);
 
@@ -150,6 +202,11 @@ public class ComputerUIController : MonoBehaviour
             _projectSelectionUI.SelectDefault();
         else if (_projectViewerUI != null)
             _projectViewerUI.Show(_defaultProjectData);
+    }
+
+    private void HandleShutdownComplete()
+    {
+        CloseImmediate();
     }
 
     private void SetDesktopShellActive(bool active)
