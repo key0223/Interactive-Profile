@@ -8,17 +8,17 @@
 
 ## Goal
 
-`CONTACT.EXE`를 Windows 95/98 Microsoft Exchange 스타일의 old mail client로 유지하면서 selected row, hover row, status keyword, preview mail header, status bar feedback 중심의 낮은 강도 visual polish를 적용한다.
+`CONTACT.EXE`를 Windows 95/98 Microsoft Exchange 스타일의 old mail client로 유지하면서 selected row, hover row, row-local connection lamp, preview mail header, status bar feedback 중심의 낮은 강도 visual polish를 적용한다.
 
 ## Scope
 
 - 포함:
-  - status keyword 색상 정책.
+  - connection indicator image 색상 정책.
   - selected/hover row visual 기준.
   - preview pane mail header 구조.
   - status bar feedback 문구 기준.
   - optional connection indicator 연결 기준.
-  - TMP rich text 설정 기준.
+  - TMP status text plain text 기준.
   - Play Mode 검증과 troubleshooting.
 - 제외:
   - Unity Editor 실제 작업.
@@ -56,8 +56,8 @@
 - Windows 95/98 회색 panel.
 - Microsoft Exchange식 folder tree, table row, inset preview pane.
 - 작은 monospace 또는 pixel 느낌 TMP.
-- muted selection blue, muted green/cyan/amber status.
-- status 단어와 selected row만 명확하게 강조.
+- muted selection blue, muted green/cyan/amber/red connection lamp.
+- status 단어는 기본 text 색을 유지하고 작은 indicator image만 상태 색을 담당.
 
 금지:
 
@@ -67,7 +67,7 @@
 - rounded card layout.
 - 크고 현대적인 CTA 버튼.
 
-## Status Keyword Color Policy
+## Status Indicator Policy
 
 대상 keyword:
 
@@ -78,7 +78,7 @@
 - `AVAILABLE`
 - `VERIFIED`
 
-색상 방향:
+상태 색상 방향:
 
 - `ONLINE`, `ACTIVE`, `AVAILABLE`: muted green.
 - `READY`, `VERIFIED`: muted cyan.
@@ -87,15 +87,19 @@
 
 구현 기준:
 
-- status keyword만 TMP rich text color로 강조한다.
-- line 전체 또는 pane 전체를 색칠하지 않는다.
+- 상태 색상 표현은 `ContactMessageRowUI._connectionIndicatorImage`가 담당한다.
+- TMP status text는 기본 UI text 색을 유지하고 상태 이름만 표시한다.
+- `● STATUS` 문자열 방식은 사용하지 않는다.
+- line 전체, pane 전체, status 단어 자체를 색칠하지 않는다.
 - CRT overlay 위에서도 읽히는 낮은 채도의 색을 사용한다.
-- `ContactMessageRowUI`, preview header, `_statusText`, `_statusBarText`, fallback `_messageListText`는 rich text를 켠다.
+- preview header, `_statusText`, `_statusBarText`, fallback `_messageListText`는 plain status string을 표시한다.
 
-TMP 예시:
+row 표시 예시:
 
 ```text
-STATUS  : <color=#73C7D6>READY</color>
+[green dot] ONLINE
+[cyan dot] READY
+[amber dot] NEW
 ```
 
 ## Selected Row Visual
@@ -137,7 +141,7 @@ message row와 folder row 모두 optional `_hoverImage`를 지원한다.
 
 ## Preview Mail Header
 
-preview pane은 선택된 entry를 fake mail header로 표시한다.
+preview pane은 선택된 entry를 fake mail header로 표시한다. preview 영역은 별도 connection lamp를 갖지 않으므로 status text를 기본 색의 plain text로 표시한다.
 
 권장 구조:
 
@@ -156,7 +160,7 @@ URL: Not available
 기준:
 
 - 기존 description 본문은 유지한다.
-- `STATUS`만 rich text color로 강조한다.
+- `STATUS` 값은 rich text color 없이 기본 text 색으로 표시한다.
 - header와 body 사이 separator line을 둔다.
 - modern card heading처럼 크고 둥글게 만들지 않는다.
 
@@ -177,7 +181,7 @@ message 선택 상태:
 기준:
 
 - message 선택 시 현재 선택 status가 반영된다.
-- status keyword만 rich text color로 강조한다.
+- status keyword는 rich text color 없이 기본 text 색으로 표시한다.
 - status bar는 animation 없이 TMP text 갱신만 사용한다.
 - 너무 자주 바뀌는 ticker나 rotating message로 만들지 않는다.
 
@@ -193,19 +197,37 @@ message row optional field:
 권장 표시:
 
 ```text
-● ONLINE
-● READY
+[dot image] ONLINE
+[dot image] READY
 ```
 
 연결 기준:
 
 - dot Image를 쓰는 경우 dot만 status color로 바꾼다.
-- TMP text를 쓰는 경우 `●` prefix와 status keyword를 표시한다.
+- TMP text는 `ONLINE`, `READY`, `NEW` 같은 plain status string만 표시한다.
+- TMP text에 `●` prefix, rich text color tag, 상태별 text color를 사용하지 않는다.
 - Image와 TMP가 둘 다 비어도 Contact 기능은 정상 동작해야 한다.
 - indicator는 message row의 `FROM` 앞 또는 `STATUS` column 근처에 작게 둔다.
 - `ContactWindowView` Inspector에는 row 내부 indicator를 연결하지 않는다.
+- Image와 TMP가 모두 연결된 경우 Image는 상태 색, TMP는 기본 text 색 status label을 담당한다.
+- dot Image 권장 크기는 row 높이에 맞춰 6~8px 수준으로 작게 유지한다.
+- dot Image의 `raycastTarget`은 false를 권장한다.
 
 권장 row hierarchy:
+
+```text
+MessageRowRoot
+├── SelectionImage
+├── HoverImage
+├── SenderText
+├── SubjectText
+├── StatusRoot
+│   ├── ConnectionIndicatorImage
+│   └── ConnectionIndicatorText
+└── StatusText
+```
+
+legacy hierarchy가 이미 존재하는 경우:
 
 ```text
 ContactMessageRow
@@ -229,9 +251,9 @@ ContactMessageRow
 - `_selectionImage`: selected background Image.
 - `_hoverImage`: optional hover background Image.
 - `_connectionIndicatorImage`: optional row-local status dot Image.
-- `_connectionIndicatorText`: optional row-local `● STATUS` TMP.
-- `_statusText`: rich text enabled TMP.
-- `_onlineColor`, `_readyColor`, `_newColor`, `_errorColor`: row indicator와 status text에 사용할 muted colors.
+- `_connectionIndicatorText`: optional row-local plain status TMP. `●` prefix와 rich text color를 사용하지 않는다.
+- `_statusText`: plain status TMP.
+- `_onlineColor`, `_readyColor`, `_newColor`, `_errorColor`: row indicator image에 사용할 muted colors.
 
 `ContactFolderRowUI` 추가 확인:
 
@@ -240,7 +262,7 @@ ContactMessageRow
 
 TMP 설정:
 
-- `Rich Text`: enabled.
+- status 관련 TMP의 `Rich Text`: disabled 권장.
 - font size는 기존 row 높이에 맞게 작게 유지.
 - status text는 column을 밀지 않게 짧은 keyword만 사용.
 
@@ -253,7 +275,9 @@ TMP 설정:
 - folder hover와 selected state가 서로 구분된다.
 - preview pane header에 `FROM`, `CHANNEL`, `STATUS`, `SUBJECT`가 표시된다.
 - preview body 기존 description과 URL이 유지된다.
-- `ONLINE`, `READY`, `ACTIVE`, `NEW`, `AVAILABLE`, `VERIFIED`가 약하게 색 강조된다.
+- `ONLINE`, `READY`, `ACTIVE`, `NEW`, `AVAILABLE`, `VERIFIED` 상태별 row indicator dot 색상이 맞다.
+- status text는 기본 UI text 색을 유지한다.
+- row와 fallback text에 `●` 문자가 출력되지 않는다.
 - status bar가 folder count와 selected status에 맞게 갱신된다.
 - row별 connection indicator를 연결한 경우 각 row status와 색이 맞는다.
 - indicator Image/TMP를 연결하지 않아도 row 생성과 selection이 오류 없이 동작한다.
@@ -262,7 +286,7 @@ TMP 설정:
 - URL이 있는 entry에서는 `CONNECT`가 활성화된다.
 - minimize/restore 후 선택 row, preview, status bar 상태가 유지된다.
 - shutdown/reopen 후 `CONTACT.EXE` 초기 상태가 정상이다.
-- CRT overlay 위에서도 status color와 selected row가 읽힌다.
+- CRT overlay 위에서도 indicator dot, status text, selected row가 읽힌다.
 - WebGL 빌드에서 Thread, native plugin, platform-specific API 문제가 없다.
 
 ## Troubleshooting
@@ -278,11 +302,12 @@ TMP 설정:
 - `_hoverImage`가 `_selectionImage`보다 위에 있더라도 selected 상태에서는 runtime에서 꺼진다.
 - 둘 다 켜져 보이면 row prefab에 별도 hover script나 animator가 있는지 확인한다.
 
-### status 색상이 보이지 않음
+### indicator 색상이 보이지 않음
 
-- TMP `Rich Text`가 켜져 있는지 확인한다.
+- `_connectionIndicatorImage` 연결을 확인한다.
+- dot Image의 `raycastTarget`은 false로 둔다.
 - status keyword가 `ONLINE`, `READY`, `ACTIVE`, `NEW`, `AVAILABLE`, `VERIFIED` 중 하나인지 확인한다.
-- 색상이 CRT overlay와 너무 가까우면 Inspector에서 TMP 기본색이나 overlay alpha를 조정한다.
+- 색상이 CRT overlay와 너무 가까우면 Inspector에서 dot Image 색 또는 overlay alpha를 조정한다.
 
 ### preview header가 너무 길게 밀림
 
@@ -303,7 +328,7 @@ TMP 설정:
 
 ## WebGL Compatibility
 
-- 사용 범위는 TMP text 갱신, Image active/color, EventSystem pointer enter/exit, `Application.OpenURL`이다.
+- 사용 범위는 TMP plain text 갱신, Image active/color, EventSystem pointer enter/exit, `Application.OpenURL`이다.
 - Thread, blocking sleep, native plugin, platform-specific API를 사용하지 않는다.
 - 외부 tween 라이브러리, Audio, shader, particle, post-processing을 사용하지 않는다.
 - hover state는 pointer event 기반이며, WebGL tab throttling과 무관하게 selected state를 보존한다.
@@ -311,7 +336,8 @@ TMP 설정:
 ## Acceptance Criteria
 
 - CONTACT.EXE가 old mail client tone을 유지한다.
-- status keyword만 muted color로 강조된다.
+- row-local indicator image만 muted status color로 강조된다.
+- status text는 기본 UI text 색을 유지하고 `● STATUS` 방식은 사용하지 않는다.
 - selected row와 hover row가 구분되고 selected가 우선한다.
 - preview pane은 fake mail header와 기존 body를 함께 표시한다.
 - status bar는 folder count와 selected status feedback을 제공한다.

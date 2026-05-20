@@ -108,6 +108,9 @@ ComputerUIRoot
 - `Inbox`는 전체 보기이고 `GitHub`, `Email`, `Portfolio`, `Resume`은 해당 entry만 필터링한다.
 - `CONNECT`는 선택 entry의 URL을 여는 최종 action이다.
 - selected row, row-local connection indicator, status visual 세부 기준은 [CONTACT.EXE Window Polish Guide](../phases/02-computer-ui/46-contact-window-polish-guide.md)를 따른다.
+- 상태 색상은 row-local connection indicator image만 담당한다.
+- status TMP text는 기본 UI text 색으로 상태 이름만 표시하며 `● STATUS` 방식과 rich text 색 강조를 사용하지 않는다.
+- 권장 row hierarchy는 `StatusRoot/ConnectionIndicatorImage/ConnectionIndicatorText` 구조이며 indicator Image의 `raycastTarget=false`를 권장한다.
 
 ## Window Lifecycle 공통 정책
 

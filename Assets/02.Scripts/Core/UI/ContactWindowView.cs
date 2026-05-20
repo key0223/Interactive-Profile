@@ -150,7 +150,6 @@ public class ContactWindowView : MonoBehaviour
         if (_connectButton != null)
             _connectButton.onClick.AddListener(OpenSelectedUrl);
 
-        ConfigureRichText();
     }
 
     private void OnDestroy()
@@ -294,7 +293,7 @@ public class ContactWindowView : MonoBehaviour
                     .Append(marker)
                     .Append(PadOrTrim(entry.DisplayName, 10))
                     .Append(PadOrTrim(entry.Subject, 32))
-                    .AppendLine(ContactVisualTextUtility.ColorizeStatus(entry.Status));
+                    .AppendLine(ContactVisualTextUtility.ResolveStatusLabel(entry.Status));
             }
         }
 
@@ -307,18 +306,18 @@ public class ContactWindowView : MonoBehaviour
 
         if (_previewTitleText != null)
         {
-            _previewTitleText.richText = true;
-            _previewTitleText.text = $"{ContactVisualTextUtility.ColorizeStatus(status)} | {SafeText(entry.Subject)}";
+            _previewTitleText.richText = false;
+            _previewTitleText.text = $"{ContactVisualTextUtility.ResolveStatusLabel(status)} | {SafeText(entry.Subject)}";
         }
 
         if (_previewBodyText != null)
         {
             string endpointLabel = string.IsNullOrWhiteSpace(entry.Url) ? "URL: Not available" : $"URL: {entry.Url}";
-            _previewBodyText.richText = true;
+            _previewBodyText.richText = false;
             _previewBodyText.text =
                 $"FROM    : {SafeText(entry.DisplayName)}\n" +
                 $"CHANNEL : {SafeText(_previewChannelName)}\n" +
-                $"STATUS  : {ContactVisualTextUtility.ColorizeStatus(status)}\n" +
+                $"STATUS  : {ContactVisualTextUtility.ResolveStatusLabel(status)}\n" +
                 $"SUBJECT : {SafeText(entry.Subject)}\n" +
                 "----------------------------------------\n" +
                 $"{NormalizeLineEndings(entry.Description)}\n\n" +
@@ -327,8 +326,8 @@ public class ContactWindowView : MonoBehaviour
 
         if (_statusText != null)
         {
-            _statusText.richText = true;
-            _statusText.text = $"1 item selected | STATUS: {ContactVisualTextUtility.ColorizeStatus(status)}";
+            _statusText.richText = false;
+            _statusText.text = $"1 item selected | STATUS: {ContactVisualTextUtility.ResolveStatusLabel(status)}";
         }
 
         UpdateStatusBarForSelection(entry);
@@ -480,24 +479,9 @@ public class ContactWindowView : MonoBehaviour
             return;
 
         string status = string.IsNullOrWhiteSpace(entry.Status) ? "READY" : entry.Status;
-        _statusBarText.richText = true;
+        _statusBarText.richText = false;
         _statusBarText.text =
-            $"1 item selected | STATUS: {ContactVisualTextUtility.ColorizeStatus(status)} | CHANNEL {ContactVisualTextUtility.ColorizeStatus("VERIFIED")}";
-    }
-
-    private void ConfigureRichText()
-    {
-        SetRichText(_messageListText);
-        SetRichText(_previewTitleText);
-        SetRichText(_previewBodyText);
-        SetRichText(_statusText);
-        SetRichText(_statusBarText);
-    }
-
-    private static void SetRichText(TMP_Text text)
-    {
-        if (text != null)
-            text.richText = true;
+            $"1 item selected | STATUS: {ContactVisualTextUtility.ResolveStatusLabel(status)} | CHANNEL {ContactVisualTextUtility.ResolveStatusLabel("VERIFIED")}";
     }
 
     private static void ApplyScrollTopAfterLayout(ScrollRect scrollRect)
@@ -602,14 +586,12 @@ public static class ContactVisualTextUtility
     private static readonly Color NewColor = new Color(0.88f, 0.68f, 0.34f);
     private static readonly Color ErrorColor = new Color(0.86f, 0.42f, 0.38f);
 
-    public static string ColorizeStatus(string status)
+    public static string ResolveStatusLabel(string status)
     {
         if (string.IsNullOrWhiteSpace(status))
-            return "-";
+            return "READY";
 
-        string trimmedStatus = status.Trim();
-        Color color = ResolveStatusColor(trimmedStatus);
-        return $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>{trimmedStatus}</color>";
+        return status.Trim().ToUpperInvariant();
     }
 
     public static Color ResolveStatusColor(string status)

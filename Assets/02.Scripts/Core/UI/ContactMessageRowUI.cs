@@ -72,25 +72,24 @@ public class ContactMessageRowUI : MonoBehaviour, IPointerEnterHandler, IPointer
         if (_statusText == null)
             return;
 
-        _statusText.richText = true;
-        _statusText.text = ColorizeStatus(status);
+        _statusText.richText = false;
+        _statusText.text = ResolveStatusLabel(status);
     }
 
     public void SetConnectionState(string status)
     {
-        string resolvedStatus = string.IsNullOrWhiteSpace(status) ? "READY" : status.Trim();
-        Color statusColor = ResolveStatusColor(resolvedStatus);
+        string resolvedStatus = ResolveStatusLabel(status);
 
         if (_connectionIndicatorImage != null)
         {
             _connectionIndicatorImage.enabled = true;
-            _connectionIndicatorImage.color = statusColor;
+            _connectionIndicatorImage.color = ResolveStatusColor(resolvedStatus);
         }
 
         if (_connectionIndicatorText != null)
         {
-            _connectionIndicatorText.richText = true;
-            _connectionIndicatorText.text = $"● {ColorizeStatus(resolvedStatus)}";
+            _connectionIndicatorText.richText = false;
+            _connectionIndicatorText.text = resolvedStatus;
         }
     }
 
@@ -133,13 +132,12 @@ public class ContactMessageRowUI : MonoBehaviour, IPointerEnterHandler, IPointer
             _hoverImage.gameObject.SetActive(!_selected && _hovered);
     }
 
-    private string ColorizeStatus(string status)
+    private static string ResolveStatusLabel(string status)
     {
         if (string.IsNullOrWhiteSpace(status))
-            return "-";
+            return "READY";
 
-        string trimmedStatus = status.Trim();
-        return $"<color=#{ColorUtility.ToHtmlStringRGB(ResolveStatusColor(trimmedStatus))}>{trimmedStatus}</color>";
+        return status.Trim().ToUpperInvariant();
     }
 
     private Color ResolveStatusColor(string status)
