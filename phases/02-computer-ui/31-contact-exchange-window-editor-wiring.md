@@ -16,6 +16,10 @@ pending
 
 - `ContactWindowView`가 구현되어 있다.
 - `ContactEntry`는 `ContactWindowView` 내부의 public이 아닌 `[Serializable] private struct`다.
+- `ContactEntry`는 `ContactFolderType`으로 folder/category를 가진다.
+- `ContactFolderType`은 `Inbox`, `GitHub`, `Email`, `Portfolio`, `Resume`을 정의한다.
+- `ContactFolderRowUI`가 folder row prefab 클릭과 selection highlight를 담당한다.
+- `ContactMessageRowUI`가 message row prefab 클릭과 selection highlight를 담당한다.
 - `ProjectWindowUI._contactWindowView`가 추가되어 있다.
 - `ProjectWindowUI.ShowContact(string title, Sprite icon)`가 추가되어 있다.
 - `ProjectDesktopUI.OpenContactWindow()`가 추가되어 있다.
@@ -29,7 +33,11 @@ pending
 
 `ContactWindowView` 핵심 필드:
 
-- `_messageListText`
+- `_folderRowRoot`
+- `_folderRowPrefab`
+- `_messageRowRoot`
+- `_messageRowPrefab`
+- `_messageListText` legacy fallback
 - `_previewTitleText`
 - `_previewBodyText`
 - `_statusText`
@@ -41,6 +49,7 @@ pending
 `ContactWindowView` 핵심 메서드:
 
 - `Initialize()`
+- `SelectFolder(ContactFolderType folderType)`
 - `SelectEntry(int index)`
 - `Clear()`
 - `ResetScrollToTop()`
@@ -81,7 +90,8 @@ pending
 - 권장 `ContactWindow` hierarchy가 포함되어 있다.
 - `ProjectDesktopUI` Contact 관련 Inspector 연결 항목이 포함되어 있다.
 - Contact window prefab의 `ProjectWindowUI` 연결 기준이 포함되어 있다.
-- `ContactWindowView`의 TMP, Button, ScrollRect 연결 항목이 포함되어 있다.
+- `ContactWindowView`의 folder row, message row, TMP fallback, Button, ScrollRect 연결 항목이 포함되어 있다.
+- `ContactFolderRowUI`와 `ContactMessageRowUI` 연결 항목이 포함되어 있다.
 - serialized `ContactEntry` 기본 데이터 예시가 포함되어 있다.
 - Windows 95/98 Microsoft Exchange visual direction이 포함되어 있다.
 - Play Mode 검증 항목과 Unity import/build 주의사항이 포함되어 있다.
@@ -100,9 +110,14 @@ ContactWindow
 ├── Toolbar
 ├── WindowBody
 │   ├── LeftFolderPane
+│   │   └── FolderContent
+│   │       └── ContactFolderRow
 │   └── RightContentArea
 │       ├── MessageListArea
-│       │   └── MessageListText
+│       │   └── ScrollView
+│       │       └── Viewport
+│       │           └── Content
+│       │               └── ContactMessageRow
 │       └── PreviewPane
 │           ├── PreviewTitleText
 │           ├── PreviewBodyText
@@ -117,11 +132,14 @@ ContactWindow
 
 - `ContactWindow` root 또는 controller object에 `ProjectWindowUI`를 둔다.
 - `WindowBody` 또는 content controller object에 `ContactWindowView`를 둔다.
-- `MessageListText`에는 `TextMeshProUGUI` 또는 `TMP_Text` 계열 컴포넌트를 둔다.
+- `LeftFolderPane/FolderContent` 아래에 `ContactFolderRow` prefab instance들이 생성되도록 둔다.
+- `MessageListArea/ScrollView/Viewport/Content` 아래에 `ContactMessageRow` prefab instance들이 생성되도록 둔다.
+- `MessageListText`는 legacy TMP fallback으로만 둔다. row prefab mode에서는 연결하지 않아도 된다.
 - `PreviewTitleText`, `PreviewBodyText`, `StatusText`도 TMP 기반으로 둔다.
 - `ConnectButton`에는 `Button`과 버튼 label TMP를 둔다.
 - `MessageListArea`와 `PreviewPane`에 scroll이 필요하면 각각 `ScrollRect`를 둔다.
-- `LeftFolderPane`, `MenuBar`, `Toolbar`, `StatusBar`는 MVP에서 순수 visual 요소여도 된다.
+- `LeftFolderPane`은 folder filtering 기능을 가진다.
+- `MenuBar`, `Toolbar`, `StatusBar`는 MVP에서 순수 visual 요소여도 된다.
 - `ResizeHandle`은 기존 `ResizableWindowUI` 연결 정책을 따른다.
 
 ## ProjectDesktopUI Inspector Wiring
@@ -198,9 +216,16 @@ Contact window prefab의 `ProjectWindowUI`를 다음 기준으로 연결한다.
 
 필수 연결:
 
-- `_messageListText`
-  - `FROM / SUBJECT / STATUS` 텍스트 리스트 표시.
-  - monospace 또는 픽셀 느낌 TMP font 권장.
+- `_folderRowRoot`
+  - `LeftFolderPane/FolderContent`.
+  - `ContactFolderRowUI` prefab instance가 생성될 부모.
+- `_folderRowPrefab`
+  - `ContactFolderRowUI`가 붙은 folder row prefab 또는 template.
+- `_messageRowRoot`
+  - `MessageListArea/ScrollView/Viewport/Content`.
+  - `ContactMessageRowUI` prefab instance가 생성될 부모.
+- `_messageRowPrefab`
+  - `ContactMessageRowUI`가 붙은 message row prefab 또는 template.
 - `_previewTitleText`
   - 선택된 entry의 `displayName / subject / status` 표시.
 - `_previewBodyText`
@@ -213,6 +238,10 @@ Contact window prefab의 `ProjectWindowUI`를 다음 기준으로 연결한다.
 
 선택 연결:
 
+- `_messageListText`
+  - legacy TMP-only fallback.
+  - `_messageRowRoot`와 `_messageRowPrefab`이 모두 연결된 row prefab mode에서는 연결하지 않아도 된다.
+  - row prefab mode가 없을 때만 `FROM / SUBJECT / STATUS` 텍스트 리스트 표시용으로 필요하다.
 - `_messageScrollRect`
   - message list가 지정 영역을 넘길 때 사용.
   - 현재 MVP row 수가 적으면 없어도 된다.
@@ -220,25 +249,85 @@ Contact window prefab의 `ProjectWindowUI`를 다음 기준으로 연결한다.
   - preview body가 길어질 때 사용.
   - 연결하면 entry 선택 시 top으로 복구된다.
 
+folder filtering 기준:
+
+- 첫 화면에서는 `Inbox`가 선택된다.
+- `Inbox`는 전체 entry를 표시한다.
+- `GitHub`는 GitHub entry만 표시한다.
+- `Email`은 Email entry만 표시한다.
+- `Portfolio`는 Portfolio entry만 표시한다.
+- `Resume`은 Resume entry만 표시한다.
+- folder 변경 시 message row 목록을 재생성하고 첫 filtered entry를 자동 선택한다.
+- filtered entry가 없으면 preview와 `CONNECT`를 안전하게 비운다.
+- 선택된 folder row와 message row는 각각 selection highlight를 표시한다.
+
 serialized entries 설정 기준:
 
 - 기본 5개 entry로 시작한다.
+- 각 entry는 `ContactFolderType`을 가진다.
 - URL은 실제 공개 링크가 확정되기 전까지 placeholder를 둘 수 있다.
 - Email은 `mailto:` URL을 사용할 수 있다.
 - URL이 비어 있는 entry는 `CONNECT` 버튼이 비활성화되고 숨겨진다.
 - `description`은 2~4줄 안에서 끝내는 편이 CRT 화면 가독성에 좋다.
+
+## ContactFolderRowUI Wiring
+
+`ContactFolderRowUI`는 왼쪽 folder/node row 한 줄을 담당한다.
+
+필수 연결:
+
+- `_button`
+  - row 전체 클릭 영역.
+  - 비어 있으면 같은 GameObject의 `Button`을 fallback으로 찾는다.
+- `_selectionImage`
+  - 선택된 folder highlight.
+  - Windows 95/98 selection blue 또는 inset highlight 스타일 권장.
+- `_labelText`
+  - `Inbox`, `GitHub`, `Email`, `Portfolio`, `Resume` label 표시.
+
+동작 기준:
+
+- `Initialize(ContactFolderType folderType, string label, Action<ContactFolderType> onClicked)`로 초기화된다.
+- `OnEnable`에서 listener를 중복 제거 후 추가한다.
+- `OnDisable`에서 listener를 제거한다.
+- `SetSelected(bool selected)`로 highlight 표시를 갱신한다.
+
+## ContactMessageRowUI Wiring
+
+`ContactMessageRowUI`는 오른쪽 message list row 한 줄을 담당한다.
+
+필수 연결:
+
+- `_button`
+  - row 전체 클릭 영역.
+  - 비어 있으면 같은 GameObject의 `Button`을 fallback으로 찾는다.
+- `_selectionImage`
+  - 선택된 message row highlight.
+- `_fromText`
+  - `ContactEntry.DisplayName`.
+- `_subjectText`
+  - `ContactEntry.Subject`.
+- `_statusText`
+  - `ContactEntry.Status`.
+
+동작 기준:
+
+- `Initialize(int index, string from, string subject, string status, Action<int> onClicked)`로 초기화된다.
+- row click은 원본 entry index를 `ContactWindowView.SelectEntry(int index)`로 전달한다.
+- folder filtering 후에도 selection은 filtered row 순번이 아니라 원본 entry index 기준으로 동기화된다.
+- row 클릭 시 PreviewPane과 `CONNECT` 버튼 상태가 갱신된다.
 
 ## ContactEntry Default Data
 
 권장 기본 데이터:
 
 ```text
-displayName  subject                         status
-SYSTEM       Welcome to GIL_OS               NEW
-GitHub       Latest Repository               ONLINE
-Email        Contact Developer               READY
-Portfolio    Interactive Desktop Portfolio   ACTIVE
-Resume       Download Resume                 AVAILABLE
+folder     displayName  subject                         status
+Inbox      SYSTEM       Welcome to GIL_OS               NEW
+GitHub     GitHub       Latest Repository               ONLINE
+Email      Email        Contact Developer               READY
+Portfolio  Portfolio    Interactive Desktop Portfolio   ACTIVE
+Resume     Resume       Download Resume                 AVAILABLE
 ```
 
 권장 URL 기준:
@@ -313,13 +402,21 @@ window lifecycle:
 
 Contact content:
 
-- message list에 `FROM / SUBJECT / STATUS` header와 entry 목록이 표시된다.
-- 첫 entry가 자동 선택되어 preview가 채워진다.
+- 첫 화면에서 `Inbox` folder가 선택되고 highlight가 표시된다.
+- `Inbox` 선택 시 전체 entry가 message row로 표시된다.
+- `GitHub` 선택 시 GitHub entry만 표시된다.
+- `Email` 선택 시 Email entry만 표시된다.
+- `Portfolio` 선택 시 Portfolio entry만 표시된다.
+- `Resume` 선택 시 Resume entry만 표시된다.
+- folder 변경 시 첫 filtered entry가 자동 선택되어 preview가 채워진다.
+- 선택된 message row highlight가 표시된다.
+- message row 클릭 시 PreviewPane이 선택 entry 기준으로 갱신된다.
 - `SYSTEM`처럼 URL이 없는 entry에서는 `CONNECT` 버튼이 비활성화되거나 숨겨진다.
 - URL이 있는 entry가 선택되면 `CONNECT` 버튼이 활성화된다.
 - `CONNECT` 클릭 시 `Application.OpenURL(url)`이 호출된다.
 - preview text가 CRT mask 안에서 잘리지 않고 읽힌다.
 - message list와 preview scroll이 연결된 경우 초기화 후 top으로 복구된다.
+- legacy TMP fallback을 사용하는 경우에만 `FROM / SUBJECT / STATUS` header와 텍스트 목록을 확인한다.
 
 visual/layout:
 
@@ -330,12 +427,12 @@ visual/layout:
 
 ## Build And Unity Import Notes
 
-현재 `dotnet build Interactive-Profile.sln`은 `ContactWindowView.cs`가 `Assembly-CSharp.csproj`에 아직 포함되지 않아 실패할 수 있다.
+현재 `dotnet build Interactive-Profile.sln`은 새 C# 파일이 `Assembly-CSharp.csproj`에 아직 포함되지 않아 실패할 수 있다.
 
 주의사항:
 
-- `ContactWindowView.cs`는 새 파일이므로 Unity Editor에서 script import가 필요하다.
-- Unity Editor가 project files를 regenerate한 뒤 `Assembly-CSharp.csproj`에 `ContactWindowView.cs`가 포함되어야 한다.
+- `ContactFolderType.cs`와 `ContactFolderRowUI.cs`는 새 파일이므로 Unity Editor에서 script import가 필요하다.
+- Unity Editor가 project files를 regenerate한 뒤 `Assembly-CSharp.csproj`에 새 C# 파일들이 포함되어야 한다.
 - `Assembly-CSharp.csproj`는 Unity generated file이므로 직접 수정하지 않는다.
 - Unity Editor import 이후 다시 `dotnet build Interactive-Profile.sln`을 실행한다.
 - 그래도 누락되면 Unity Editor에서 `Preferences > External Tools > Regenerate project files`를 실행한다.
@@ -345,26 +442,29 @@ visual/layout:
 1. Unity Editor에서 프로젝트를 연다.
 2. Console에 script compile error가 없는지 확인한다.
 3. project files regenerate를 수행한다.
-4. `Assembly-CSharp.csproj`에 `Assets\02.Scripts\Core\UI\ContactWindowView.cs`가 포함되었는지 확인한다.
+4. `Assembly-CSharp.csproj`에 `ContactFolderType.cs`, `ContactFolderRowUI.cs`, `ContactMessageRowUI.cs`, `ContactWindowView.cs`가 포함되었는지 확인한다.
 5. `dotnet build Interactive-Profile.sln`을 재실행한다.
 6. Play Mode wiring 검증을 수행한다.
 
 ## Suggested Next Steps
 
-1. Unity Editor에서 Contact window prefab을 생성하고 이 문서의 Inspector 연결을 수행한다.
+1. Unity Editor에서 Contact window prefab과 folder/message row prefab을 생성하고 이 문서의 Inspector 연결을 수행한다.
 2. 실제 GitHub, email, portfolio, resume URL을 확정해 serialized entries에 입력한다.
 3. Unity script import와 project files regenerate 후 `dotnet build Interactive-Profile.sln`을 재실행한다.
-4. Play Mode에서 runtime `CONTACT.EXE` icon, single typed window, taskbar, focus, Escape close, `CONNECT` 동작을 검증한다.
-5. 후속 step에서 message row prefab과 click 기반 row selection을 추가한다.
+4. Play Mode에서 runtime `CONTACT.EXE` icon, folder filtering, row selection, taskbar, focus, Escape close, `CONNECT` 동작을 검증한다.
+5. 후속 step에서 실제 URL, resume link, visual polish를 확정한다.
 
 ## Completed Step Summary
 
-이 step은 `CONTACT.EXE` window를 Unity Editor에서 연결하기 위한 prefab hierarchy, Inspector wiring, Contact entry data, runtime desktop icon, Play Mode 검증, Unity import/build 주의사항을 정리한다. Contact는 기존 Projects/AboutMe/Skills lifecycle과 taskbar/focus/Escape close 흐름을 재사용하는 단일 typed window로 연결한다.
+이 step은 `CONTACT.EXE` window를 Unity Editor에서 연결하기 위한 prefab hierarchy, folder/message row Inspector wiring, Contact entry data, runtime desktop icon, Play Mode 검증, Unity import/build 주의사항을 정리한다. Contact는 기존 Projects/AboutMe/Skills lifecycle과 taskbar/focus/Escape close 흐름을 재사용하는 단일 typed window로 연결한다.
 
 ## Retry / Recovery
 
 - Contact icon이 생성되지 않으면 `_showContactDesktopIcon`, `_iconRoot`, `_iconPrefab`, `ProjectDesktopUI.Initialize()` 호출 여부를 확인한다.
 - Contact window가 열리지 않으면 `_contactWindowPrefab`, `_windowRoot`, prefab의 `ProjectWindowUI._windowType`, `_contactWindowView` 연결을 확인한다.
 - taskbar button이 생성되지 않으면 `_projectTaskbarUI`, taskbar button prefab, `ProjectWindowManager.SetTaskbar(...)` 흐름을 확인한다.
+- folder row가 생성되지 않으면 `_folderRowRoot`, `_folderRowPrefab`, `ContactFolderRowUI` 내부 연결을 확인한다.
+- message row가 생성되지 않으면 `_messageRowRoot`, `_messageRowPrefab`, `ContactMessageRowUI` 내부 연결을 확인한다.
+- folder filtering이 맞지 않으면 각 `ContactEntry`의 `ContactFolderType` 값을 확인한다.
 - `CONNECT` 버튼이 항상 숨겨지면 선택된 entry의 `url` 값이 비어 있지 않은지 확인한다.
-- build가 `ContactWindowView` 누락으로 실패하면 Unity Editor script import와 project files regenerate를 먼저 수행한다.
+- build가 새 C# 파일 누락으로 실패하면 Unity Editor script import와 project files regenerate를 먼저 수행한다.
