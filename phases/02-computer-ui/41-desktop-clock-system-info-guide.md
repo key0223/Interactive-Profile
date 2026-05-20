@@ -3,34 +3,39 @@
 ## Document Metadata
 
 - Status: Active
-- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Computer UI Polish Roadmap](./39-computer-ui-polish-roadmap.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md)
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Computer UI Polish Roadmap](./39-computer-ui-polish-roadmap.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md), [Fake OS Ambience Guide](./42-fake-os-ambience-guide.md)
 - Last Reviewed Phase: 41 Desktop Clock System Info Guide
 
 ## Goal
 
-`DesktopSystemInfoUI`를 통해 taskbar 또는 desktop shell에 lightweight fake OS clock, date, system info text를 표시한다.
+System tray에는 clock만 기본 표시하고, hover 시 lightweight fake OS system info popup을 표시한다.
 
 이 문서는 Editor 작업 가이드다. Unity Editor 작업은 사용자가 직접 수행하며 Codex는 `.unity`, `.prefab`, `.asset`, `.meta` 파일을 직접 수정하지 않는다.
 
 ## Current Structure Analysis
 
-- `ComputerUIController`는 `_desktopLayer`, `_windowLayer`, `_taskbarRoot`를 함께 켜고 끈다.
-- shutdown 요청 시 `SetDesktopShellActive(false)`가 호출되므로 `TaskbarRoot` 하위 UI는 자연스럽게 숨겨진다.
-- `ProjectTaskbarUI`는 runtime taskbar button 생성, 제거, active, minimized, closing state 관리에 집중한다.
-- clock text는 runtime button root와 분리된 `TaskbarRoot` 오른쪽 tray 영역에 두는 것이 가장 적합하다.
-- system info text는 조작성을 해치지 않으려면 taskbar tray 내부의 작은 multi-line text 또는 desktop corner의 고정 status text로 둔다.
-- startup 중에는 taskbar가 hidden 상태라 clock도 표시되지 않는다.
-- minimize/restore는 window와 taskbar button state만 바꾸므로 clock/system info와 충돌하지 않는다.
+- 기존 `DesktopSystemInfoUI`는 `_clockText`, `_dateText`, `_systemInfoText`를 모두 갱신해 taskbar tray에 상시 표시할 수 있었다.
+- `OnEnable`에서 즉시 `Refresh()`하고, `Update`에서 `_refreshInterval`마다 갱신한다.
+- clock은 `DateTime.Now`, date는 `yyyy.MM.dd`, system info는 serialized string을 표시한다.
+- 이 구조는 taskbar 폭을 많이 사용하고 fake OS tray tooltip 느낌이 약하다.
+- 개선 구조에서는 tray 기본 상태를 clock만 남기고 date/system info는 hover popup으로 이동한다.
 
-## Runtime Policy
+## Implemented Components
 
-- `DesktopSystemInfoUI`는 별도 manager에 의존하지 않는다.
-- `OnEnable`에서 즉시 `Refresh()`를 실행해 reopen 직후 stale text를 피한다.
-- `Update`에서 `_refreshInterval`마다 갱신한다.
-- `_refreshInterval`은 코드에서 최소 `0.5`초로 clamp한다.
-- clock은 `DateTime.Now`를 사용한다.
-- fake system info는 실제 hardware probing 없이 serialized string을 표시한다.
-- null TMP field는 skip한다. `_clockText` 누락은 최초 1회 warning만 남긴다.
+`DesktopSystemInfoUI`:
+
+- clock, date, system info TMP를 선택적으로 갱신한다.
+- `_showClock`이 추가되어 popup 내부에서는 clock 표시를 끌 수 있다.
+- null TMP field는 skip한다.
+- `_showClock`이 true인데 `_clockText`가 없을 때만 최초 1회 warning을 남긴다.
+
+`SystemTrayHoverUI`:
+
+- `IPointerEnterHandler`, `IPointerExitHandler` 기반 hover controller다.
+- pointer enter 시 popup root를 표시한다.
+- pointer exit 시 popup root를 숨긴다.
+- `_showDelay`, `_hideDelay`로 짧은 delay를 줄 수 있다.
+- `OnDisable`에서 pending coroutine을 중단하고 popup을 숨긴다.
 
 ## Recommended Hierarchy
 
@@ -38,97 +43,131 @@
 TaskbarRoot
 ├── TaskbarButtonRoot
 └── SystemTrayRoot
-    └── DesktopSystemInfoUI
-        ├── ClockText
-        ├── DateText
-        └── SystemInfoText
+    ├── SystemTrayHoverUI
+    ├── ClockRoot
+    │   └── ClockText
+    └── SystemInfoPopupRoot
+        ├── PopupBackground
+        └── DesktopSystemInfoUI
+            ├── DateText
+            └── SystemInfoText
 ```
 
 대안:
 
-- system info를 desktop corner에 두고 싶으면 `DesktopLayer` 하위에 `DesktopSystemInfoUI`를 둘 수 있다.
-- clock은 taskbar 오른쪽에 두는 것을 기본으로 한다.
-- `TaskbarButtonRoot` 안에는 clock/system info를 넣지 않는다. runtime button 생성/삭제와 layout 충돌 가능성이 있다.
+- `DesktopSystemInfoUI`를 `SystemTrayRoot`에 두고 `_clockText`는 `ClockRoot/ClockText`, `_dateText`와 `_systemInfoText`는 popup 내부 TMP에 연결해도 된다.
+- popup 안에도 clock을 반복 표시하고 싶으면 popup 쪽 `DesktopSystemInfoUI._showClock`을 true로 두고 popup clock TMP를 연결한다.
+
+## Runtime Policy
+
+- 기본 상태에서는 `ClockRoot`만 보인다.
+- `SystemInfoPopupRoot`는 기본 inactive다.
+- `SystemTrayHoverUI.Awake()`와 `OnDisable()`은 popup을 숨긴다.
+- hover enter 시 popup을 표시한다.
+- hover exit 시 popup을 숨긴다.
+- Computer UI shutdown 또는 root inactive 시 popup은 자연스럽게 숨겨진다.
+- popup은 taskbar button click과 window lifecycle에 의존하지 않는다.
+- `DesktopAmbienceUI`는 rotating ambience message 전용이고, system info popup과 별도 TMP를 사용한다.
 
 ## Inspector Wiring
 
-`DesktopSystemInfoUI`:
+Clock:
 
-- `_clockText`: taskbar tray의 clock TMP text.
-- `_dateText`: 선택 date TMP text. 사용하지 않으면 비워둘 수 있다.
-- `_systemInfoText`: 선택 fake system info TMP text. 사용하지 않으면 비워둘 수 있다.
-- `_use24HourTime`: `true` 권장.
-- `_showDate`: date text를 표시할 때 `true`.
-- `_showSystemInfo`: fake system text를 표시할 때 `true`.
-- `_refreshInterval`: `1.0` 권장. 최소 `0.5`초 이상으로 둔다.
-- `_systemInfoFormat`: 표시할 fake OS text.
+- `ClockRoot/ClockText`는 항상 보이는 taskbar tray clock TMP다.
+- clock 전용 `DesktopSystemInfoUI`를 `ClockRoot` 또는 `SystemTrayRoot`에 둘 경우 `_clockText`에 `ClockText`를 연결한다.
+- clock 전용 인스턴스는 `_showClock=true`, `_showDate=false`, `_showSystemInfo=false`를 권장한다.
+
+Popup:
+
+- `SystemInfoPopupRoot`는 기본 inactive로 둔다.
+- popup 내부에는 background Image 또는 panel과 padding을 둔다.
+- popup 내부 `DesktopSystemInfoUI`는 `_showClock=false`, `_showDate=true`, `_showSystemInfo=true`를 권장한다.
+- `_dateText`와 `_systemInfoText`는 popup 내부 TMP에 연결한다.
+- `_systemInfoFormat`은 2~4줄의 짧은 faux OS 정보로 유지한다.
+
+Hover:
+
+- `SystemTrayHoverUI._popupRoot`에 `SystemInfoPopupRoot`를 연결한다.
+- `_showDelay`: `0`~`0.15`
+- `_hideDelay`: `0.05`~`0.15`
+- `_hideOnPointerExit`: `true`
 
 표시 예시:
 
 ```text
 14:32
+```
+
+Popup:
+
+```text
 2026.05.20
 USER: EUNYOUNG
 WEBGL MODE
 PROFILE READY
 ```
 
-## Layout Rules
+## Raycast And Layout Rules
 
-- clock은 taskbar 오른쪽 끝에 고정한다.
-- text는 작은 pixel 또는 monospace 느낌의 TMP font를 사용한다.
-- system info는 1~3줄 안에서 유지한다.
-- taskbar button 영역을 침범하지 않게 `SystemTrayRoot` 폭을 고정하거나 layout group으로 분리한다.
-- CRT mask 안에서 읽히는 대비를 유지하되 glow, gradient, 큰 animation을 사용하지 않는다.
+- `SystemTrayRoot`에는 raycast 가능한 Image 또는 Graphic을 두어 pointer enter/exit를 받을 수 있게 한다.
+- popup background는 tooltip panel처럼 작고 조밀하게 만든다.
+- popup은 taskbar 위쪽으로 뜨게 배치하고 taskbar button 영역을 덮지 않게 한다.
+- popup이 클릭 대상이 아니면 `Image.raycastTarget=false`를 권장한다.
+- popup 위로 pointer를 이동해도 유지해야 한다면 popup을 `SystemTrayRoot` hover 영역 안에 포함하거나 hide delay를 둔다.
+- clock, ambience, popup은 서로 다른 TMP text를 사용한다.
 
 ## Play Mode Verification
 
-- Computer UI open 후 clock이 표시된다.
-- clock이 `_refreshInterval` 기준으로 갱신된다.
-- `_showDate` on/off 옵션이 정상 동작한다.
-- `_showSystemInfo` on/off 옵션이 정상 동작한다.
-- shutdown 시 taskbar와 함께 clock/system info가 숨겨진다.
-- reopen 시 `OnEnable` 경로로 즉시 refresh된다.
-- `_dateText` 또는 `_systemInfoText` 미연결 상태에서도 오류 없이 동작한다.
-- `_clockText` 미연결 상태에서 최초 1회 warning만 표시되고 오류 없이 동작한다.
-- minimize/restore와 taskbar button state가 clock/system info 표시를 깨지 않는다.
+- 기본 상태에서 clock만 표시된다.
+- tray hover 시 system info popup이 표시된다.
+- hover exit 시 popup이 숨겨진다.
+- reopen 후 popup이 숨김 상태에서 시작하고 clock이 즉시 갱신된다.
+- shutdown 시 popup이 숨겨지고 pending delay가 정리된다.
+- `_clockText`, `_dateText`, `_systemInfoText` 미연결 상태에서 crash 없이 skip된다.
+- `SystemTrayHoverUI._popupRoot` 미연결 상태에서 최초 warning 후 crash가 없다.
+- popup이 taskbar button click을 방해하지 않는다.
+- `DesktopAmbienceUI` message와 clock/system info popup이 겹치지 않는다.
 - WebGL 호환성 문제가 없다.
 
 ## Troubleshooting
 
-### clock이 보이지 않음
+### hover가 동작하지 않음
 
-- `DesktopSystemInfoUI._clockText` 연결을 확인한다.
-- `SystemTrayRoot`가 `TaskbarRoot` 하위에 있고 active 상태인지 확인한다.
-- TMP text color와 CRT overlay 대비를 확인한다.
+- `SystemTrayRoot` 또는 hover target에 raycast 가능한 Graphic이 있는지 확인한다.
+- EventSystem이 scene에 존재하는지 확인한다.
+- `SystemTrayHoverUI._popupRoot` 연결을 확인한다.
 
-### shutdown 후에도 표시됨
+### popup이 처음부터 보임
 
-- `DesktopSystemInfoUI`가 `TaskbarRoot` 또는 `DesktopLayer` 하위에 있는지 확인한다.
-- `ComputerUIController._taskbarRoot` 또는 `_desktopLayer` 연결이 올바른지 확인한다.
+- `SystemInfoPopupRoot` 기본 active 상태를 확인한다.
+- `SystemTrayHoverUI.Awake()`가 있는 오브젝트가 active인지 확인한다.
 
-### taskbar button과 겹침
+### popup이 너무 빨리 사라짐
 
-- `SystemTrayRoot`를 `TaskbarButtonRoot` 밖으로 분리한다.
-- taskbar button container의 오른쪽 padding 또는 max width를 조정한다.
-- clock/system info 폭을 고정한다.
+- `_hideDelay`를 `0.1`~`0.15`로 올린다.
+- popup을 `SystemTrayRoot` pointer 영역 안에 배치한다.
 
-### 갱신이 너무 잦음
+### taskbar click을 방해함
 
-- `_refreshInterval`을 `1.0` 이상으로 둔다.
-- 코드상 최소값은 `0.5`초이지만 clock은 분 단위 표시라 `1.0`초면 충분하다.
+- popup background와 image들의 `raycastTarget`을 false로 둔다.
+- popup 위치가 taskbar button 위를 덮지 않게 조정한다.
+
+### system info가 상시 표시됨
+
+- `_dateText`와 `_systemInfoText`가 `ClockRoot` 쪽에 있지 않은지 확인한다.
+- popup 내부 TMP만 `DesktopSystemInfoUI`에 연결한다.
+- `SystemInfoPopupRoot` 기본 active를 false로 둔다.
 
 ## WebGL Compatibility
 
-- `DateTime.Now`, `Time.unscaledTime`, TMP text 갱신만 사용한다.
+- `DateTime.Now`, `Time.unscaledTime`, `WaitForSecondsRealtime`, TMP text 갱신, EventSystem pointer event만 사용한다.
 - Thread, blocking sleep, native plugin, platform-specific API를 사용하지 않는다.
 - 실제 hardware/system probing을 하지 않는다.
 - 외부 라이브러리를 사용하지 않는다.
-- tab throttling 후에도 `OnEnable`과 다음 `Update`에서 표시 상태가 복구되어야 한다.
 
 ## Acceptance Criteria
 
-- `DesktopSystemInfoUI`의 목적과 wiring 기준이 문서화되어 있다.
-- taskbar 오른쪽 tray 배치 기준이 명확하다.
-- Play Mode 검증 체크리스트가 포함되어 있다.
+- tray 기본 상태가 clock only 구조로 문서화되어 있다.
+- hover popup controller wiring 기준이 문서화되어 있다.
+- popup 표시/숨김, reopen, shutdown 검증 항목이 포함되어 있다.
 - WebGL 호환성 기준이 포함되어 있다.

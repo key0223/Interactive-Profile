@@ -10,6 +10,7 @@ public class DesktopSystemInfoUI : MonoBehaviour
     [SerializeField] private TMP_Text _dateText;
     [SerializeField] private TMP_Text _systemInfoText;
     [SerializeField] private bool _use24HourTime = true;
+    [SerializeField] private bool _showClock = true;
     [SerializeField] private bool _showDate = true;
     [SerializeField] private bool _showSystemInfo = true;
     [SerializeField] private float _refreshInterval = 1f;
@@ -46,7 +47,7 @@ public class DesktopSystemInfoUI : MonoBehaviour
     {
         if (_clockText == null)
         {
-            if (!_hasLoggedMissingClockText)
+            if (_showClock && !_hasLoggedMissingClockText)
             {
                 Debug.LogWarning($"{nameof(DesktopSystemInfoUI)} on {name} can show a desktop clock when _clockText is assigned.");
                 _hasLoggedMissingClockText = true;
@@ -55,7 +56,10 @@ public class DesktopSystemInfoUI : MonoBehaviour
             return;
         }
 
-        _clockText.text = now.ToString(_use24HourTime ? "HH:mm" : "h:mm tt");
+        _clockText.gameObject.SetActive(_showClock);
+
+        if (_showClock)
+            _clockText.text = now.ToString(_use24HourTime ? "HH:mm" : "h:mm tt");
     }
 
     private void RefreshDate(DateTime now)
