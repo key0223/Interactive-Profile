@@ -10,6 +10,7 @@ public class ComputerUIController : MonoBehaviour
     [SerializeField] private ProjectDesktopUI _projectDesktopUI;
     [SerializeField] private ProjectSelectionUI _projectSelectionUI;
     [SerializeField] private InteractionPromptUI _interactionPromptUI;
+    [SerializeField] private StartMenuUI _startMenuUI;
 
     public bool IsOpen { get; private set; }
 
@@ -32,6 +33,9 @@ public class ComputerUIController : MonoBehaviour
 
         if (_interactionPromptUI == null)
             Debug.LogWarning($"{nameof(ComputerUIController)} on {name} can hide prompts when an {nameof(InteractionPromptUI)} reference is assigned.");
+
+        if (_startMenuUI != null)
+            _startMenuUI.Initialize(Close);
 
         SetRootActive(false);
         IsOpen = false;
@@ -59,6 +63,9 @@ public class ComputerUIController : MonoBehaviour
         IsOpen = true;
         SetRootActive(true);
 
+        if (_startMenuUI != null)
+            _startMenuUI.Hide();
+
         if (_interactionPromptUI != null)
             _interactionPromptUI.SetVisibleBlocked(true);
 
@@ -79,6 +86,10 @@ public class ComputerUIController : MonoBehaviour
             return;
 
         IsOpen = false;
+
+        if (_startMenuUI != null)
+            _startMenuUI.Hide();
+
         SetRootActive(false);
 
         if (_projectDesktopUI != null)
