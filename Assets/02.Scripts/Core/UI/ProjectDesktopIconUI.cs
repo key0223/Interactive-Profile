@@ -1,9 +1,10 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ProjectDesktopIconUI : MonoBehaviour
+public class ProjectDesktopIconUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Button _button;
     [SerializeField] private Image _iconImage;
@@ -11,6 +12,7 @@ public class ProjectDesktopIconUI : MonoBehaviour
     [SerializeField] private Image _selectionImage;
     [SerializeField] private Sprite _fallbackIcon;
     [SerializeField] private Color _normalSelectionColor = new Color(0f, 0f, 0f, 0f);
+    [SerializeField] private Color _hoverSelectionColor = new Color(1f, 1f, 1f, 0.14f);
     [SerializeField] private Color _selectedSelectionColor = new Color(0f, 0f, 0.5f, 0.45f);
     [SerializeField] private float _doubleClickThreshold = 0.35f;
 
@@ -18,6 +20,8 @@ public class ProjectDesktopIconUI : MonoBehaviour
     private Action _onSelected;
     private Action _onOpened;
     private float _lastClickTime = -1f;
+    private bool _isHovered;
+    private bool _isSelected;
 
     public ProjectData ProjectData => _projectData;
 
@@ -43,6 +47,10 @@ public class ProjectDesktopIconUI : MonoBehaviour
     {
         if (_button != null)
             _button.onClick.RemoveListener(HandleClicked);
+
+        _isHovered = false;
+        _lastClickTime = -1f;
+        UpdateInteractionVisuals();
     }
 
     public void Setup(ProjectData projectData, Action<ProjectData> onClicked)
@@ -86,14 +94,27 @@ public class ProjectDesktopIconUI : MonoBehaviour
 
     public void SetSelected(bool selected)
     {
-        if (_selectionImage != null)
-            _selectionImage.color = selected ? _selectedSelectionColor : _normalSelectionColor;
+        _isSelected = selected;
+        UpdateInteractionVisuals();
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        _isHovered = true;
+        UpdateInteractionVisuals();
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        _isHovered = false;
+        UpdateInteractionVisuals();
     }
 
     private void HandleClicked()
     {
         float clickTime = Time.unscaledTime;
-        bool isDoubleClick = _lastClickTime >= 0f && clickTime - _lastClickTime <= _doubleClickThreshold;
+        float doubleClickThreshold = Mathf.Max(0.05f, _doubleClickThreshold);
+        bool isDoubleClick = _lastClickTime >= 0f && clickTime - _lastClickTime <= doubleClickThreshold;
         _lastClickTime = isDoubleClick ? -1f : clickTime;
 
         _onSelected?.Invoke();
@@ -113,5 +134,18 @@ public class ProjectDesktopIconUI : MonoBehaviour
 
         _iconImage.sprite = sprite;
         _iconImage.enabled = true;
+    }
+
+    private void UpdateInteractionVisuals()
+    {
+        if (_selectionImage == null)
+            return;
+
+        if (_isSelected)
+            _selectionImage.color = _selectedSelectionColor;
+        else if (_isHovered)
+            _selectionImage.color = _hoverSelectionColor;
+        else
+            _selectionImage.color = _normalSelectionColor;
     }
 }

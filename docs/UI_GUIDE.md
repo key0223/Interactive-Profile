@@ -138,6 +138,54 @@ Boot visual polish 기준:
 - 후보가 없으면 active taskbar indicator는 모두 해제된다.
 - Escape는 focused/opened window 하나를 닫는다. minimized window는 Escape close 대상이 아니다.
 
+## Desktop Icon Interaction
+
+- desktop icon은 `ProjectDesktopUI`가 runtime에 생성한다.
+- project icon은 `ProjectData`별로 생성되고, typed app icon은 `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE` 설정에 따라 생성된다.
+- 단일 클릭은 icon selected 상태만 갱신한다.
+- 같은 icon을 `_doubleClickThreshold` 안에 다시 클릭하면 window open 흐름을 호출한다.
+- double click open은 기존 `ProjectWindowManager` 흐름을 그대로 사용하므로 중복 project/app window 생성 정책은 window manager가 처리한다.
+- hover와 selected visual은 `ProjectDesktopIconUI._selectionImage` 색상으로만 처리한다.
+- selected 상태가 hover보다 우선한다.
+- pointer exit 시 hover visual은 제거되고 selected visual은 유지된다.
+- desktop background 클릭 시 `ProjectDesktopUI._clearSelectionOnDesktopClick`이 켜져 있으면 selected icon을 해제할 수 있다.
+- background click 해제는 `ProjectDesktopUI`가 붙은 desktop 영역 또는 해당 배경 Image가 raycast를 받을 때만 동작한다.
+- hover/selected polish에는 Image color, TMP 설정, EventSystem pointer event만 사용한다.
+- animation, tween, scale bounce, glow 효과는 사용하지 않는다.
+
+권장 Inspector 값:
+
+- `ProjectDesktopIconUI._selectionImage`: icon label과 icon 뒤를 덮는 highlight Image
+- `ProjectDesktopIconUI._normalSelectionColor`: `(0, 0, 0, 0)`
+- `ProjectDesktopIconUI._hoverSelectionColor`: 흰색 또는 밝은 회색 alpha `0.10`~`0.18`
+- `ProjectDesktopIconUI._selectedSelectionColor`: Windows selection blue 계열 alpha `0.40`~`0.55`
+- `ProjectDesktopIconUI._doubleClickThreshold`: `0.30`~`0.40`
+- `ProjectDesktopUI._clearSelectionOnDesktopClick`: `true`
+
+Editor 연결 기준:
+
+- icon prefab에는 `Button`, icon `Image`, label `TMP_Text`, highlight용 `Image`를 연결한다.
+- highlight `Image`는 icon과 label의 clickable area 안쪽에 두고, 기본 alpha는 `0`으로 둔다.
+- highlight `Image`는 hover/selected 상태를 보여주는 용도이며 decorative glow로 쓰지 않는다.
+- icon background가 별도 GameObject라면 그 `Image`를 `_selectionImage`로 연결한다.
+- label TMP는 작은 pixel 또는 monospace 느낌의 font를 사용한다.
+- label TMP는 흰색 또는 밝은 회색을 기본으로 하고, CRT 배경에서 읽히도록 shadow/outline을 약하게 적용할 수 있다.
+- label은 1~2줄 안에서 읽히게 하고, 긴 project title은 data title 또는 prefab width를 조정한다.
+- desktop background click으로 selection을 해제하려면 desktop 영역에 raycast 가능한 투명 또는 저투명 Image가 필요하다.
+- Scene, prefab YAML을 직접 수정하지 말고 Unity Editor Inspector에서 연결한다.
+
+Desktop icon Play Mode 검증 항목:
+
+- icon hover 시 visual이 변경된다.
+- hover exit 시 selected가 아닌 icon은 normal visual로 돌아간다.
+- icon click 시 selected visual이 표시된다.
+- 다른 icon click 시 이전 selected visual이 해제된다.
+- desktop background click 시 selected visual이 해제된다.
+- icon double click 시 window open 흐름이 호출된다.
+- window open transition과 icon double click 처리가 충돌하지 않는다.
+- 빠른 double click에도 동일 project/app window가 중복 생성되지 않는다.
+- hover, selected, double click 처리에서 WebGL 호환성 문제가 없어야 한다.
+
 ## Window Open/Close Transition
 
 - `WindowTransitionUI`는 desktop window open/close에 짧은 fade와 scale 전환을 추가하는 공통 컴포넌트다.
@@ -307,10 +355,16 @@ ContactWindow
 - runtime desktop icon이 생성된다.
 - Computer UI open 시 boot screen이 먼저 표시되고 완료 후 desktop shell이 표시된다.
 - project icon과 `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE` icon이 표시된다.
+- icon hover 시 visual이 변경된다.
+- hover exit 시 selected가 아닌 icon은 normal visual로 돌아간다.
+- icon click 시 selected visual이 표시된다.
+- 다른 icon click 시 이전 selected visual이 해제된다.
+- desktop background click 시 selected visual이 해제된다.
 - icon double click 또는 open action으로 window가 열린다.
 - icon double click 시 window open animation이 표시된다.
 - window open 시 `alpha 0 -> 1`, `scale 0.96 -> 1` 전환이 표시된다.
 - 중복 open 시 기존 typed app window를 restore/focus한다.
+- 빠른 double click에도 동일 project/app window가 중복 생성되지 않는다.
 - taskbar button이 window open 시 생성되고 close 시 제거된다.
 - close button 클릭 시 close animation 후 window destroy와 taskbar button 제거가 실행된다.
 - Escape focused close 시 close animation이 정상 표시된다.

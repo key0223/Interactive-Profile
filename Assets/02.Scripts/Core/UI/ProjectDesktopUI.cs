@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-public class ProjectDesktopUI : MonoBehaviour
+public class ProjectDesktopUI : MonoBehaviour, IPointerDownHandler
 {
     [SerializeField] private ProjectCatalog _catalog;
     [SerializeField] private Transform _iconRoot;
@@ -33,6 +34,7 @@ public class ProjectDesktopUI : MonoBehaviour
     [SerializeField] private string _contactWindowTitle = "CONTACT.EXE";
     [SerializeField] private Sprite _contactWindowIcon;
     [SerializeField] private bool _openDefaultOnStart;
+    [SerializeField] private bool _clearSelectionOnDesktopClick = true;
 
     private readonly List<ProjectDesktopIconUI> _icons = new List<ProjectDesktopIconUI>();
     private ProjectDesktopIconUI _aboutMeIcon;
@@ -177,6 +179,17 @@ public class ProjectDesktopUI : MonoBehaviour
             return false;
 
         return _projectWindowManager.CloseFocusedWindow();
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (!_clearSelectionOnDesktopClick)
+            return;
+
+        if (IsPointerOverDesktopIcon(eventData))
+            return;
+
+        ClearSelection();
     }
 
     private void RebuildIcons()
@@ -329,6 +342,14 @@ public class ProjectDesktopUI : MonoBehaviour
         }
 
         return null;
+    }
+
+    private bool IsPointerOverDesktopIcon(PointerEventData eventData)
+    {
+        if (eventData == null || eventData.pointerCurrentRaycast.gameObject == null)
+            return false;
+
+        return eventData.pointerCurrentRaycast.gameObject.GetComponentInParent<ProjectDesktopIconUI>() != null;
     }
 }
 
