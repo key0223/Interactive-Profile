@@ -80,11 +80,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _documentText: "****************************************************\r\n*                                                 
-    *\r\n*                 READE_ME.TXT                     *\r\n*                                                 
-    *\r\n****************************************************\r\n\r\n> PROFILE\r\n\r\n\uC774\uB984       
-    : \uAE38\uC740\uC601\r\n\uC5ED\uD560        : Unity \uD074\uB77C\uC774\uC5B8\uD2B8
-    \uD504\uB85C\uADF8\uB798\uBA38\r\n\uC704\uCE58        : Korea\r\n\r\n> SUMMARY\r\n\r\n\uC774\uC804\uC5D0\uB294
-    \uC804\uD600 \uB2E4\uB978 \uBD84\uC57C\uC758 \uC77C\uC744 \uD588\uC9C0\uB9CC,\r\n\uC26C\uB294
+    *\r\n*                  README.TXT                      *\r\n*             WORKSTATION
+    PROFILE                  *\r\n*                                                 
+    *\r\n****************************************************\r\n\r\n> PROFILE\r\n\r\nNAME       
+    : \uAE38\uC740\uC601\r\nROLE        : Unity Client Programmer\r\nREGION     
+    : \uACBD\uC0B0\r\n\r\n> SUMMARY\r\n\r\n\uC774\uC804\uC5D0\uB294 \uC804\uD600
+    \uB2E4\uB978 \uBD84\uC57C\uC758 \uC77C\uC744 \uD588\uC9C0\uB9CC,\r\n\uC26C\uB294
     \uAE30\uAC04 \uB3D9\uC548 \uC6B0\uC5F0\uD788 \uD504\uB85C\uADF8\uB798\uBC0D\uC744
     \uC811\uD558\uBA74\uC11C\r\n\uAC1C\uBC1C \uACF5\uBD80\uB97C \uC2DC\uC791\uD558\uAC8C
     \uB418\uC5C8\uC2B5\uB2C8\uB2E4.\r\n\r\n\uCC98\uC74C\uC5D0\uB294 \uAC8C\uC784\uC744
@@ -111,25 +112,24 @@ MonoBehaviour:
     \uB2E8\uC21C\uD788 \uAE30\uB2A5\uB9CC \uAD6C\uD604\uD558\uB294 \uAC83\uC774 \uC544\uB2C8\uB77C,\r\n\uC720\uC9C0\uBCF4\uC218\uC131\uACFC
     \uD655\uC7A5\uC131, \uB370\uC774\uD130 \uD750\uB984\uAE4C\uC9C0 \uD568\uAED8\r\n\uACE0\uB824\uD558\uB294
     \uBC29\uD5A5\uC73C\uB85C \uAC1C\uBC1C\uD558\uB824 \uB178\uB825\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4.\r\n\r\n\uCD5C\uADFC\uC5D0\uB294
-    \uD2B9\uD788 \uC544\uB798\uC640 \uAC19\uC740 \uBC29\uD5A5\uC5D0 \uAD00\uC2EC\uC774
-    \uB9CE\uC2B5\uB2C8\uB2E4.\r\n\r\n- \uB370\uC774\uD130 \uAE30\uBC18 \uAD6C\uC870\r\n-
-    \uC7AC\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uAC8C\uC784\uD50C\uB808\uC774 \uC2DC\uC2A4\uD15C\r\r\n-
-    \uD655\uC7A5 \uAC00\uB2A5\uD55C \uD504\uB85C\uC81D\uD2B8 \uC124\uACC4\r\n- \uBC18\uBCF5
-    \uC791\uC5C5\uC744 \uC904\uC774\uB294 \uC6CC\uD06C\uD50C\uB85C\uC6B0\r\n\r\n\uC0C8\uB85C\uC6B4
+    \uD2B9\uD788 \uC544\uB798\uC640 \uAC19\uC740 \uBC29\uD5A5\uC5D0\r\n\uAD00\uC2EC\uC744
+    \uAC00\uC9C0\uACE0 \uC788\uC2B5\uB2C8\uB2E4.\r\n\r\n- \uB370\uC774\uD130 \uAE30\uBC18
+    \uAD6C\uC870\r\n- \uC7AC\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uAC8C\uC784\uD50C\uB808\uC774
+    \uC2DC\uC2A4\uD15C\r\n- \uD655\uC7A5 \uAC00\uB2A5\uD55C \uD504\uB85C\uC81D\uD2B8
+    \uC124\uACC4\r\n- \uBC18\uBCF5 \uC791\uC5C5\uC744 \uC904\uC774\uB294 \uC6CC\uD06C\uD50C\uB85C\uC6B0\r\n\r\n\uC0C8\uB85C\uC6B4
     \uCF58\uD150\uCE20\uB97C \uCD94\uAC00\uD560 \uB54C\r\n\uAE30\uC874 \uCF54\uB4DC\uB97C
     \uCD5C\uB300\uD55C \uC218\uC815\uD558\uC9C0 \uC54A\uC544\uB3C4 \uB418\uB294 \uAD6C\uC870\uB97C\r\n\uC88B\uC740
     \uC2DC\uC2A4\uD15C\uC774\uB77C\uACE0 \uC0DD\uAC01\uD569\uB2C8\uB2E4.\r\n\r\n>
-    EXPERIENCE\r\n\r\n[2D \uC2DC\uBBAC\uB808\uC774\uC158 \uD504\uB85C\uC81D\uD2B8]\r\n\r\n-
-    JSON \uAE30\uBC18 \uC544\uC774\uD15C/\uC560\uB2C8\uBA54\uC774\uC158 \uB370\uC774\uD130
-    \uAD00\uB9AC\r\n- Factory Pattern \uAE30\uBC18 ItemFactory \uAD6C\uD604\r\n-
-    \uD0DC\uADF8 \uAE30\uBC18 \uB300\uD654 \uC2DC\uC2A4\uD15C \uC81C\uC791\r\n- \uCEE4\uC2A4\uD140
-    \uC5D0\uB514\uD130 \uC81C\uC791\r\n- \uD655\uC7A5 \uAC00\uB2A5\uD55C \uCF58\uD150\uCE20
-    \uAD6C\uC870 \uC124\uACC4\r\n\r\n[3D \uC561\uC158 \uD504\uB85C\uC81D\uD2B8]\r\n\r\n-
+    EXPERIENCE\r\n\r\n[2D SIMULATION PROJECT]\r\n\r\n- JSON \uAE30\uBC18 \uC544\uC774\uD15C/\uC560\uB2C8\uBA54\uC774\uC158
+    \uB370\uC774\uD130 \uAD00\uB9AC\r\n- Factory Pattern \uAE30\uBC18 ItemFactory
+    \uAD6C\uD604\r\n- \uD0DC\uADF8 \uAE30\uBC18 \uB300\uD654 \uC2DC\uC2A4\uD15C \uC81C\uC791\r\n-
+    \uCEE4\uC2A4\uD140 \uC5D0\uB514\uD130 \uC81C\uC791\r\n- \uD655\uC7A5 \uAC00\uB2A5\uD55C
+    \uCF58\uD150\uCE20 \uAD6C\uC870 \uC124\uACC4\r\n\r\n[3D ACTION PROJECT]\r\n\r\n-
     \uBCF4\uC2A4 \uC804\uD22C \uC2DC\uC2A4\uD15C \uAD6C\uD604\r\n- \uB2E4\uC911 \uBD80\uC704
     \uD328\uD134 \uC2A4\uCF00\uC904\uB9C1\r\n- \uBCD1\uB82C \uC2A4\uD0AC \uC2E4\uD589
     \uAD6C\uC870 \uCC98\uB9AC\r\n- \uBAA8\uBC14\uC77C \uCD5C\uC801\uD654\r\n- GC
-    Alloc \uBD84\uC11D\r\n- \uB80C\uB354\uB9C1 \uCD5C\uC801\uD654\r\n\r\n[Backend
-    / Server]\r\n\r\n- AWS EC2 \uAE30\uBC18 API \uC11C\uBC84 \uAD6C\uCD95\r\n- REST
+    Alloc \uBD84\uC11D\r\n- \uB80C\uB354\uB9C1 \uCD5C\uC801\uD654\r\n\r\n[BACKEND
+    / SERVER]\r\n\r\n- AWS EC2 \uAE30\uBC18 API \uC11C\uBC84 \uAD6C\uCD95\r\n- REST
     API \uD1B5\uC2E0\r\n- MySQL \uB370\uC774\uD130 \uAD00\uB9AC\r\n- Unity IAP \uC601\uC218\uC99D
     \uAC80\uC99D\r\n\r\n> COMMUNICATION\r\n\r\n\uBB38\uC81C\uB97C \uB108\uBB34 \uC624\uB798
     \uD63C\uC790 \uBD99\uC7A1\uACE0 \uC788\uAE30\uBCF4\uB2E4,\r\n\uBE60\uB974\uAC8C
@@ -153,14 +153,16 @@ MonoBehaviour:
     \uAE0D\uC815\uC801\uC778 \uC601\uD5A5\uC744 \uC900\uB2E4\uACE0 \uBBFF\uC2B5\uB2C8\uB2E4.\r\n\r\n\uC800
     \uC5ED\uC2DC \uADF8\uB7F0 \uAC1C\uBC1C\uC790\uAC00 \uB418\uACE0 \uC2F6\uC2B5\uB2C8\uB2E4.\r\n\r\n>
     CURRENT_GOAL\r\n\r\n\uC81C\uAC00 \uBAA9\uD45C\uB85C \uD558\uB294 \uAC1C\uBC1C\uC790\uB294,\r\n\r\n-
-    \uC720\uC9C0\uBCF4\uC218\uAC00 \uC27D\uACE0\r\n- \uD655\uC7A5\uC774 \uC26C\uC6B0\uBA70\r\n-
+    \uC720\uC9C0\uBCF4\uC218\uAC00 \uC27D\uACE0\r\n- \uD655\uC7A5\uC5D0 \uC720\uC5F0\uD558\uBA70\r\n-
     \uBC18\uBCF5 \uC791\uC5C5\uC744 \uC904\uC774\uACE0\r\n- \uD611\uC5C5 \uD6A8\uC728\uC744
     \uB192\uC774\uBA70\r\n- \uD504\uB85C\uC81D\uD2B8 \uADDC\uBAA8\uAC00 \uCEE4\uC838\uB3C4
-    \uC548\uC815\uC801\uC73C\uB85C \uC720\uC9C0\uB418\uB294\r\n\r\n\uC2DC\uC2A4\uD15C\uC744
-    \uB9CC\uB4E4 \uC218 \uC788\uB294 \uD074\uB77C\uC774\uC5B8\uD2B8 \uD504\uB85C\uADF8\uB798\uBA38\uC785\uB2C8\uB2E4.\r\n\r\n>
-    CONTACT\n\r\n\rGitHub   : https://github.com/key0223\nPortfolio: Interactive
-    Desktop Portfolio\r\nEmail      : addkey0223@gmail.com)\r\n\r\n****************************************************\r\n*               
-    END OF FILE                       *\r\n****************************************************"
+    \uC548\uC815\uC801\uC73C\uB85C \uC720\uC9C0\uB418\uB294\r\n\r\n\uAC8C\uC784\uD50C\uB808\uC774
+    \uC2DC\uC2A4\uD15C\uC744 \uB9CC\uB4E4 \uC218 \uC788\uB294\r\n\uD074\uB77C\uC774\uC5B8\uD2B8
+    \uD504\uB85C\uADF8\uB798\uBA38\uC785\uB2C8\uB2E4.\r\n\r\n> AVAILABLE_MODULES\r\n\r\n-
+    PROJECT ARCHIVE\r\n- SYSTEM.LOG\r\n- CONTACT.EXE\r\n\r\nRECOMMENDED ENTRY:\r\nOPEN
+    SYSTEM.LOG\r\n\r\n> CONTACT\r\n\r\nGitHub    : https://github.com/key0223\r\nPortfolio
+    : Interactive Desktop Portfolio\r\nEmail     : addkey0223@gmail.com\r\n\r\n****************************************************\r\n*                 
+    END OF FILE                     *\r\n****************************************************"
   _textArea: {fileID: 905431625879636206}
   _monoFont: {fileID: 0}
   _scrollRect: {fileID: 498482234566778065}
