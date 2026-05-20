@@ -411,8 +411,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -17.999996}
-  m_SizeDelta: {x: -20, y: -49.999992}
+  m_AnchoredPosition: {x: 0, y: -8.999989}
+  m_SizeDelta: {x: -20, y: -67.99998}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2596874355635140718
 GameObject:
@@ -1387,63 +1387,111 @@ MonoBehaviour:
       m_Calls: []
   m_text: '[SYSTEM.LOG]
 
-    BOOT SEQUENCE: SKILL DIAGNOSTIC
+    BOOT SEQUENCE : SKILL DIAGNOSTIC
 
-    TARGET: GIL EUNYOUNG
+    TARGET       
+    : GIL EUNYOUNG
+
+
+
+    --------------------------------------------------
+
 
 
     >
     CHECK UNITY_CLIENT
 
-    C#....................ACTIVE
 
-    Unity 2D/3D...........ACTIVE
+
+    C#............................ACTIVE
+
+    Unity 2D/3D...................ACTIVE
 
     UI
-    System.............ACTIVE
+    System.....................ACTIVE
 
-    Interaction System....ACTIVE
+    Interaction System............ACTIVE
 
 
-    > CHECK SYSTEM_DESIGN
 
-    Data-Driven
-    Design....ACTIVE
+    --------------------------------------------------
 
-    Maintainability.......ACTIVE
 
-    Extensibility.........ACTIVE
+
+    >
+    CHECK SYSTEM_DESIGN
+
+
+
+    Data-Driven Design............ACTIVE
+
+    Maintainability...............ACTIVE
+
+    Extensibility.................ACTIVE
 
     Modular
-    Structure.....ACTIVE
+    Structure.............ACTIVE
 
 
-    > CHECK SERVER_BACKEND
 
-    Web API...............ACTIVE
+    --------------------------------------------------
 
-    MySQL.................ACTIVE
+
+
+    >
+    CHECK SERVER_BACKEND
+
+
+
+    Web API.......................ACTIVE
+
+    MySQL.........................ACTIVE
 
     AWS
-    EC2...............ACTIVE
+    EC2.......................ACTIVE
 
-    Receipt Validation....ACTIVE
-
-
-    > CHECK WORK_STYLE
-
-    Communication.........ACTIVE
-
-    Problem
-    Solving.......ACTIVE
-
-    Sustainable Routine...ACTIVE
+    Receipt Validation............ACTIVE
 
 
-    STATUS: SYSTEM ARCHITECTURE
-    ORIENTED UNITY DEVELOPER
 
-'
+    --------------------------------------------------
+
+
+
+    >
+    CHECK WORK_STYLE
+
+
+
+    Communication.................ACTIVE
+
+    Problem Solving...............ACTIVE
+
+    Sustainable
+    Routine...........ACTIVE
+
+
+
+    --------------------------------------------------
+
+
+
+    FINAL
+    STATUS : STABLE
+
+
+
+    PRIMARY ROLE : UNITY CLIENT PROGRAMMER
+
+    SPECIALTY   
+    : SYSTEM ARCHITECTURE
+
+
+
+    SYSTEM RESULT:
+
+    ARCHITECTURE-ORIENTED UNITY
+    DEVELOPER'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ea311c16eec766344b7a2df104c9f7f7, type: 2}
   m_sharedMaterial: {fileID: -7971927939489030785, guid: ea311c16eec766344b7a2df104c9f7f7,
@@ -1930,7 +1978,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 6449602972753145060}
   m_Direction: 2
   m_Value: 0.5
-  m_Size: 0.8825516
+  m_Size: 0.3861241
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2671,6 +2719,7 @@ GameObject:
   - component: {fileID: 3718386791126105537}
   - component: {fileID: 1155242956166052946}
   - component: {fileID: 7935125130489311028}
+  - component: {fileID: 6989017013846516352}
   m_Layer: 0
   m_Name: SkillViewerUI
   m_TagString: Untagged
@@ -2753,65 +2802,166 @@ MonoBehaviour:
   _logText: {fileID: 4537297531008190681}
   _scrollRect: {fileID: 3501184391599097499}
   _monoFont: {fileID: 0}
+  _diagnosticUI: {fileID: 6989017013846516352}
   _logDocument: '[SYSTEM.LOG]
 
-    BOOT SEQUENCE: SKILL DIAGNOSTIC
+    BOOT SEQUENCE : SKILL DIAGNOSTIC
 
-    TARGET: GIL
-    EUNYOUNG
+    TARGET       
+    : GIL EUNYOUNG
 
 
-    > CHECK UNITY_CLIENT
 
-    C#....................ACTIVE
+    --------------------------------------------------
 
-    Unity
-    2D/3D...........ACTIVE
 
-    UI System.............ACTIVE
 
-    Interaction System....ACTIVE
+    >
+    CHECK UNITY_CLIENT
+
+
+
+    C#............................ACTIVE
+
+    Unity 2D/3D...................ACTIVE
+
+    UI
+    System.....................ACTIVE
+
+    Interaction System............ACTIVE
+
+
+
+    --------------------------------------------------
+
 
 
     >
     CHECK SYSTEM_DESIGN
 
-    Data-Driven Design....ACTIVE
 
-    Maintainability.......ACTIVE
 
-    Extensibility.........ACTIVE
+    Data-Driven Design............ACTIVE
+
+    Maintainability...............ACTIVE
+
+    Extensibility.................ACTIVE
 
     Modular
-    Structure.....ACTIVE
+    Structure.............ACTIVE
 
 
-    > CHECK SERVER_BACKEND
 
-    Web API...............ACTIVE
+    --------------------------------------------------
 
-    MySQL.................ACTIVE
+
+
+    >
+    CHECK SERVER_BACKEND
+
+
+
+    Web API.......................ACTIVE
+
+    MySQL.........................ACTIVE
 
     AWS
-    EC2...............ACTIVE
+    EC2.......................ACTIVE
 
-    Receipt Validation....ACTIVE
-
-
-    > CHECK WORK_STYLE
-
-    Communication.........ACTIVE
-
-    Problem
-    Solving.......ACTIVE
-
-    Sustainable Routine...ACTIVE
+    Receipt Validation............ACTIVE
 
 
-    STATUS: SYSTEM ARCHITECTURE
-    ORIENTED UNITY DEVELOPER
 
-'
+    --------------------------------------------------
+
+
+
+    >
+    CHECK WORK_STYLE
+
+
+
+    Communication.................ACTIVE
+
+    Problem Solving...............ACTIVE
+
+    Sustainable
+    Routine...........ACTIVE
+
+
+
+    --------------------------------------------------
+
+
+
+    FINAL
+    STATUS : STABLE
+
+
+
+    PRIMARY ROLE : UNITY CLIENT PROGRAMMER
+
+    SPECIALTY   
+    : SYSTEM ARCHITECTURE
+
+
+
+    SYSTEM RESULT:
+
+    ARCHITECTURE-ORIENTED UNITY
+    DEVELOPER'
+--- !u!114 &6989017013846516352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8886022090843904597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 125a59925a003944dae6baac38839ab8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _logText: {fileID: 4537297531008190681}
+  _lines:
+  - '[SYSTEM.LOG]'
+  - 'BOOT SEQUENCE: SKILL DIAGNOSTIC'
+  - 'TARGET: GIL EUNYOUNG'
+  - 
+  - '> CHECK UNITY_CLIENT'
+  - C#....................ACTIVE
+  - Unity 2D/3D...........ACTIVE
+  - UI System.............ACTIVE
+  - Interaction System....ACTIVE
+  - 
+  - '> CHECK SYSTEM_DESIGN'
+  - Data-Driven Design....STABLE
+  - Maintainability.......STABLE
+  - Extensibility.........READY
+  - Modular Structure.....READY
+  - 
+  - '> CHECK SERVER_BACKEND'
+  - Web API...............ACTIVE
+  - MySQL.................READY
+  - AWS EC2...............ONLINE
+  - Receipt Validation....STABLE
+  - 
+  - '> CHECK WORK_STYLE'
+  - Communication.........ACTIVE
+  - Problem Solving.......ACTIVE
+  - Sustainable Routine...STABLE
+  - 
+  - 'FINAL STATUS: SYSTEM ARCHITECTURE ORIENTED UNITY DEVELOPER'
+  _lineDelay: 0.08
+  _statusDelay: 0.18
+  _finalStatusPause: 0.35
+  _playOnEnable: 0
+  _replayOnEnable: 0
+  _showCursor: 1
+  _cursor: _
+  _cursorBlinkInterval: 0.28
+  _defaultColor: {r: 0.82, g: 0.9, b: 0.82, a: 1}
+  _statusColor: {r: 0.49, g: 1, b: 0.61, a: 1}
 --- !u!1 &9161047894913119317
 GameObject:
   m_ObjectHideFlags: 0

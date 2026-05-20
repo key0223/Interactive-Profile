@@ -39,6 +39,7 @@ public class SkillsWindowView : MonoBehaviour
     [SerializeField] private TMP_Text _logText;
     [SerializeField] private ScrollRect _scrollRect;
     [SerializeField] private TMP_FontAsset _monoFont;
+    [SerializeField] private SystemLogDiagnosticUI _diagnosticUI;
 
     [Header("Content")]
     [TextArea(12, 30)]
@@ -53,6 +54,9 @@ public class SkillsWindowView : MonoBehaviour
 
         if (_scrollRect == null)
             _scrollRect = GetComponentInChildren<ScrollRect>(true);
+
+        if (_diagnosticUI == null)
+            _diagnosticUI = GetComponentInChildren<SystemLogDiagnosticUI>(true);
     }
 
     private void OnDisable()
@@ -74,8 +78,17 @@ public class SkillsWindowView : MonoBehaviour
         {
             if (_monoFont != null)
                 _logText.font = _monoFont;
+        }
 
-            _logText.text = NormalizeLineEndings(resolvedLogDocument);
+        if (_diagnosticUI != null)
+        {
+            _diagnosticUI.SetLines(SplitLines(resolvedLogDocument));
+            _diagnosticUI.Play();
+        }
+        else
+        {
+            if (_logText != null)
+                _logText.text = NormalizeLineEndings(resolvedLogDocument);
         }
 
         ResetScrollToTop();
@@ -83,6 +96,12 @@ public class SkillsWindowView : MonoBehaviour
 
     public void Clear()
     {
+        if (_diagnosticUI != null)
+        {
+            _diagnosticUI.Stop();
+            _diagnosticUI.ResetLog();
+        }
+
         if (_logText != null)
             _logText.text = string.Empty;
 
@@ -134,5 +153,10 @@ public class SkillsWindowView : MonoBehaviour
         return string.IsNullOrEmpty(text)
             ? string.Empty
             : text.Replace("\r\n", "\n").Replace("\r", "\n");
+    }
+
+    private static string[] SplitLines(string text)
+    {
+        return NormalizeLineEndings(text).Split('\n');
     }
 }
