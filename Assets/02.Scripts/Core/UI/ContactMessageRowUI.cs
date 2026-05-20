@@ -14,6 +14,8 @@ public class ContactMessageRowUI : MonoBehaviour
     private Action<int> _onClicked;
     private int _index = -1;
 
+    public int Index => _index;
+
     private void Awake()
     {
         if (_button == null)
