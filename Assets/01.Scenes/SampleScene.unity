@@ -1437,6 +1437,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 889668083}
+  - component: {fileID: 889668085}
   - component: {fileID: 889668084}
   m_Layer: 0
   m_Name: BootScreenRoot
@@ -1479,6 +1480,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _root: {fileID: 889668082}
+  _canvasGroup: {fileID: 889668085}
   _logText: {fileID: 745478649}
   _bootLines:
   - GIL_OS 98 BOOT SEQUENCE
@@ -1488,6 +1490,25 @@ MonoBehaviour:
   - Starting window manager.OK
   - Ready.
   _lineDelay: 0.2
+  _characterDelay: 0.01
+  _completionDelay: 0.25
+  _showCursor: 1
+  _cursor: _
+  _cursorBlinkInterval: 0.16
+  _useFadeOut: 1
+  _fadeOutDuration: 0.25
+--- !u!225 &889668085
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 889668082}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &910100000
 GameObject:
   m_ObjectHideFlags: 0

@@ -83,12 +83,14 @@ ComputerUIRoot
 필수 Inspector 연결:
 
 - `BootScreenUI._root`: `BootScreenRoot`
+- `BootScreenUI._canvasGroup`: `BootScreenRoot`의 `CanvasGroup`
 - `BootScreenUI._logText`: boot log용 `TMP_Text`
 - `BootScreenUI._bootLines`: 짧은 boot log line 배열
 - `BootScreenUI._lineDelay`: line-by-line 출력 간격
 - `BootScreenUI._characterDelay`: character reveal 간격
 - `BootScreenUI._completionDelay`: `READY.` 이후 desktop 전환 전 짧은 hold
 - `BootScreenUI._showCursor`, `_cursor`, `_cursorBlinkInterval`: terminal cursor 연출
+- `BootScreenUI._useFadeOut`, `_fadeOutDuration`: boot 종료 fade out
 - `ComputerUIController._bootScreenUI`: `BootScreenUI`
 - `ComputerUIController._desktopLayer`: `DesktopLayer`
 - `ComputerUIController._windowLayer`: `WindowLayer`
@@ -100,10 +102,26 @@ Boot visual polish 기준:
 
 - 배경은 검은색 또는 매우 어두운 회색/남색 계열을 사용한다.
 - boot log 텍스트는 낮은 채도의 녹색, 밝은 회색, 흰색 중 하나를 사용한다.
+- `BootScreenRoot`에는 fade out용 `CanvasGroup`을 추가하고 `BootScreenUI._canvasGroup`에 연결한다.
 - `_characterDelay`는 `0.006`~`0.018`, `_lineDelay`는 `0.12`~`0.25`, `_completionDelay`는 `0.2`~`0.45`를 우선한다.
+- `_fadeOutDuration`은 `0.15`~`0.35`를 우선한다.
 - cursor는 text suffix 방식의 `_`를 기본으로 보고, 별도 cursor GameObject는 만들지 않는다.
-- desktop transition은 `READY.` 후 짧은 hold → boot hide → desktop shell show 순서를 기본으로 한다.
-- fade out, desktop fade in, taskbar delayed reveal, icon delayed reveal, CRT flicker는 별도 구현 step으로 분리한다.
+- desktop transition은 `READY.` 후 짧은 hold → boot fade out → boot hide → desktop shell show 순서를 기본으로 한다.
+- fade out은 `CanvasGroup.alpha`와 coroutine만 사용해 WebGL 호환성을 유지한다.
+- `Play()`와 `Hide()`는 alpha를 `1`로 복구해야 하며, reopen 시 투명한 boot screen으로 시작하지 않아야 한다.
+- `_canvasGroup`이 비어 있으면 fade out 없이 즉시 hide로 fallback 된다.
+- desktop fade in, taskbar delayed reveal, icon delayed reveal, CRT flicker는 별도 구현 step으로 분리한다.
+
+## Shutdown Sequence
+
+- 현재 Computer UI shutdown은 즉시 close 흐름이며 별도 transition이 없다.
+- shutdown transition은 startup `BootScreenUI`와 분리된 전용 UI로 설계한다.
+- 권장 방향은 `ShutdownScreenRoot`와 `ShutdownScreenUI`를 별도 계층/컴포넌트로 두는 것이다.
+- shutdown 문구는 `SHUTTING DOWN...`, `SAVING SESSION...`, `GOODBYE.`처럼 짧게 유지한다.
+- shutdown transition은 startup보다 빠른 `0.6`~`1.2`초 범위를 우선한다.
+- fade는 `CanvasGroup.alpha`와 coroutine만 사용해 WebGL 호환성을 유지한다.
+- desktop 상태 Escape는 기존 focused window close 우선 정책을 유지하고, Start Menu `Shut Down...`만 shutdown transition 진입점으로 둔다.
+- 자세한 설계는 `phases/02-computer-ui/34-shutdown-transition-plan.md`를 따른다.
 
 ## Window Lifecycle Interaction
 
@@ -191,6 +209,11 @@ ContactWindow
 - boot 중 `Close()` 후 boot 완료 callback이 뒤늦게 실행되지 않는다.
 - boot 완료 후 Escape는 기존 focused window close 우선 정책을 유지한다.
 - `READY.` 이후 짧은 hold 뒤 desktop shell이 표시된다.
+- `READY.` 이후 boot screen이 짧게 fade out된 뒤 숨겨진다.
+- fade out 중 Escape 입력 시 Computer UI가 닫히고 boot 완료 callback이 뒤늦게 실행되지 않는다.
+- reopen 시 `CanvasGroup.alpha`가 `1`로 복구되어 boot screen이 정상 표시된다.
+- reopen 시 boot log가 처음부터 다시 출력된다.
+- `_canvasGroup` 미연결 fallback을 테스트한 경우 fade 없이 즉시 hide되는지 확인하고, 테스트 후 다시 연결한다.
 - cursor 사용 시 완료 후 cursor 잔상이 남지 않는다.
 - `_bootScreenUI`가 null이어도 기존 desktop 초기화 흐름이 정상 동작한다.
 - runtime desktop icon이 생성된다.

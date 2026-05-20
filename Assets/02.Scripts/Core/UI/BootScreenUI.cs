@@ -7,6 +7,7 @@ using UnityEngine;
 public class BootScreenUI : MonoBehaviour
 {
     [SerializeField] private GameObject _root;
+    [SerializeField] private CanvasGroup _canvasGroup;
     [SerializeField] private TMP_Text _logText;
     [SerializeField] private string[] _bootLines =
     {
@@ -23,6 +24,8 @@ public class BootScreenUI : MonoBehaviour
     [SerializeField] private bool _showCursor = true;
     [SerializeField] private string _cursor = "_";
     [SerializeField] private float _cursorBlinkInterval = 0.16f;
+    [SerializeField] private bool _useFadeOut = true;
+    [SerializeField] private float _fadeOutDuration = 0.25f;
 
     private readonly StringBuilder _logBuilder = new StringBuilder();
     private Coroutine _playRoutine;
@@ -34,6 +37,9 @@ public class BootScreenUI : MonoBehaviour
     {
         if (_root == null)
             Debug.LogWarning($"{nameof(BootScreenUI)} on {name} requires a root GameObject reference.");
+
+        if (_canvasGroup == null)
+            Debug.LogWarning($"{nameof(BootScreenUI)} on {name} can fade out when a CanvasGroup reference is assigned.");
 
         if (_logText == null)
             Debug.LogWarning($"{nameof(BootScreenUI)} on {name} requires a TMP_Text log reference.");
@@ -56,6 +62,7 @@ public class BootScreenUI : MonoBehaviour
         Stop();
 
         _onComplete = onComplete;
+        ResetCanvasGroupAlpha();
         ClearLog();
 
         if (_root != null)
@@ -79,6 +86,7 @@ public class BootScreenUI : MonoBehaviour
     {
         Stop();
         ClearLog();
+        ResetCanvasGroupAlpha();
 
         if (_root != null)
             _root.SetActive(false);
@@ -103,6 +111,8 @@ public class BootScreenUI : MonoBehaviour
 
         if (_completionDelay > 0f)
             yield return new WaitForSeconds(_completionDelay);
+
+        yield return FadeOut();
 
         Action onComplete = _onComplete;
         _playRoutine = null;
@@ -210,5 +220,32 @@ public class BootScreenUI : MonoBehaviour
     {
         if (_root != null)
             _root.SetActive(false);
+    }
+
+    private IEnumerator FadeOut()
+    {
+        if (!_useFadeOut || _canvasGroup == null || _fadeOutDuration <= 0f)
+        {
+            ResetCanvasGroupAlpha();
+            yield break;
+        }
+
+        float elapsed = 0f;
+        _canvasGroup.alpha = 1f;
+
+        while (elapsed < _fadeOutDuration)
+        {
+            elapsed += Time.deltaTime;
+            _canvasGroup.alpha = Mathf.Lerp(1f, 0f, Mathf.Clamp01(elapsed / _fadeOutDuration));
+            yield return null;
+        }
+
+        _canvasGroup.alpha = 0f;
+    }
+
+    private void ResetCanvasGroupAlpha()
+    {
+        if (_canvasGroup != null)
+            _canvasGroup.alpha = 1f;
     }
 }

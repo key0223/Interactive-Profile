@@ -116,6 +116,14 @@ ComputerUIRoot
 - 전체 화면 배경 `BootPanel`
 - boot log 출력용 `TMP_Text` 하나
 
+`BootScreenRoot` 필수/권장 컴포넌트:
+
+- `RectTransform`: full screen stretch 배치.
+- `CanvasRenderer`: UI 렌더링에 필요하며 UI 오브젝트 생성 시 자동으로 붙을 수 있다.
+- `Image` 또는 하위 `BootPanel`: 어두운 배경 표시용. 배경을 하위 panel로 둘 경우 `BootScreenRoot` 자체에는 `Image`가 없어도 된다.
+- `CanvasGroup`: fade out alpha 제어용.
+- `BootScreenUI`: boot log 출력, fade out, hide callback 담당.
+
 권장 스타일:
 
 - Windows 95/98 이전 PC 부팅 로그처럼 조밀하고 짧게 보이게 한다.
@@ -125,13 +133,22 @@ ComputerUIRoot
 
 ## BootScreenUI Component Wiring
 
+Inspector 연결 순서:
+
 1. `BootScreenRoot`를 선택한다.
-2. `BootScreenUI` 컴포넌트를 추가한다.
-3. Inspector에서 다음 필드를 연결한다.
+2. `CanvasGroup` 컴포넌트를 추가한다.
+3. `BootScreenUI` 컴포넌트를 추가한다.
+4. `BootScreenUI._root`에 `BootScreenRoot`를 드래그한다.
+5. `BootScreenUI._canvasGroup`에 같은 GameObject의 `CanvasGroup`을 드래그한다.
+6. `BootScreenUI._logText`에 `BootLogText`의 `TMP_Text`를 드래그한다.
+7. `_bootLines`, `_lineDelay`, `_characterDelay`, `_completionDelay`를 설정한다.
+8. cursor가 필요하면 `_showCursor`, `_cursor`, `_cursorBlinkInterval`을 설정한다.
+9. fade out이 필요하면 `_useFadeOut`을 켜고 `_fadeOutDuration`을 설정한다.
 
 연결 목록:
 
 - `_root` → `BootScreenRoot`
+- `_canvasGroup` → `BootScreenRoot`의 `CanvasGroup`
 - `_logText` → `BootLogText`의 `TMP_Text`
 - `_bootLines` → 짧은 boot log 문장 4~7개
 - `_lineDelay` → `0.12`~`0.35`초 권장
@@ -140,6 +157,30 @@ ComputerUIRoot
 - `_showCursor` → terminal cursor가 필요하면 enabled
 - `_cursor` → `_` 또는 `█` 중 하나 권장
 - `_cursorBlinkInterval` → `0.12`~`0.25`초 권장
+- `_useFadeOut` → enabled 권장
+- `_fadeOutDuration` → `0.15`~`0.35`초 권장
+
+권장 Inspector 값:
+
+- `_lineDelay`: `0.12`~`0.25`
+- `_characterDelay`: `0.006`~`0.018`
+- `_completionDelay`: `0.2`~`0.45`
+- `_showCursor`: enabled
+- `_cursor`: `_`
+- `_cursorBlinkInterval`: `0.12`~`0.25`
+- `_useFadeOut`: enabled
+- `_fadeOutDuration`: `0.15`~`0.35`
+
+CanvasGroup 설정:
+
+- `BootScreenRoot`에 `CanvasGroup` 컴포넌트를 추가한다.
+- `BootScreenUI._canvasGroup`에 같은 `CanvasGroup`을 연결한다.
+- `Alpha`는 기본 `1`로 둔다.
+- `Interactable`과 `Blocks Raycasts`는 boot screen에 버튼이 없으면 큰 의미가 없다. 기존 Canvas 입력 정책과 충돌하지 않게 둔다.
+- `BootScreenUI.Play()`가 시작되면 alpha는 코드에서 `1`로 복구된다.
+- fade out이 끝나면 alpha는 `0`이 된 뒤 `BootScreenRoot`가 비활성화된다.
+- `BootScreenUI.Hide()`가 호출되면 alpha는 다시 `1`로 복구되고 root가 비활성화된다.
+- reopen 시 `Play()`가 alpha를 `1`로 복구하므로 이전 fade out 상태가 남지 않아야 한다.
 
 boot log 예시:
 
@@ -164,11 +205,14 @@ READY.
 연결 누락 시 기준:
 
 - `_root`가 누락되면 boot screen을 표시하거나 숨길 수 없다.
+- `_canvasGroup`이 누락되면 fade out 없이 즉시 숨김으로 동작한다.
 - `_logText`가 누락되면 boot root는 표시될 수 있지만 로그 라인은 보이지 않는다.
 - `_bootLines`가 비어 있으면 boot screen이 거의 즉시 완료될 수 있다.
 - `_lineDelay`가 `0`이면 모든 라인이 한 프레임에 출력될 수 있다.
 - `_characterDelay`가 너무 길면 boot가 느리게 느껴진다. 전체 boot 길이는 1.5~2.5초 안쪽을 우선한다.
 - `_completionDelay`는 `READY.`가 보인 뒤 desktop이 너무 갑자기 뜨지 않게 하는 짧은 hold다.
+- `_useFadeOut`이 꺼져 있거나 `_fadeOutDuration`이 `0` 이하이면 fade 없이 즉시 숨김으로 동작한다.
+- `_canvasGroup` fallback 확인은 테스트 목적으로만 수행한다. 정상 scene 구성에서는 `CanvasGroup`을 연결한 상태를 기준으로 한다.
 
 ## Visual Polish Guide
 
@@ -188,6 +232,7 @@ animation timing 권장값:
 - `_lineDelay`: `0.12`~`0.25`
 - `_completionDelay`: `0.2`~`0.45`
 - `_cursorBlinkInterval`: `0.12`~`0.25`
+- `_fadeOutDuration`: `0.15`~`0.35`
 
 typing 연출 기준:
 
@@ -195,6 +240,7 @@ typing 연출 기준:
 - line 끝에는 cursor를 짧게 보여준다.
 - line 사이 delay는 짧게 유지한다.
 - `READY.` 이후 completion delay를 두고 desktop으로 전환한다.
+- completion delay 이후 `CanvasGroup` alpha를 짧게 fade out한다.
 
 cursor blink 기준:
 
@@ -217,6 +263,8 @@ cursor blink 기준:
 
 ```text
 boot complete
+→ completion delay
+→ BootScreenRoot CanvasGroup fade out
 → BootScreenRoot hide
 → DesktopLayer / WindowLayer / TaskbarRoot show
 → ProjectDesktopUI.Initialize()
@@ -244,12 +292,46 @@ READY. 표시
 
 이번 구조에서 바로 구현하지 않는 후보:
 
+- desktop fade in.
 - taskbar delayed reveal.
 - icon delayed reveal.
 - CRT overlay flicker.
 - monitor power-on scan animation.
 
 이 연출들은 `ComputerUIController`의 shell 표시 순서나 CRT overlay 계층과 결합되므로, Play Mode 검증이 끝난 현재 boot open/close 안정성을 유지하려면 별도 phase로 다룬다.
+
+## Fade Out Behavior
+
+현재 fade out 동작:
+
+```text
+Play()
+→ CanvasGroup.alpha = 1
+→ boot log 출력
+→ completion delay
+→ CanvasGroup.alpha 1에서 0으로 보간
+→ BootScreenRoot inactive
+→ boot complete callback
+```
+
+중단 동작:
+
+```text
+Close() 또는 Escape
+→ ComputerUIController.Close()
+→ BootScreenUI.Hide()
+→ running coroutine stop
+→ pending callback clear
+→ log clear
+→ CanvasGroup.alpha = 1
+→ BootScreenRoot inactive
+```
+
+검증 기준:
+
+- fade out 중 `Close()`가 호출되어도 desktop shell이 뒤늦게 표시되지 않아야 한다.
+- fade out 중 Escape를 눌러도 다음 open에서 boot screen이 투명하게 시작하지 않아야 한다.
+- `_canvasGroup`이 비어 있으면 fade만 생략되고 boot complete callback 흐름은 유지되어야 한다.
 
 ## ComputerUIController Wiring
 
@@ -296,8 +378,25 @@ READY. 표시
 - boot 중 Escape 입력 시 Computer UI가 닫힌다.
 - 다시 열었을 때 boot log가 처음부터 다시 출력된다.
 - `READY.` 이후 짧은 hold 뒤 desktop이 표시된다.
+- `READY.` 이후 boot screen이 즉시 꺼지지 않고 짧게 fade out된다.
+- fade out 완료 후 `BootScreenRoot`가 inactive가 된다.
+- fade out 중 Escape 입력 시 Computer UI가 닫히고 boot 완료 callback이 뒤늦게 실행되지 않는다.
+- 다시 열었을 때 `CanvasGroup.alpha`가 `1`로 복구되어 boot screen이 정상 표시된다.
+- 다시 열었을 때 boot log가 처음부터 다시 출력된다.
+- 테스트 목적으로 `_canvasGroup` 연결을 비우면 fade 없이 즉시 hide fallback이 동작한다. 테스트 후 반드시 다시 연결한다.
 - cursor가 켜진 경우 line reveal 중 cursor가 표시되고 완료 후 잔상이 남지 않는다.
 - `_bootScreenUI`를 비운 상태에서도 기존 desktop 진입 흐름이 정상 동작한다.
+
+## WebGL Compatibility
+
+- fade out은 Unity coroutine 기반으로 실행한다.
+- 시간 누적은 `Time.deltaTime`을 사용한다.
+- 시각 변화는 `CanvasGroup.alpha`만 사용한다.
+- native plugin을 사용하지 않는다.
+- thread를 사용하지 않는다.
+- WebGL 비호환 API를 사용하지 않는다.
+- WebGL에서 tab throttling이나 frame rate 저하가 있어도 fade 시간만 늘어날 수 있고 상태 전이는 coroutine 안에서 유지된다.
+- `Close()` 또는 Escape로 `BootScreenUI.Hide()`가 호출되면 coroutine이 중단되고 alpha가 `1`로 복구되어 reopen 상태가 안정적이어야 한다.
 
 ## Common Issues
 
@@ -334,9 +433,12 @@ READY. 표시
 - `BootScreenRoot`는 desktop shell과 같은 레벨의 overlay 계층이다.
 - `BootScreenRoot`는 기본 inactive 상태다.
 - `BootScreenRoot`에 `BootScreenUI`가 붙어 있다.
+- `BootScreenRoot`에 `CanvasGroup`이 붙어 있고 `BootScreenUI._canvasGroup`에 연결되어 있다.
 - `BootScreenUI._root`, `_logText`, `_bootLines`, `_lineDelay`가 설정되어 있다.
+- `BootScreenUI._useFadeOut`과 `_fadeOutDuration`이 의도한 값으로 설정되어 있다.
 - `ComputerUIController._bootScreenUI`, `_desktopLayer`, `_windowLayer`, `_taskbarRoot`가 연결되어 있다.
 - Play Mode에서 boot screen 표시, line-by-line 로그 출력, 완료 후 desktop 표시가 확인된다.
+- Play Mode에서 fade out 중 Escape close와 reopen alpha 복구가 확인된다.
 - boot 중 Escape close와 reopen 시 boot 재생이 확인된다.
 
 ## Completed Step Summary
