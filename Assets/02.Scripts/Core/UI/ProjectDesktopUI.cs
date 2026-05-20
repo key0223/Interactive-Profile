@@ -524,6 +524,7 @@ public sealed class ProjectWindowManager
 
         if (_registeredWindows.TryGetValue(id, out ProjectWindowUI window) && window != null)
         {
+            _taskbarUI?.SetButtonClosing(id, true);
             window.Hide();
         }
         else
@@ -950,6 +951,7 @@ public sealed class ProjectWindowManager
         }
 
         _taskbarUI.ShowButton(id);
+        _taskbarUI.SetButtonClosing(id, false);
         _taskbarUI.SetButtonMinimized(id, state == WindowState.Minimized);
     }
 

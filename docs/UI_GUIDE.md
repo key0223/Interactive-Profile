@@ -316,10 +316,57 @@ ContactWindow
 
 ## Taskbar Button States
 
+- taskbar button은 window open 시 `ProjectTaskbarUI.RegisterButton` 경로로 runtime 생성된다.
+- taskbar button은 window close animation 완료 후 `Closed` callback에서 제거된다.
 - active indicator는 focused/opened window의 button에만 표시한다.
 - minimized indicator는 minimized window의 button에 표시한다.
 - closed window의 taskbar button은 제거하거나 숨긴다.
 - taskbar 상태는 `ProjectWindowManager`의 `WindowState`와 동기화한다.
+- taskbar button click은 minimized window를 restore/focus하고, visible opened window를 focus한다.
+- 이미 focused 상태인 button을 다시 클릭하면 minimize하지 않고 focus 상태를 유지한다.
+- close animation 중인 button은 closing visual을 표시하지만 click은 유지한다. close 중 click이 들어오면 기존 focus/restore 경로가 window close transition을 취소하고 window를 복구할 수 있어야 한다.
+- visual state 우선순위는 `Closing > Active > Hover > Minimized > Normal`이다.
+- taskbar visual polish는 `Image.color`, active indicator, minimized indicator만 사용한다.
+- animation, tween, glow-heavy effect는 사용하지 않는다.
+
+Taskbar 권장 Inspector 값:
+
+- `ProjectTaskbarButtonUI._backgroundImage`: button root 또는 bevel panel의 Image
+- `ProjectTaskbarButtonUI._normalColor`: Windows 95/98 회색 panel 색
+- `ProjectTaskbarButtonUI._hoverColor`: normal보다 약간 밝은 회색
+- `ProjectTaskbarButtonUI._activeColor`: 낮은 채도의 selection blue 또는 눌린 panel 색
+- `ProjectTaskbarButtonUI._minimizedColor`: normal보다 낮은 대비의 회색
+- `ProjectTaskbarButtonUI._closingColor`: 어두운 회색
+- `ProjectTaskbarButtonUI._activeIndicator`: active/focused 상태를 보조하는 얇은 bar 또는 inset highlight
+- `ProjectTaskbarButtonUI._minimizedIndicator`: minimized 상태를 보조하는 얇은 bar 또는 dim indicator
+
+Taskbar Editor 연결 기준:
+
+- taskbar button prefab에는 `Button`, background `Image`, label `TMP_Text`를 연결한다.
+- icon을 표시하는 경우 `_iconImage`에는 app/project icon Image를 연결한다.
+- icon이 없는 window는 `_iconImage`가 비어 있어도 동작해야 한다.
+- label TMP는 작은 pixel 또는 monospace 느낌의 font를 사용한다.
+- label은 taskbar button 안에서 1줄로 읽히게 하고, 긴 title은 ellipsis 또는 clipping 기준을 prefab에서 정한다.
+- active와 minimized indicator는 button 내부에 작고 명확하게 보이는 오브젝트로 둔다.
+- hover/active 색상은 Windows-like panel 느낌을 유지하고 neon, glow, gradient를 쓰지 않는다.
+- Scene, prefab YAML을 직접 수정하지 말고 Unity Editor Inspector에서 연결한다.
+
+Taskbar Play Mode 검증 항목:
+
+- window open 시 taskbar button이 생성된다.
+- focused window의 taskbar button에 active visual이 표시된다.
+- 다른 window focus 시 active button이 변경된다.
+- unfocused opened window button은 normal visual로 표시된다.
+- taskbar button hover 시 hover visual이 표시된다.
+- hover exit 시 active/minimized/normal 상태에 맞는 visual로 돌아간다.
+- taskbar button click 시 visible window는 focus된다.
+- taskbar button click 시 minimized window는 restore/focus된다.
+- 이미 focused 상태인 taskbar button을 다시 클릭해도 상태가 꼬이지 않는다.
+- close button 클릭 시 close animation 후 taskbar button이 제거된다.
+- Escape focused close 후 close animation 완료 시 taskbar button이 제거된다.
+- close 중 taskbar click 시 window가 복구되거나 상태가 꼬이지 않는다.
+- 여러 window를 연속 open/focus해도 active button과 sibling order가 정상이다.
+- WebGL에서 taskbar interaction 관련 thread, native plugin, platform-specific API, 외부 tween 라이브러리 문제가 없어야 한다.
 
 ## Play Mode 검증 체크리스트
 
@@ -366,12 +413,21 @@ ContactWindow
 - 중복 open 시 기존 typed app window를 restore/focus한다.
 - 빠른 double click에도 동일 project/app window가 중복 생성되지 않는다.
 - taskbar button이 window open 시 생성되고 close 시 제거된다.
+- focused window의 taskbar button에 active visual이 표시된다.
+- 다른 window focus 시 active taskbar button이 변경된다.
+- unfocused opened window taskbar button은 normal visual로 표시된다.
+- taskbar button hover 시 hover visual이 표시된다.
+- taskbar button hover exit 시 active, minimized, normal 상태에 맞는 visual로 돌아간다.
 - close button 클릭 시 close animation 후 window destroy와 taskbar button 제거가 실행된다.
 - Escape focused close 시 close animation이 정상 표시된다.
+- Escape focused close 후 close animation 완료 시 taskbar button이 제거된다.
 - close 중 같은 icon을 다시 실행하면 window가 복구되고 destroy되지 않는다.
 - taskbar restore/focus 입력이 close 중 들어와도 window가 정상 복구된다.
+- close 중 taskbar click 시 window가 복구되거나 상태가 꼬이지 않는다.
 - minimize 시 window가 숨겨지고 minimized state가 표시된다.
 - taskbar button click 시 restore/focus된다.
+- taskbar button click 시 visible window는 focus된다.
+- 이미 focused 상태인 taskbar button을 다시 클릭해도 상태가 꼬이지 않는다.
 - Escape가 focused/opened window를 닫는다.
 - 여러 window를 연속으로 열어도 focus와 sibling order가 정상 유지된다.
 - window restore/focus 시 scroll reset이 필요한 view는 top으로 돌아간다.

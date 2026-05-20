@@ -70,6 +70,7 @@ public class ProjectTaskbarUI : MonoBehaviour
         button.SetVisible(true);
         button.SetActive(false);
         button.SetMinimized(false);
+        button.SetClosing(false);
     }
 
     public void ShowButton(DesktopWindowType type)
@@ -95,6 +96,7 @@ public class ProjectTaskbarUI : MonoBehaviour
 
         button.SetActive(false);
         button.SetMinimized(false);
+        button.SetClosing(false);
         button.SetVisible(false);
         _buttonsById.Remove(id);
         Destroy(button.gameObject);
@@ -132,6 +134,12 @@ public class ProjectTaskbarUI : MonoBehaviour
     {
         if (TryGetButton(id, out ProjectTaskbarButtonUI button))
             button.SetMinimized(isMinimized);
+    }
+
+    public void SetButtonClosing(DesktopWindowId id, bool isClosing)
+    {
+        if (TryGetButton(id, out ProjectTaskbarButtonUI button))
+            button.SetClosing(isClosing);
     }
 
     public void Clear()
