@@ -87,7 +87,7 @@ public class ContactWindowView : MonoBehaviour
             ContactFolderType.Resume,
             "Resume",
             "Download Resume",
-            "AVAILABLE",
+            "VERIFIED",
             "Open the latest resume file or download link.",
             "https://your-site.example/resume")
     };
@@ -106,6 +106,9 @@ public class ContactWindowView : MonoBehaviour
     private readonly List<ContactFolderRowUI> _folderRows = new List<ContactFolderRowUI>();
     private readonly List<ContactMessageRowUI> _messageRows = new List<ContactMessageRowUI>();
     private readonly StringBuilder _messageListBuilder = new StringBuilder();
+    [Header("Visual Polish")]
+    [SerializeField] private string _previewChannelName = "LOCAL NETWORK";
+
     private Coroutine _resetScrollCoroutine;
     private ContactFolderType _selectedFolder = ContactFolderType.Inbox;
     private int _selectedIndex = NoSelection;
@@ -146,6 +149,8 @@ public class ContactWindowView : MonoBehaviour
 
         if (_connectButton != null)
             _connectButton.onClick.AddListener(OpenSelectedUrl);
+
+        ConfigureRichText();
     }
 
     private void OnDestroy()
@@ -289,7 +294,7 @@ public class ContactWindowView : MonoBehaviour
                     .Append(marker)
                     .Append(PadOrTrim(entry.DisplayName, 10))
                     .Append(PadOrTrim(entry.Subject, 32))
-                    .AppendLine(entry.Status ?? string.Empty);
+                    .AppendLine(ContactVisualTextUtility.ColorizeStatus(entry.Status));
             }
         }
 
@@ -298,21 +303,35 @@ public class ContactWindowView : MonoBehaviour
 
     private void RefreshPreview(ContactEntry entry)
     {
+        string status = string.IsNullOrWhiteSpace(entry.Status) ? "READY" : entry.Status;
+
         if (_previewTitleText != null)
-            _previewTitleText.text = $"{SafeText(entry.DisplayName)} / {SafeText(entry.Subject)} / {SafeText(entry.Status)}";
+        {
+            _previewTitleText.richText = true;
+            _previewTitleText.text = $"{ContactVisualTextUtility.ColorizeStatus(status)} | {SafeText(entry.Subject)}";
+        }
 
         if (_previewBodyText != null)
         {
             string endpointLabel = string.IsNullOrWhiteSpace(entry.Url) ? "URL: Not available" : $"URL: {entry.Url}";
-            _previewBodyText.text = $"{NormalizeLineEndings(entry.Description)}\n\n{endpointLabel}";
+            _previewBodyText.richText = true;
+            _previewBodyText.text =
+                $"FROM    : {SafeText(entry.DisplayName)}\n" +
+                $"CHANNEL : {SafeText(_previewChannelName)}\n" +
+                $"STATUS  : {ContactVisualTextUtility.ColorizeStatus(status)}\n" +
+                $"SUBJECT : {SafeText(entry.Subject)}\n" +
+                "----------------------------------------\n" +
+                $"{NormalizeLineEndings(entry.Description)}\n\n" +
+                $"{endpointLabel}";
         }
 
         if (_statusText != null)
         {
-            string status = string.IsNullOrWhiteSpace(entry.Status) ? "READY" : entry.Status;
-            _statusText.text = $"1 item selected | STATUS: {status}";
+            _statusText.richText = true;
+            _statusText.text = $"1 item selected | STATUS: {ContactVisualTextUtility.ColorizeStatus(status)}";
         }
 
+        UpdateStatusBarForSelection(entry);
         SetConnectButtonActive(!string.IsNullOrWhiteSpace(entry.Url));
     }
 
@@ -331,6 +350,7 @@ public class ContactWindowView : MonoBehaviour
         if (_statusText != null)
             _statusText.text = "0 item(s)";
 
+        UpdateStatusBar(GetFilteredEntryCount());
         SetConnectButtonActive(false);
     }
 
@@ -392,6 +412,8 @@ public class ContactWindowView : MonoBehaviour
                 continue;
 
             row.Initialize(i, entry.DisplayName, entry.Subject, entry.Status, SelectEntry);
+            row.SetStatus(entry.Status);
+            row.SetConnectionState(entry.Status);
             row.SetSelected(i == _selectedIndex);
             _messageRows.Add(row);
         }
@@ -450,6 +472,32 @@ public class ContactWindowView : MonoBehaviour
 
         string messageLabel = messageCount == 1 ? "message" : "messages";
         _statusBarText.text = $"{_networkStatusPrefix} | {messageCount} {messageLabel} loaded";
+    }
+
+    private void UpdateStatusBarForSelection(ContactEntry entry)
+    {
+        if (_statusBarText == null)
+            return;
+
+        string status = string.IsNullOrWhiteSpace(entry.Status) ? "READY" : entry.Status;
+        _statusBarText.richText = true;
+        _statusBarText.text =
+            $"1 item selected | STATUS: {ContactVisualTextUtility.ColorizeStatus(status)} | CHANNEL {ContactVisualTextUtility.ColorizeStatus("VERIFIED")}";
+    }
+
+    private void ConfigureRichText()
+    {
+        SetRichText(_messageListText);
+        SetRichText(_previewTitleText);
+        SetRichText(_previewBodyText);
+        SetRichText(_statusText);
+        SetRichText(_statusBarText);
+    }
+
+    private static void SetRichText(TMP_Text text)
+    {
+        if (text != null)
+            text.richText = true;
     }
 
     private static void ApplyScrollTopAfterLayout(ScrollRect scrollRect)
@@ -544,5 +592,48 @@ public class ContactWindowView : MonoBehaviour
     private bool CanUseFolderRows()
     {
         return _folderRowRoot != null && _folderRowPrefab != null;
+    }
+}
+
+public static class ContactVisualTextUtility
+{
+    private static readonly Color OnlineColor = new Color(0.43f, 0.78f, 0.5f);
+    private static readonly Color ReadyColor = new Color(0.45f, 0.78f, 0.84f);
+    private static readonly Color NewColor = new Color(0.88f, 0.68f, 0.34f);
+    private static readonly Color ErrorColor = new Color(0.86f, 0.42f, 0.38f);
+
+    public static string ColorizeStatus(string status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+            return "-";
+
+        string trimmedStatus = status.Trim();
+        Color color = ResolveStatusColor(trimmedStatus);
+        return $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>{trimmedStatus}</color>";
+    }
+
+    public static Color ResolveStatusColor(string status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+            return ReadyColor;
+
+        switch (status.Trim().ToUpperInvariant())
+        {
+            case "ONLINE":
+            case "ACTIVE":
+            case "AVAILABLE":
+                return OnlineColor;
+            case "READY":
+            case "VERIFIED":
+                return ReadyColor;
+            case "NEW":
+                return NewColor;
+            case "ERROR":
+            case "FAILED":
+            case "OFFLINE":
+                return ErrorColor;
+            default:
+                return ReadyColor;
+        }
     }
 }

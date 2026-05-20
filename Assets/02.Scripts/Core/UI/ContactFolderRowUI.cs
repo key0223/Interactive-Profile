@@ -1,16 +1,20 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ContactFolderRowUI : MonoBehaviour
+public class ContactFolderRowUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Button _button;
     [SerializeField] private Image _selectionImage;
+    [SerializeField] private Image _hoverImage;
     [SerializeField] private TMP_Text _labelText;
 
     private Action<ContactFolderType> _onClicked;
     private ContactFolderType _folderType;
+    private bool _selected;
+    private bool _hovered;
 
     public ContactFolderType FolderType => _folderType;
 
@@ -51,12 +55,33 @@ public class ContactFolderRowUI : MonoBehaviour
 
     public void SetSelected(bool selected)
     {
-        if (_selectionImage != null)
-            _selectionImage.gameObject.SetActive(selected);
+        _selected = selected;
+        RefreshVisualState();
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        _hovered = true;
+        RefreshVisualState();
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        _hovered = false;
+        RefreshVisualState();
     }
 
     private void HandleClicked()
     {
         _onClicked?.Invoke(_folderType);
+    }
+
+    private void RefreshVisualState()
+    {
+        if (_selectionImage != null)
+            _selectionImage.gameObject.SetActive(_selected);
+
+        if (_hoverImage != null)
+            _hoverImage.gameObject.SetActive(!_selected && _hovered);
     }
 }
