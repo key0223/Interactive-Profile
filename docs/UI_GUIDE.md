@@ -86,12 +86,24 @@ ComputerUIRoot
 - `BootScreenUI._logText`: boot log용 `TMP_Text`
 - `BootScreenUI._bootLines`: 짧은 boot log line 배열
 - `BootScreenUI._lineDelay`: line-by-line 출력 간격
+- `BootScreenUI._characterDelay`: character reveal 간격
+- `BootScreenUI._completionDelay`: `READY.` 이후 desktop 전환 전 짧은 hold
+- `BootScreenUI._showCursor`, `_cursor`, `_cursorBlinkInterval`: terminal cursor 연출
 - `ComputerUIController._bootScreenUI`: `BootScreenUI`
 - `ComputerUIController._desktopLayer`: `DesktopLayer`
 - `ComputerUIController._windowLayer`: `WindowLayer`
 - `ComputerUIController._taskbarRoot`: `TaskbarRoot`
 
 자세한 Editor 작업 절차는 `phases/02-computer-ui/33-boot-screen-editor-guide.md`를 따른다.
+
+Boot visual polish 기준:
+
+- 배경은 검은색 또는 매우 어두운 회색/남색 계열을 사용한다.
+- boot log 텍스트는 낮은 채도의 녹색, 밝은 회색, 흰색 중 하나를 사용한다.
+- `_characterDelay`는 `0.006`~`0.018`, `_lineDelay`는 `0.12`~`0.25`, `_completionDelay`는 `0.2`~`0.45`를 우선한다.
+- cursor는 text suffix 방식의 `_`를 기본으로 보고, 별도 cursor GameObject는 만들지 않는다.
+- desktop transition은 `READY.` 후 짧은 hold → boot hide → desktop shell show 순서를 기본으로 한다.
+- fade out, desktop fade in, taskbar delayed reveal, icon delayed reveal, CRT flicker는 별도 구현 step으로 분리한다.
 
 ## Window Lifecycle Interaction
 
@@ -178,6 +190,8 @@ ContactWindow
 - boot 중 Escape 입력 시 `Close()`가 호출되고 Computer UI가 닫힌다.
 - boot 중 `Close()` 후 boot 완료 callback이 뒤늦게 실행되지 않는다.
 - boot 완료 후 Escape는 기존 focused window close 우선 정책을 유지한다.
+- `READY.` 이후 짧은 hold 뒤 desktop shell이 표시된다.
+- cursor 사용 시 완료 후 cursor 잔상이 남지 않는다.
 - `_bootScreenUI`가 null이어도 기존 desktop 초기화 흐름이 정상 동작한다.
 - runtime desktop icon이 생성된다.
 - Computer UI open 시 boot screen이 먼저 표시되고 완료 후 desktop shell이 표시된다.

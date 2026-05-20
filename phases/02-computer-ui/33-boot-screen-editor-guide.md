@@ -135,6 +135,11 @@ ComputerUIRoot
 - `_logText` → `BootLogText`의 `TMP_Text`
 - `_bootLines` → 짧은 boot log 문장 4~7개
 - `_lineDelay` → `0.12`~`0.35`초 권장
+- `_characterDelay` → `0.006`~`0.018`초 권장
+- `_completionDelay` → `0.2`~`0.45`초 권장
+- `_showCursor` → terminal cursor가 필요하면 enabled
+- `_cursor` → `_` 또는 `█` 중 하나 권장
+- `_cursorBlinkInterval` → `0.12`~`0.25`초 권장
 
 boot log 예시:
 
@@ -162,6 +167,89 @@ READY.
 - `_logText`가 누락되면 boot root는 표시될 수 있지만 로그 라인은 보이지 않는다.
 - `_bootLines`가 비어 있으면 boot screen이 거의 즉시 완료될 수 있다.
 - `_lineDelay`가 `0`이면 모든 라인이 한 프레임에 출력될 수 있다.
+- `_characterDelay`가 너무 길면 boot가 느리게 느껴진다. 전체 boot 길이는 1.5~2.5초 안쪽을 우선한다.
+- `_completionDelay`는 `READY.`가 보인 뒤 desktop이 너무 갑자기 뜨지 않게 하는 짧은 hold다.
+
+## Visual Polish Guide
+
+terminal/system 느낌 권장값:
+
+- Background: `#050805`, `#080A0C`, `#0B0D10`
+- Text primary: `#C8F7C5`, `#D7D7D7`, `#A8FFB0`
+- Text alpha: `90%`~`100%`
+- Font: 프로젝트의 `SYSTEM.LOG` 또는 terminal 계열 TMP font와 통일
+- Font size: CRT mask 안에서 4~7줄이 안정적으로 읽히는 크기
+- Line spacing: 기본값보다 과하게 넓히지 않는다
+- Alignment: 좌측 상단 또는 중앙 좌측
+
+animation timing 권장값:
+
+- `_characterDelay`: `0.006`~`0.018`
+- `_lineDelay`: `0.12`~`0.25`
+- `_completionDelay`: `0.2`~`0.45`
+- `_cursorBlinkInterval`: `0.12`~`0.25`
+
+typing 연출 기준:
+
+- 각 line은 character reveal로 출력한다.
+- line 끝에는 cursor를 짧게 보여준다.
+- line 사이 delay는 짧게 유지한다.
+- `READY.` 이후 completion delay를 두고 desktop으로 전환한다.
+
+cursor blink 기준:
+
+- MVP에서는 `BootScreenUI`의 text suffix cursor로 충분하다.
+- 별도 cursor GameObject를 만들지 않는다.
+- cursor 문자는 `_`가 가장 안전하다.
+- `█`는 font fallback과 가독성을 Play Mode에서 확인한 뒤 사용한다.
+- cursor blink가 산만하면 `_showCursor`를 끈다.
+
+피해야 할 방향:
+
+- 긴 타자 애니메이션으로 부팅 시간이 3초를 넘는 것.
+- 여러 색의 rich text를 과하게 섞는 것.
+- progress bar, spinner, modern loading UI.
+- boot screen 안에 프로젝트 소개나 스킬 설명을 넣는 것.
+
+## Desktop Transition Guide
+
+현재 구현 기준 transition:
+
+```text
+boot complete
+→ BootScreenRoot hide
+→ DesktopLayer / WindowLayer / TaskbarRoot show
+→ ProjectDesktopUI.Initialize()
+```
+
+권장 후속 transition 흐름:
+
+```text
+READY. 표시
+→ completion delay
+→ BootScreenRoot fade out
+→ DesktopLayer show
+→ WindowLayer show
+→ TaskbarRoot show
+→ ProjectDesktopUI.Initialize()
+```
+
+작게 추가하기 좋은 순서:
+
+1. `READY.` 이후 `_completionDelay`로 짧게 hold한다.
+2. boot screen fade out은 `CanvasGroup` 기반으로 추가한다.
+3. desktop fade in도 `CanvasGroup` 기반으로 추가한다.
+4. taskbar delayed reveal은 desktop shell이 안정화된 뒤 별도 step으로 분리한다.
+5. icon delayed reveal은 `ProjectDesktopUI` runtime icon lifecycle과 결합되므로 별도 구현 step으로 분리한다.
+
+이번 구조에서 바로 구현하지 않는 후보:
+
+- taskbar delayed reveal.
+- icon delayed reveal.
+- CRT overlay flicker.
+- monitor power-on scan animation.
+
+이 연출들은 `ComputerUIController`의 shell 표시 순서나 CRT overlay 계층과 결합되므로, Play Mode 검증이 끝난 현재 boot open/close 안정성을 유지하려면 별도 phase로 다룬다.
 
 ## ComputerUIController Wiring
 
@@ -189,6 +277,8 @@ READY.
 - `BootScreenRoot`가 `WindowLayer`나 `TaskbarRoot`보다 아래에 보이면 부팅 중 window/taskbar가 boot 화면 위에 노출될 수 있다.
 - 별도 Canvas를 만들 필요는 없다. 기존 `ComputerUIRoot` 안의 overlay 계층으로 충분하다.
 - CRT frame, mask, overlay가 별도 계층이라면 기존 시각 효과가 boot screen에도 적용되는지 Play Mode에서 확인한다.
+- CRT overlay가 `BootScreenRoot`보다 위에 있어야 scanline/frame 효과가 boot 화면에도 적용된다.
+- CRT overlay가 `BootScreenRoot` 아래에 있으면 boot 화면만 평면 UI처럼 보일 수 있다.
 
 ## Play Mode Verification Checklist
 
@@ -205,6 +295,8 @@ READY.
 - 완료 후 desktop icon이 생성된다.
 - boot 중 Escape 입력 시 Computer UI가 닫힌다.
 - 다시 열었을 때 boot log가 처음부터 다시 출력된다.
+- `READY.` 이후 짧은 hold 뒤 desktop이 표시된다.
+- cursor가 켜진 경우 line reveal 중 cursor가 표시되고 완료 후 잔상이 남지 않는다.
 - `_bootScreenUI`를 비운 상태에서도 기존 desktop 진입 흐름이 정상 동작한다.
 
 ## Common Issues

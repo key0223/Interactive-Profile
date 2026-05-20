@@ -18,10 +18,17 @@ public class BootScreenUI : MonoBehaviour
         "Ready."
     };
     [SerializeField] private float _lineDelay = 0.2f;
+    [SerializeField] private float _characterDelay = 0.01f;
+    [SerializeField] private float _completionDelay = 0.25f;
+    [SerializeField] private bool _showCursor = true;
+    [SerializeField] private string _cursor = "_";
+    [SerializeField] private float _cursorBlinkInterval = 0.16f;
 
     private readonly StringBuilder _logBuilder = new StringBuilder();
     private Coroutine _playRoutine;
     private Action _onComplete;
+    private string _currentLine = string.Empty;
+    private bool _cursorVisible = true;
 
     private void Awake()
     {
@@ -83,12 +90,19 @@ public class BootScreenUI : MonoBehaviour
         {
             for (int i = 0; i < _bootLines.Length; i++)
             {
-                AppendLine(_bootLines[i]);
+                yield return RevealLine(_bootLines[i]);
+                CommitLine(_bootLines[i]);
 
                 if (_lineDelay > 0f)
                     yield return new WaitForSeconds(_lineDelay);
             }
         }
+
+        ClearActiveLine();
+        UpdateLogText();
+
+        if (_completionDelay > 0f)
+            yield return new WaitForSeconds(_completionDelay);
 
         Action onComplete = _onComplete;
         _playRoutine = null;
@@ -98,24 +112,98 @@ public class BootScreenUI : MonoBehaviour
         onComplete?.Invoke();
     }
 
-    private void AppendLine(string line)
+    private IEnumerator RevealLine(string line)
     {
-        if (_logText == null)
-            return;
+        string safeLine = line ?? string.Empty;
+
+        if (_characterDelay <= 0f)
+        {
+            _currentLine = safeLine;
+            UpdateLogText();
+            yield break;
+        }
+
+        _currentLine = string.Empty;
+        _cursorVisible = true;
+
+        float blinkTimer = 0f;
+
+        for (int i = 0; i < safeLine.Length; i++)
+        {
+            _currentLine += safeLine[i];
+            UpdateLogText();
+
+            float elapsed = 0f;
+            while (elapsed < _characterDelay)
+            {
+                elapsed += Time.deltaTime;
+                blinkTimer += Time.deltaTime;
+
+                if (_showCursor && _cursorBlinkInterval > 0f && blinkTimer >= _cursorBlinkInterval)
+                {
+                    blinkTimer = 0f;
+                    _cursorVisible = !_cursorVisible;
+                    UpdateLogText();
+                }
+
+                yield return null;
+            }
+        }
+
+        _cursorVisible = true;
+        UpdateLogText();
+    }
+
+    private void CommitLine(string line)
+    {
+        string safeLine = line ?? string.Empty;
 
         if (_logBuilder.Length > 0)
             _logBuilder.AppendLine();
 
-        _logBuilder.Append(line);
-        _logText.text = _logBuilder.ToString();
+        _logBuilder.Append(safeLine);
+        ClearActiveLine();
+        UpdateLogText();
     }
 
     private void ClearLog()
     {
         _logBuilder.Clear();
+        ClearActiveLine();
 
         if (_logText != null)
             _logText.text = string.Empty;
+    }
+
+    private void ClearActiveLine()
+    {
+        _currentLine = string.Empty;
+        _cursorVisible = true;
+    }
+
+    private void UpdateLogText()
+    {
+        if (_logText == null)
+            return;
+
+        if (string.IsNullOrEmpty(_currentLine))
+        {
+            _logText.text = _logBuilder.ToString();
+            return;
+        }
+
+        if (_logBuilder.Length > 0)
+            _logText.text = $"{_logBuilder}{Environment.NewLine}{_currentLine}{ResolveCursor()}";
+        else
+            _logText.text = $"{_currentLine}{ResolveCursor()}";
+    }
+
+    private string ResolveCursor()
+    {
+        if (!_showCursor || string.IsNullOrEmpty(_cursor) || !_cursorVisible)
+            return string.Empty;
+
+        return _cursor;
     }
 
     private void HideRootOnly()
