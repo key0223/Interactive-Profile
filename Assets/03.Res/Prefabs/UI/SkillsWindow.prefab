@@ -2823,7 +2823,9 @@ GameObject:
   - component: {fileID: 6500863015103716288}
   - component: {fileID: 8635197560286027933}
   - component: {fileID: 7915289464257901300}
+  - component: {fileID: 4111005203963524388}
   - component: {fileID: 8068815454246193741}
+  - component: {fileID: 8966040346186091460}
   m_Layer: 0
   m_Name: SkillsWindow
   m_TagString: Untagged
@@ -2891,6 +2893,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!225 &4111005203963524388
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9161047894913119317}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!114 &8068815454246193741
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2914,5 +2928,26 @@ MonoBehaviour:
   _projectViewerUI: {fileID: 0}
   _aboutMeViewerUI: {fileID: 0}
   _skillsWindowView: {fileID: 7935125130489311028}
+  _contactWindowView: {fileID: 0}
+  _windowTransitionUI: {fileID: 8966040346186091460}
   _maximizeBoundsRoot: {fileID: 0}
   _fallbackMaximizedSize: {x: 860, y: 560}
+--- !u!114 &8966040346186091460
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9161047894913119317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19ca48bc802471d4899076920715413e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _canvasGroup: {fileID: 4111005203963524388}
+  _target: {fileID: 6500863015103716288}
+  _useFade: 1
+  _useScale: 1
+  _openDuration: 0.14
+  _closeDuration: 0.12
+  _closedScale: {x: 0.96, y: 0.96, z: 1}

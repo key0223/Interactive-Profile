@@ -503,26 +503,17 @@ public sealed class ProjectWindowManager
 
         if (_registeredWindows.TryGetValue(id, out ProjectWindowUI window) && window != null)
         {
-            if (window.CurrentProjectData != null && _openWindows.TryGetValue(window.CurrentProjectData, out ProjectWindowUI registeredProjectWindow) && registeredProjectWindow == window)
-                _openWindows.Remove(window.CurrentProjectData);
-            else
-                RemoveWindowByInstance(window);
-
-            UnsubscribeWindow(window);
-            _registeredWindows.Remove(id);
-            _idsByWindow.Remove(window);
-            UnityEngine.Object.Destroy(window.gameObject);
+            window.Hide();
         }
         else
         {
             _registeredWindows.Remove(id);
+            RemoveFocusTracking(id);
+            SyncTaskbarWindowState(id);
+
+            if (wasActiveWindow)
+                ActivateMostRecentOpenWindow();
         }
-
-        RemoveFocusTracking(id);
-        SyncTaskbarWindowState(id);
-
-        if (wasActiveWindow)
-            ActivateMostRecentOpenWindow();
     }
 
     public bool CloseFocusedWindow()
@@ -751,6 +742,8 @@ public sealed class ProjectWindowManager
 
         if (!_idsByWindow.TryGetValue(window, out DesktopWindowId id))
             return;
+
+        window.EnsureOpen();
 
         if (!window.IsVisible)
         {

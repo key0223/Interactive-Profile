@@ -33,6 +33,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     [SerializeField] private AboutMeViewerUI _aboutMeViewerUI;
     [SerializeField] private SkillsWindowView _skillsWindowView;
     [SerializeField] private ContactWindowView _contactWindowView;
+    [SerializeField] private WindowTransitionUI _windowTransitionUI;
     [SerializeField] private RectTransform _maximizeBoundsRoot;
     [SerializeField] private Vector2 _fallbackMaximizedSize = new Vector2(860f, 560f);
 
@@ -50,11 +51,13 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     private Vector2 _restoreOffsetMax;
     private bool _hasRestoreState;
     private bool _isMaximized;
+    private bool _isClosing;
     private RectTransform _runtimeBoundsRoot;
 
     public DesktopWindowType WindowType => _windowType;
     public ProjectData CurrentProjectData { get; private set; }
     public bool IsMaximized => _isMaximized;
+    public bool IsClosing => _isClosing;
     public bool IsVisible => _windowRoot != null && _windowRoot.activeSelf;
     public RectTransform WindowRectTransform => _windowRoot != null ? _windowRoot.transform as RectTransform : transform as RectTransform;
 
@@ -87,7 +90,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         if (_closeButton != null)
             _closeButton.onClick.AddListener(Hide);
 
-        Hide();
+        HideImmediate(false);
     }
 
     private void OnDestroy()
@@ -112,7 +115,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         }
 
         CurrentProjectData = projectData;
-        SetRootActive(true);
+        ShowRoot();
         SetTitle(projectData.Title);
         SetIcon(projectData.Icon);
 
@@ -134,7 +137,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     public void ShowAboutMe(string title, Sprite icon)
     {
         CurrentProjectData = null;
-        SetRootActive(true);
+        ShowRoot();
         SetTitle(string.IsNullOrWhiteSpace(title) ? "About Me" : title);
         SetIcon(icon);
 
@@ -156,7 +159,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     public void ShowSkills(string title, Sprite icon)
     {
         CurrentProjectData = null;
-        SetRootActive(true);
+        ShowRoot();
         SetTitle(string.IsNullOrWhiteSpace(title) ? "SYSTEM.LOG" : title);
         SetIcon(icon);
 
@@ -178,7 +181,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     public void ShowContact(string title, Sprite icon)
     {
         CurrentProjectData = null;
-        SetRootActive(true);
+        ShowRoot();
         SetTitle(string.IsNullOrWhiteSpace(title) ? "CONTACT.EXE" : title);
         SetIcon(icon);
 
@@ -199,13 +202,15 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
     public void Hide()
     {
-        ProjectData closedProjectData = CurrentProjectData;
-        ResetWindowState(true);
-        Clear();
-        SetRootActive(false);
-        CurrentProjectData = closedProjectData;
-        Closed?.Invoke(this);
-        CurrentProjectData = null;
+        if (_isClosing)
+            return;
+
+        _isClosing = true;
+
+        if (_windowTransitionUI != null && IsVisible)
+            _windowTransitionUI.PlayClose(FinalizeHide);
+        else
+            FinalizeHide();
     }
 
     public void Clear()
@@ -234,16 +239,28 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
     public void Minimize()
     {
+        _isClosing = false;
+        if (_windowTransitionUI != null)
+            _windowTransitionUI.ResetState();
+
         SetRootActive(false);
         Minimized?.Invoke(this);
     }
 
     public void RestoreFromMinimized()
     {
-        SetRootActive(true);
+        ShowRoot();
         ResetWindowScrollToTop();
         Restored?.Invoke(this);
         RequestFocus();
+    }
+
+    public void EnsureOpen()
+    {
+        if (!_isClosing)
+            return;
+
+        ShowRoot();
     }
 
     public void ResetProjectScrollToTop()
@@ -456,5 +473,46 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     {
         if (_windowRoot != null)
             _windowRoot.SetActive(active);
+    }
+
+    private void ShowRoot()
+    {
+        _isClosing = false;
+        SetRootActive(true);
+
+        if (_windowTransitionUI != null)
+            _windowTransitionUI.PlayOpen();
+    }
+
+    private void FinalizeHide()
+    {
+        ProjectData closedProjectData = CurrentProjectData;
+        ResetWindowState(true);
+        Clear();
+        SetRootActive(false);
+        _isClosing = false;
+        CurrentProjectData = closedProjectData;
+        Closed?.Invoke(this);
+        CurrentProjectData = null;
+    }
+
+    private void HideImmediate(bool notifyClosed)
+    {
+        _isClosing = false;
+
+        if (_windowTransitionUI != null)
+            _windowTransitionUI.ResetState();
+
+        ProjectData closedProjectData = CurrentProjectData;
+        ResetWindowState(true);
+        Clear();
+        SetRootActive(false);
+
+        if (!notifyClosed)
+            return;
+
+        CurrentProjectData = closedProjectData;
+        Closed?.Invoke(this);
+        CurrentProjectData = null;
     }
 }

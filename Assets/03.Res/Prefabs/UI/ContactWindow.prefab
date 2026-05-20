@@ -2491,7 +2491,9 @@ GameObject:
   - component: {fileID: 7186392295242884213}
   - component: {fileID: 4934966966544375733}
   - component: {fileID: 82938287359968883}
+  - component: {fileID: 7958682918941798767}
   - component: {fileID: 3144021637577238876}
+  - component: {fileID: 3460083661026376305}
   m_Layer: 0
   m_Name: ContactWindow
   m_TagString: Untagged
@@ -2563,6 +2565,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!225 &7958682918941798767
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4819993502658838621}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!114 &3144021637577238876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2587,8 +2601,28 @@ MonoBehaviour:
   _aboutMeViewerUI: {fileID: 0}
   _skillsWindowView: {fileID: 0}
   _contactWindowView: {fileID: 4204440986860659187}
+  _windowTransitionUI: {fileID: 3460083661026376305}
   _maximizeBoundsRoot: {fileID: 0}
   _fallbackMaximizedSize: {x: 860, y: 560}
+--- !u!114 &3460083661026376305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4819993502658838621}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19ca48bc802471d4899076920715413e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _canvasGroup: {fileID: 7958682918941798767}
+  _target: {fileID: 7186392295242884213}
+  _useFade: 1
+  _useScale: 1
+  _openDuration: 0.14
+  _closeDuration: 0.12
+  _closedScale: {x: 0.96, y: 0.96, z: 1}
 --- !u!1 &4890824561552325310
 GameObject:
   m_ObjectHideFlags: 0
@@ -3686,7 +3720,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7289552007782132863}
   m_HandleRect: {fileID: 633428066000687446}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -5241,8 +5275,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5409219739631273138}
   m_HandleRect: {fileID: 1897372288880565098}
   m_Direction: 2
-  m_Value: 0.5
-  m_Size: 0.8715458
+  m_Value: 0
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
