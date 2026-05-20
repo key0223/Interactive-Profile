@@ -11,8 +11,14 @@ public class ComputerUIController : MonoBehaviour
     [SerializeField] private ProjectSelectionUI _projectSelectionUI;
     [SerializeField] private InteractionPromptUI _interactionPromptUI;
     [SerializeField] private StartMenuUI _startMenuUI;
+    [SerializeField] private BootScreenUI _bootScreenUI;
+    [SerializeField] private GameObject _desktopLayer;
+    [SerializeField] private GameObject _windowLayer;
+    [SerializeField] private GameObject _taskbarRoot;
 
     public bool IsOpen { get; private set; }
+
+    private bool _isBooting;
 
     private void Awake()
     {
@@ -37,6 +43,13 @@ public class ComputerUIController : MonoBehaviour
         if (_startMenuUI != null)
             _startMenuUI.Initialize(Close);
 
+        if (_bootScreenUI != null && _desktopLayer == null && _windowLayer == null && _taskbarRoot == null)
+            Debug.LogWarning($"{nameof(ComputerUIController)} on {name} has a {nameof(BootScreenUI)} but no desktop shell layer references. Desktop shell cannot be hidden during boot.");
+
+        if (_bootScreenUI != null)
+            _bootScreenUI.Hide();
+
+        SetDesktopShellActive(false);
         SetRootActive(false);
         IsOpen = false;
     }
@@ -48,7 +61,9 @@ public class ComputerUIController : MonoBehaviour
 
         if (_inputManager.IsCancelPressed)
         {
-            if (_projectDesktopUI != null)
+            if (_isBooting)
+                Close();
+            else if (_projectDesktopUI != null)
                 _projectDesktopUI.CloseFocusedWindow();
             else
                 Close();
@@ -62,6 +77,7 @@ public class ComputerUIController : MonoBehaviour
 
         IsOpen = true;
         SetRootActive(true);
+        SetDesktopShellActive(false);
 
         if (_startMenuUI != null)
             _startMenuUI.Hide();
@@ -69,15 +85,18 @@ public class ComputerUIController : MonoBehaviour
         if (_interactionPromptUI != null)
             _interactionPromptUI.SetVisibleBlocked(true);
 
-        if (_projectDesktopUI != null)
-            _projectDesktopUI.Initialize();
-        else if (_projectSelectionUI != null)
-            _projectSelectionUI.SelectDefault();
-        else if (_projectViewerUI != null)
-            _projectViewerUI.Show(_defaultProjectData);
-
         if (_playerMovement != null)
             _playerMovement.SetMovementEnabled(false);
+
+        if (_bootScreenUI != null)
+        {
+            _isBooting = true;
+            _bootScreenUI.Play(HandleBootComplete);
+        }
+        else
+        {
+            HandleBootComplete();
+        }
     }
 
     public void Close()
@@ -86,10 +105,15 @@ public class ComputerUIController : MonoBehaviour
             return;
 
         IsOpen = false;
+        _isBooting = false;
+
+        if (_bootScreenUI != null)
+            _bootScreenUI.Hide();
 
         if (_startMenuUI != null)
             _startMenuUI.Hide();
 
+        SetDesktopShellActive(false);
         SetRootActive(false);
 
         if (_projectDesktopUI != null)
@@ -110,5 +134,33 @@ public class ComputerUIController : MonoBehaviour
     {
         if (_root != null)
             _root.SetActive(active);
+    }
+
+    private void HandleBootComplete()
+    {
+        if (!IsOpen)
+            return;
+
+        _isBooting = false;
+        SetDesktopShellActive(true);
+
+        if (_projectDesktopUI != null)
+            _projectDesktopUI.Initialize();
+        else if (_projectSelectionUI != null)
+            _projectSelectionUI.SelectDefault();
+        else if (_projectViewerUI != null)
+            _projectViewerUI.Show(_defaultProjectData);
+    }
+
+    private void SetDesktopShellActive(bool active)
+    {
+        if (_desktopLayer != null)
+            _desktopLayer.SetActive(active);
+
+        if (_windowLayer != null)
+            _windowLayer.SetActive(active);
+
+        if (_taskbarRoot != null)
+            _taskbarRoot.SetActive(active);
     }
 }

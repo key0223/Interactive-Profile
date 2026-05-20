@@ -261,12 +261,30 @@ Editor 연결:
 - `BootScreenRoot`에 `BootScreenUI`를 붙인다.
 - `BootScreenUI._root`에 `BootScreenRoot`를 연결한다.
 - `BootScreenUI._logText`에 boot log용 `TMP_Text`를 연결한다.
+- `BootScreenUI._bootLines`에는 4~7개 정도의 짧은 부팅 로그 문구를 입력한다.
+- `BootScreenUI._lineDelay`는 0.12초에서 0.35초 사이를 우선 사용한다.
 - `ComputerUIController._bootScreenUI`에 `BootScreenUI`를 연결한다.
 - `ComputerUIController._desktopLayer`에 `DesktopLayer`를 연결한다.
 - `ComputerUIController._windowLayer`에 `WindowLayer`를 연결한다.
 - `ComputerUIController._taskbarRoot`에 `TaskbarRoot`를 연결한다.
 - `BootScreenRoot`는 기본 inactive 권장.
 - `DesktopLayer`, `WindowLayer`, `TaskbarRoot`는 Computer UI root 비활성 상태에서는 보이지 않지만, boot 시작 시 코드가 명시적으로 숨길 수 있어야 한다.
+
+기본 inactive 권장 이유:
+
+- scene 시작 직후 boot screen이 사용자에게 노출되는 것을 막는다.
+- `ComputerUIController.Open()`이 boot screen 표시 시작점을 단일하게 소유한다.
+- close 후 reopen 시 이전 boot log 잔상이 남는 문제를 줄인다.
+- boot screen이 연결되지 않은 fallback desktop 흐름과 시각 상태가 섞이지 않게 한다.
+
+누락 참조 기준:
+
+- `BootScreenUI._root`가 누락되면 boot screen root를 표시하거나 숨길 수 없다. coroutine과 완료 callback은 진행될 수 있으나 사용자는 boot 화면을 보지 못한다.
+- `BootScreenUI._logText`가 누락되면 root는 표시될 수 있지만 line-by-line 로그 텍스트는 출력되지 않는다. 완료 callback은 계속 호출될 수 있어 desktop 진입 자체는 막지 않는다.
+- `ComputerUIController._desktopLayer`가 누락되면 부팅 중 desktop icon 영역을 숨기거나 완료 후 표시하는 제어가 불완전하다.
+- `ComputerUIController._windowLayer`가 누락되면 부팅 중 기존 window 영역을 숨기거나 완료 후 표시하는 제어가 불완전하다.
+- `ComputerUIController._taskbarRoot`가 누락되면 부팅 중 taskbar와 Start Menu 영역을 숨기거나 완료 후 표시하는 제어가 불완전하다.
+- 세 shell layer 참조 중 하나라도 누락되면 Play Mode에서 해당 영역이 부팅 중 노출되지 않는지 직접 확인한다.
 
 ## Visual Direction
 
@@ -292,6 +310,19 @@ Editor 연결:
 
 검증 항목:
 
+- Computer 상호작용 시 `ComputerUIRoot`가 열린다.
+- `BootScreenRoot`가 표시된다.
+- boot log가 line-by-line으로 출력된다.
+- 부팅 중 `DesktopLayer`가 숨겨진다.
+- 부팅 중 `WindowLayer`가 숨겨진다.
+- 부팅 중 `TaskbarRoot`가 숨겨진다.
+- boot 완료 후 `BootScreenRoot`가 숨겨진다.
+- boot 완료 후 desktop shell이 표시된다.
+- boot 완료 후 `ProjectDesktopUI.Initialize()`가 호출되어 runtime desktop icon 흐름이 시작된다.
+- boot 중 Escape 입력 시 `Close()`가 호출된다.
+- boot 중 `Close()` 후 boot 완료 callback이 뒤늦게 실행되지 않는다.
+- boot 완료 후 Escape는 기존 focused window close 우선 정책을 유지한다.
+- `_bootScreenUI`가 null이어도 기존 desktop 흐름이 정상 동작한다.
 - 컴퓨터 상호작용 시 `ComputerUIRoot`가 켜지고 boot screen이 먼저 보인다.
 - 부팅 중 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`가 보이지 않는다.
 - 로그 라인이 순서대로 짧게 표시된다.

@@ -76,6 +76,22 @@ ComputerUIRoot
 - 부팅 완료 후 `ProjectDesktopUI.Initialize()`를 실행하고 desktop shell을 표시한다.
 - 부팅 중 `Close()` 또는 Escape가 들어오면 boot sequence를 중단하고 Computer UI를 닫는다.
 - boot log는 Skills의 `SYSTEM.LOG`처럼 기술 역량을 설명하지 않고 OS 진입감만 담당한다.
+- `BootScreenRoot`는 기본 inactive로 둔다. Computer UI가 닫힌 상태나 scene 시작 직후에 boot screen이 먼저 노출되는 것을 막고, `ComputerUIController.Open()`이 표시 시작점을 단일하게 제어하기 위해서다.
+- `BootScreenUI._logText`가 누락되면 boot root 표시와 완료 callback은 유지될 수 있지만 로그 텍스트는 출력되지 않는다. 누락 경고를 확인하고 `TMP_Text`를 연결해야 한다.
+- `DesktopLayer`, `WindowLayer`, `TaskbarRoot` 중 일부가 `ComputerUIController`에 연결되지 않으면 해당 레이어는 코드가 숨기거나 다시 표시할 수 없다. 부팅 중 desktop shell이 새어 보이면 세 참조가 모두 연결되어 있는지 먼저 확인한다.
+
+필수 Inspector 연결:
+
+- `BootScreenUI._root`: `BootScreenRoot`
+- `BootScreenUI._logText`: boot log용 `TMP_Text`
+- `BootScreenUI._bootLines`: 짧은 boot log line 배열
+- `BootScreenUI._lineDelay`: line-by-line 출력 간격
+- `ComputerUIController._bootScreenUI`: `BootScreenUI`
+- `ComputerUIController._desktopLayer`: `DesktopLayer`
+- `ComputerUIController._windowLayer`: `WindowLayer`
+- `ComputerUIController._taskbarRoot`: `TaskbarRoot`
+
+자세한 Editor 작업 절차는 `phases/02-computer-ui/33-boot-screen-editor-guide.md`를 따른다.
 
 ## Window Lifecycle Interaction
 
@@ -150,6 +166,19 @@ ContactWindow
 
 ## Play Mode 검증 체크리스트
 
+- Computer 상호작용 시 `ComputerUIRoot`가 열린다.
+- `BootScreenRoot`가 표시된다.
+- boot log가 line-by-line으로 출력된다.
+- 부팅 중 `DesktopLayer`가 숨겨진다.
+- 부팅 중 `WindowLayer`가 숨겨진다.
+- 부팅 중 `TaskbarRoot`가 숨겨진다.
+- boot 완료 후 `BootScreenRoot`가 숨겨진다.
+- boot 완료 후 desktop shell이 표시된다.
+- boot 완료 후 `ProjectDesktopUI.Initialize()` 흐름으로 runtime desktop icon이 생성된다.
+- boot 중 Escape 입력 시 `Close()`가 호출되고 Computer UI가 닫힌다.
+- boot 중 `Close()` 후 boot 완료 callback이 뒤늦게 실행되지 않는다.
+- boot 완료 후 Escape는 기존 focused window close 우선 정책을 유지한다.
+- `_bootScreenUI`가 null이어도 기존 desktop 초기화 흐름이 정상 동작한다.
 - runtime desktop icon이 생성된다.
 - Computer UI open 시 boot screen이 먼저 표시되고 완료 후 desktop shell이 표시된다.
 - project icon과 `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE` icon이 표시된다.
