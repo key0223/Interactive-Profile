@@ -1,6 +1,17 @@
 # Step: CRT Frame And Screen Mask Editor Guide
 
-## Status
+## Document Metadata
+
+- Status: Active
+- Replaced By: 최신 문서가 완전 대체하지는 않음.
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Boot Screen Editor Guide](./33-boot-screen-editor-guide.md), [Shutdown Transition Plan](./34-shutdown-transition-plan.md), [Future Transition Polish](./38-future-transition-polish.md)
+- Last Reviewed Phase: 38 Future Transition Polish
+
+## Current Structure Notice
+
+현재 Computer UI는 `BootScreenRoot`와 `ShutdownScreenRoot`를 desktop shell과 분리된 overlay 계층으로 사용한다. CRT frame, mask, overlay는 boot, shutdown, desktop, window, taskbar 모두에 일관되게 적용되어야 하며, 후속 CRT flicker 후보는 [Future Transition Polish](./38-future-transition-polish.md)에서만 관리한다.
+
+## Step Status
 
 pending
 
@@ -45,6 +56,8 @@ ComputerUIScreenRoot
 │   └── MonitorFrameImage
 └── ScreenArea
     ├── ScreenMask 또는 ScreenPanel
+    │   ├── BootScreenRoot
+    │   ├── ShutdownScreenRoot
     │   ├── DesktopLayer
     │   ├── WindowLayer
     │   ├── TaskbarRoot
@@ -70,6 +83,8 @@ ComputerUIRoot
 │   └── MonitorFrameImage
 └── ScreenArea
     └── ScreenMask 또는 ScreenPanel
+        ├── BootScreenRoot
+        ├── ShutdownScreenRoot
         ├── DesktopLayer
         ├── WindowLayer
         ├── TaskbarRoot
@@ -85,7 +100,7 @@ ComputerUIRoot
 
 `ScreenArea`는 CRT 모니터 안쪽의 실제 화면이다.
 
-- `DesktopLayer`, `WindowLayer`, `TaskbarRoot`는 반드시 `ScreenArea` 안에 있어야 한다.
+- `BootScreenRoot`, `ShutdownScreenRoot`, `DesktopLayer`, `WindowLayer`, `TaskbarRoot`는 반드시 `ScreenArea` 안에 있어야 한다.
 - `CRTOverlayLayer`도 `ScreenArea` 안에서만 화면을 덮어야 한다.
 - `ScanlineOverlay`, `ScreenVignette`, `NoiseOverlay`가 frame/bezel 영역까지 덮지 않게 한다.
 - `MonitorFrameImage`는 `ScreenArea` 밖 가장자리를 감싸는 역할만 한다.
@@ -98,7 +113,7 @@ ComputerUIRoot
 
 - `RectMask2D`는 사각형 화면 영역을 자르는 데 충분하고 별도 mask sprite가 필요 없다.
 - `ScreenArea` 또는 `ScreenMask` 오브젝트에 `RectMask2D`를 추가한다.
-- mask 대상은 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`, `CRTOverlayLayer` 전체다.
+- mask 대상은 `BootScreenRoot`, `ShutdownScreenRoot`, `DesktopLayer`, `WindowLayer`, `TaskbarRoot`, `CRTOverlayLayer` 전체다.
 - 목적은 window, overlay, desktop element가 frame 밖으로 튀어나오지 않게 하는 것이다.
 
 `Mask` 사용 후보:
@@ -155,7 +170,7 @@ Raycast 기준:
 ### CRTOverlayLayer
 
 - `ScreenArea` 또는 `ScreenMask` 기준 전체 stretch로 둔다.
-- `DesktopLayer`, `WindowLayer`, `TaskbarRoot`보다 위에 보이도록 최상단 sibling으로 둔다.
+- `BootScreenRoot`, `ShutdownScreenRoot`, `DesktopLayer`, `WindowLayer`, `TaskbarRoot`보다 위에 보이도록 최상단 sibling으로 둔다.
 - `Raycast Target`은 꺼둔다.
 - `ScanlineOverlay`, `ScreenVignette`, `NoiseOverlay`도 모두 `Raycast Target Off`로 둔다.
 - overlay 강도는 텍스트와 버튼 가독성을 해치지 않는 수준으로 조정한다.
@@ -171,6 +186,7 @@ Play Mode에서 다음 항목을 확인한다.
 - `MonitorFrameImage`가 버튼 클릭 영역을 덮는다면 `Raycast Target`이 꺼져 있다.
 - `ScreenMask` 또는 `ScreenPanel` Image가 필요한 입력을 막지 않는다.
 - desktop icon double click이 정상 동작한다.
+- startup boot screen과 shutdown screen이 CRT mask 안에 표시된다.
 - window drag와 focus 전환이 정상 동작한다.
 - taskbar click이 정상 동작한다.
 - project detail의 link button click이 정상 동작한다.
@@ -188,7 +204,7 @@ Play Mode에서 다음 항목을 확인한다.
 
 ## Editor Work Order
 
-1. 기존 hierarchy를 확인하고, 현재 `ComputerUIRoot`, `DesktopLayer`, `WindowLayer`, `TaskbarRoot`, `CRTOverlayLayer` 연결 상태를 기록한다.
+1. 기존 hierarchy를 확인하고, 현재 `ComputerUIRoot`, `BootScreenRoot`, `ShutdownScreenRoot`, `DesktopLayer`, `WindowLayer`, `TaskbarRoot`, `CRTOverlayLayer` 연결 상태를 기록한다.
 2. prefab 또는 scene 변경 전 Unity Editor에서 작업 대상 오브젝트를 복제하거나 버전 관리 상태를 확인한다.
 3. `ComputerUIRoot`를 유지할지, 새 `ComputerUIScreenRoot`를 만들지 결정한다.
 4. `CRTMonitorFrame` GameObject를 만든다.
@@ -196,7 +212,7 @@ Play Mode에서 다음 항목을 확인한다.
 6. `ScreenArea` GameObject를 만든다.
 7. 필요하면 `ScreenArea` 아래에 `ScreenMask` 또는 `ScreenPanel` GameObject를 만든다.
 8. `ScreenArea` 또는 `ScreenMask`에 `RectMask2D`를 추가한다.
-9. `DesktopLayer`, `WindowLayer`, `TaskbarRoot`, `CRTOverlayLayer`를 `ScreenArea` 또는 `ScreenMask` 아래로 정리한다.
+9. `BootScreenRoot`, `ShutdownScreenRoot`, `DesktopLayer`, `WindowLayer`, `TaskbarRoot`, `CRTOverlayLayer`를 `ScreenArea` 또는 `ScreenMask` 아래로 정리한다.
 10. `MonitorFrameImage`를 `ScreenArea`보다 크게 배치한다.
 11. `ScreenArea`를 frame 안쪽 실제 화면 크기로 조정한다.
 12. `DesktopLayer`가 `ScreenArea` 안을 채우는지 확인한다.
@@ -205,17 +221,17 @@ Play Mode에서 다음 항목을 확인한다.
 15. `CRTOverlayLayer`를 `ScreenArea` 전체 stretch로 맞춘다.
 16. `CRTOverlayLayer`를 `ScreenArea` 내부 최상단 sibling으로 둔다.
 17. overlay, frame, mask 관련 Image의 `Raycast Target`을 점검한다.
-18. Play Mode에서 desktop icon, window drag, taskbar click, link button click을 검증한다.
+18. Play Mode에서 boot, shutdown, desktop icon, window drag, taskbar click, link button click을 검증한다.
 19. 텍스트 가독성이 낮으면 overlay alpha와 vignette 강도를 낮춘다.
 20. frame 밖으로 UI가 보이면 `RectMask2D` 적용 위치와 자식 hierarchy를 다시 확인한다.
 
 ## Acceptance Criteria
 
 - Computer UI가 monitor frame 안쪽 화면에 들어가 보인다.
-- DesktopLayer, WindowLayer, TaskbarRoot, CRTOverlayLayer가 screen 영역 밖으로 튀어나오지 않는다.
+- BootScreenRoot, ShutdownScreenRoot, DesktopLayer, WindowLayer, TaskbarRoot, CRTOverlayLayer가 screen 영역 밖으로 튀어나오지 않는다.
 - 기존 desktop, window, taskbar 기능이 정상 동작한다.
 - overlay, frame, mask가 클릭을 막지 않는다.
-- desktop icon double click, window drag, taskbar click, link button click이 정상 동작한다.
+- startup boot, shutdown, desktop icon double click, window drag, taskbar click, link button click이 정상 동작한다.
 - scanline, vignette, noise가 텍스트 가독성을 해치지 않는다.
 - shader, RenderTexture, post-processing 없이 Image, Mask, RectTransform만으로 구성된다.
 

@@ -1,6 +1,17 @@
 # Step: Runtime Taskbar Editor Wiring
 
-## Status
+## Document Metadata
+
+- Status: Active
+- Replaced By: 최신 문서가 완전 대체하지는 않음.
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Taskbar Window Management Design](./18-taskbar-window-management.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md), [Window Transition Guide](./35-window-transition-guide.md)
+- Last Reviewed Phase: 38 Future Transition Polish
+
+## Current Structure Notice
+
+이 문서는 runtime taskbar button 생성과 Editor wiring 기준으로 유지한다. hover, active, minimized, closing 색상/indicator 정책은 [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md)를 우선하고, close 후 button 제거 timing은 [Window Transition Guide](./35-window-transition-guide.md)의 close transition 완료 정책을 따른다.
+
+## Step Status
 
 completed
 

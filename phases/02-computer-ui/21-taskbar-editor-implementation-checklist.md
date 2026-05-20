@@ -1,6 +1,17 @@
 # Step: Runtime Taskbar Editor Implementation Checklist
 
-## Status
+## Document Metadata
+
+- Status: Active
+- Replaced By: 최신 문서가 완전 대체하지는 않음.
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Runtime Taskbar Editor Wiring](./20-taskbar-editor-wiring.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md), [Window Transition Guide](./35-window-transition-guide.md)
+- Last Reviewed Phase: 38 Future Transition Polish
+
+## Current Structure Notice
+
+이 문서는 runtime taskbar Editor wiring 완료 체크리스트로 유지한다. active/minimized/closing visual polish와 taskbar click state 검증은 [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md)를 우선하고, close animation 이후 button 제거는 [Window Transition Guide](./35-window-transition-guide.md)를 따른다.
+
+## Step Status
 
 completed
 

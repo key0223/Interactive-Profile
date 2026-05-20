@@ -1,5 +1,12 @@
 # Step: Boot Screen Editor Guide
 
+## Document Metadata
+
+- Status: Active
+- Replaced By: 최신 문서가 완전 대체하지는 않음.
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Shutdown Transition Plan](./34-shutdown-transition-plan.md), [Future Transition Polish](./38-future-transition-polish.md)
+- Last Reviewed Phase: 38 Future Transition Polish
+
 ## Related Documents
 
 - [UI Guide](../../docs/UI_GUIDE.md) — Computer UI 공통 hierarchy, transition 원칙, WebGL 제약.
@@ -18,7 +25,7 @@
 - Computer UI open/close lifecycle
 - CRT frame, mask, overlay 계층
 
-## Status
+## Step Status
 
 pending
 

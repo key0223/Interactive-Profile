@@ -1,6 +1,17 @@
 # Step: Contact Exchange Window Editor Wiring
 
-## Status
+## Document Metadata
+
+- Status: Active
+- Replaced By: 최신 문서가 완전 대체하지는 않음.
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Desktop Icon Interaction Guide](./37-desktop-icon-guide.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md), [Window Transition Guide](./35-window-transition-guide.md)
+- Last Reviewed Phase: 38 Future Transition Polish
+
+## Current Structure Notice
+
+`CONTACT.EXE`는 현재 typed app window로 유지한다. desktop icon selection/double click 기준은 [Desktop Icon Interaction Guide](./37-desktop-icon-guide.md), taskbar state 기준은 [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md), open/close transition 기준은 [Window Transition Guide](./35-window-transition-guide.md)를 우선한다.
+
+## Step Status
 
 pending
 
@@ -168,7 +179,7 @@ Contact 연결:
 
 - `_showContactDesktopIcon`이 true이면 `Initialize()` 이후 runtime desktop icon이 생성된다.
 - icon title은 `_contactDesktopTitle`을 따른다.
-- 더블클릭 또는 icon open action은 `ProjectDesktopUI.OpenContactWindow()`를 호출한다.
+- 더블클릭은 `ProjectDesktopUI.OpenContactWindow()`를 호출한다.
 - Contact window instance는 `_windowRoot` 아래에 생성된다.
 - taskbar button은 `_projectTaskbarUI`와 `ProjectWindowManager.RegisterWindow(...)` 흐름을 통해 생성된다.
 
@@ -390,7 +401,7 @@ desktop icon:
 - icon title이 `CONTACT.EXE`로 표시된다.
 - icon sprite가 연결되어 있으면 표시된다.
 - single click 또는 첫 click에서 selection visual이 표시된다.
-- double click 또는 open action으로 Contact window가 열린다.
+- double click으로 Contact window가 열린다.
 
 window lifecycle:
 

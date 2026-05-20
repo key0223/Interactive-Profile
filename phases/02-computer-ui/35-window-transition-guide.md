@@ -1,5 +1,12 @@
 # Step: Window Transition Guide
 
+## Document Metadata
+
+- Status: Active
+- Replaced By: 최신 문서가 완전 대체하지는 않음.
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md), [Desktop Icon Interaction Guide](./37-desktop-icon-guide.md)
+- Last Reviewed Phase: 38 Future Transition Polish
+
 ## Related Documents
 
 - [UI Guide](../../docs/UI_GUIDE.md) — window lifecycle, transition 공통 원칙, CanvasGroup fallback 정책.
@@ -19,7 +26,7 @@
 - taskbar button register/remove lifecycle
 - Escape focused window close 정책
 
-## Status
+## Step Status
 
 completed
 

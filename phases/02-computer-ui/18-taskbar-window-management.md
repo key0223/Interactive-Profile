@@ -1,6 +1,17 @@
 # Step: Taskbar Window Management Design
 
-## Status
+## Document Metadata
+
+- Status: Active
+- Replaced By: 최신 문서가 완전 대체하지는 않음.
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Runtime Taskbar Editor Wiring](./20-taskbar-editor-wiring.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md), [Window Transition Guide](./35-window-transition-guide.md)
+- Last Reviewed Phase: 38 Future Transition Polish
+
+## Current Structure Notice
+
+이 문서는 taskbar/window lifecycle 설계 기록으로 유효하다. 다만 taskbar button hover, active, minimized, closing visual state의 최신 기준은 [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md)를 우선하고, close cleanup timing은 [Window Transition Guide](./35-window-transition-guide.md)의 `WindowTransitionUI` 정책을 따른다.
+
+## Step Status
 
 completed
 
@@ -97,6 +108,7 @@ ProjectDesktopIconUI double click
 ```text
 CloseButton click
 → ProjectWindowUI.Hide()
+→ WindowTransitionUI close transition
 → ProjectWindowUI.Closed
 → ProjectWindowManager.HandleWindowClosed(ProjectWindowUI)
 → dictionary에서 제거

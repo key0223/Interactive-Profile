@@ -1,5 +1,12 @@
 # Step: Future Transition Polish
 
+## Document Metadata
+
+- Status: Active
+- Replaced By: 최신 문서가 완전 대체하지는 않음.
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Boot Screen Editor Guide](./33-boot-screen-editor-guide.md), [Shutdown Transition Plan](./34-shutdown-transition-plan.md), [Window Transition Guide](./35-window-transition-guide.md)
+- Last Reviewed Phase: 38 Future Transition Polish
+
 ## Related Documents
 
 - [UI Guide](../../docs/UI_GUIDE.md) — transition 공통 원칙과 WebGL 제약.
@@ -21,7 +28,7 @@
 - taskbar reveal
 - CRT frame, mask, overlay polish
 
-## Status
+## Step Status
 
 pending
 

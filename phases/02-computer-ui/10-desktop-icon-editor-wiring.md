@@ -1,6 +1,19 @@
 # Step: Desktop Icon Editor Wiring
 
-## Status
+## Document Metadata
+
+- Status: Deprecated
+- Replaced By: [Desktop Icon Interaction Guide](./37-desktop-icon-guide.md)
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Window Transition Guide](./35-window-transition-guide.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md)
+- Last Reviewed Phase: 38 Future Transition Polish
+
+## Current Structure Notice
+
+이 문서는 초기 Desktop icon Editor wiring 기록으로 보존한다. 현재 구현 기준은 runtime desktop icon selection/double click, `ProjectWindowManager` 기반 multi-window lifecycle, `WindowTransitionUI`, runtime taskbar button 동기화를 포함하므로 새 작업은 [Desktop Icon Interaction Guide](./37-desktop-icon-guide.md), [Window Transition Guide](./35-window-transition-guide.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md)를 우선한다.
+
+아래 내용 중 단일 `ProjectWindow` 재사용, Sidebar fallback, Escape 전체 닫기 우선 설명은 현재 기준이 아니다. history/reference 가치가 있는 항목만 참고하고 최신 검증 기준으로 사용하지 않는다.
+
+## Step Status
 
 pending
 

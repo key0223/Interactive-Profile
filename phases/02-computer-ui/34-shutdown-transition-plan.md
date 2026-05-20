@@ -1,5 +1,12 @@
 # Step: Shutdown Transition Plan
 
+## Document Metadata
+
+- Status: Active
+- Replaced By: 최신 문서가 완전 대체하지는 않음.
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Boot Screen Editor Guide](./33-boot-screen-editor-guide.md), [Future Transition Polish](./38-future-transition-polish.md)
+- Last Reviewed Phase: 38 Future Transition Polish
+
 ## Related Documents
 
 - [UI Guide](../../docs/UI_GUIDE.md) — Computer UI 공통 hierarchy, transition 원칙, WebGL 제약.
@@ -19,7 +26,7 @@
 - Start Menu shutdown action
 - Computer UI reopen 안정성
 
-## Status
+## Step Status
 
 pending
 

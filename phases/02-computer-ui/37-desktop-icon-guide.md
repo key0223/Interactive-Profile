@@ -1,5 +1,12 @@
 # Step: Desktop Icon Interaction Guide
 
+## Document Metadata
+
+- Status: Active
+- Replaced By: 최신 문서가 완전 대체하지는 않음.
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Desktop Icon Editor Wiring](./10-desktop-icon-editor-wiring.md), [Window Transition Guide](./35-window-transition-guide.md)
+- Last Reviewed Phase: 38 Future Transition Polish
+
 ## Related Documents
 
 - [UI Guide](../../docs/UI_GUIDE.md) — desktop layer, app naming, visual direction 공통 기준.
@@ -19,7 +26,7 @@
 - icon selection and double click interaction
 - desktop background click selection clear
 
-## Status
+## Step Status
 
 completed
 

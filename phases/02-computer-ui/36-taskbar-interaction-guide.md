@@ -1,5 +1,12 @@
 # Step: Taskbar Interaction Guide
 
+## Document Metadata
+
+- Status: Active
+- Replaced By: 최신 문서가 완전 대체하지는 않음.
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Window Transition Guide](./35-window-transition-guide.md), [Runtime Taskbar Editor Wiring](./20-taskbar-editor-wiring.md)
+- Last Reviewed Phase: 38 Future Transition Polish
+
 ## Related Documents
 
 - [UI Guide](../../docs/UI_GUIDE.md) — taskbar hierarchy, window lifecycle, 공통 Play Mode 검증 기준.
@@ -18,7 +25,7 @@
 - window focus, minimize, restore, close state
 - EventSystem pointer interaction
 
-## Status
+## Step Status
 
 completed
 
