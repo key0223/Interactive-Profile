@@ -75,6 +75,33 @@ public class WindowTransitionUI : MonoBehaviour
         }));
     }
 
+    public void PlayMinimize(Action onComplete)
+    {
+        ResolveReferences();
+        StopTransition();
+
+        if (_canvasGroup != null)
+        {
+            _canvasGroup.interactable = false;
+            _canvasGroup.blocksRaycasts = false;
+        }
+
+        if (!isActiveAndEnabled || _closeDuration <= 0f || (!_useFade && !_useScale))
+        {
+            ApplyClosedState();
+            onComplete?.Invoke();
+            return;
+        }
+
+        float startAlpha = _canvasGroup != null ? _canvasGroup.alpha : 1f;
+        Vector3 startScale = _target != null ? _target.localScale : Vector3.one;
+        _transitionRoutine = StartCoroutine(PlayRoutine(startAlpha, 0f, startScale, _closedScale, _closeDuration, () =>
+        {
+            ApplyClosedState();
+            onComplete?.Invoke();
+        }));
+    }
+
     public void ResetState()
     {
         ResolveReferences();

@@ -52,6 +52,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     private bool _hasRestoreState;
     private bool _isMaximized;
     private bool _isClosing;
+    private bool _isMinimizing;
     private RectTransform _runtimeBoundsRoot;
 
     public DesktopWindowType WindowType => _windowType;
@@ -205,6 +206,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         if (_isClosing)
             return;
 
+        _isMinimizing = false;
         _isClosing = true;
 
         if (_windowTransitionUI != null && IsVisible)
@@ -239,10 +241,31 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
     public void Minimize()
     {
-        _isClosing = false;
-        if (_windowTransitionUI != null)
-            _windowTransitionUI.ResetState();
+        if (_isClosing || _isMinimizing)
+            return;
 
+        _isClosing = false;
+
+        if (!IsVisible)
+        {
+            Minimized?.Invoke(this);
+            return;
+        }
+
+        _isMinimizing = true;
+
+        if (_windowTransitionUI != null)
+            _windowTransitionUI.PlayMinimize(FinalizeMinimize);
+        else
+            FinalizeMinimize();
+    }
+
+    private void FinalizeMinimize()
+    {
+        if (!_isMinimizing)
+            return;
+
+        _isMinimizing = false;
         SetRootActive(false);
         Minimized?.Invoke(this);
     }
@@ -257,7 +280,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
     public void EnsureOpen()
     {
-        if (!_isClosing)
+        if (!_isClosing && !_isMinimizing)
             return;
 
         ShowRoot();
@@ -477,6 +500,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
     private void ShowRoot()
     {
+        _isMinimizing = false;
         _isClosing = false;
         SetRootActive(true);
 
@@ -487,6 +511,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     private void FinalizeHide()
     {
         ProjectData closedProjectData = CurrentProjectData;
+        _isMinimizing = false;
         ResetWindowState(true);
         Clear();
         SetRootActive(false);
@@ -499,6 +524,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     private void HideImmediate(bool notifyClosed)
     {
         _isClosing = false;
+        _isMinimizing = false;
 
         if (_windowTransitionUI != null)
             _windowTransitionUI.ResetState();
