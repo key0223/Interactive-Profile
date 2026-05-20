@@ -4,8 +4,8 @@
 
 - Status: Active
 - Replaced By: 최신 문서가 완전 대체하지는 않음.
-- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Boot Screen Editor Guide](./33-boot-screen-editor-guide.md), [Shutdown Transition Plan](./34-shutdown-transition-plan.md), [Window Transition Guide](./35-window-transition-guide.md)
-- Last Reviewed Phase: 38 Future Transition Polish
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Boot Screen Editor Guide](./33-boot-screen-editor-guide.md), [Shutdown Transition Plan](./34-shutdown-transition-plan.md), [Window Transition Guide](./35-window-transition-guide.md), [CRT Overlay Polish Guide](./43-crt-overlay-polish-guide.md)
+- Last Reviewed Phase: 43 CRT Overlay Polish Guide
 
 ## Related Documents
 
@@ -13,6 +13,7 @@
 - [Boot Screen Editor Guide](./33-boot-screen-editor-guide.md) — startup boot 완료 후 shell 표시 기준.
 - [Shutdown Transition Plan](./34-shutdown-transition-plan.md) — shutdown transition과 reopen 안정성 기준.
 - [Window Transition Guide](./35-window-transition-guide.md) — 현재 안정화된 window open/close transition.
+- [CRT Overlay Polish Guide](./43-crt-overlay-polish-guide.md) — CRT overlay flicker 후보가 CanvasGroup 기반 polish로 구체화된 기준.
 
 ## Depends On
 
@@ -45,6 +46,7 @@ Computer UI의 startup, shutdown, desktop shell, taskbar, icon reveal 관련 후
   - taskbar delayed reveal 후보.
   - icon delayed reveal 후보.
   - CRT flicker 또는 monitor power-on scan 후보.
+  - CRT overlay flicker는 [CRT Overlay Polish Guide](./43-crt-overlay-polish-guide.md)에서 CanvasGroup 기반 구현으로 구체화됨.
   - 후속 구현 전 guardrails.
 - 제외:
   - C# 코드 수정.
@@ -67,7 +69,7 @@ Computer UI의 startup, shutdown, desktop shell, taskbar, icon reveal 관련 후
 - desktop fade in.
 - taskbar delayed reveal.
 - icon delayed reveal.
-- CRT overlay flicker.
+- CRT overlay flicker의 shader/post-processing 방식.
 - monitor power-on scan animation.
 
 ## Guardrails

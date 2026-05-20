@@ -3,8 +3,8 @@
 ## Document Metadata
 
 - Status: Active
-- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Window Transition Guide](./35-window-transition-guide.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md), [Future Transition Polish](./38-future-transition-polish.md), [Desktop Clock System Info Guide](./41-desktop-clock-system-info-guide.md), [Fake OS Ambience Guide](./42-fake-os-ambience-guide.md)
-- Last Reviewed Phase: 42 Fake OS Ambience Guide
+- Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Window Transition Guide](./35-window-transition-guide.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md), [Future Transition Polish](./38-future-transition-polish.md), [Desktop Clock System Info Guide](./41-desktop-clock-system-info-guide.md), [Fake OS Ambience Guide](./42-fake-os-ambience-guide.md), [CRT Overlay Polish Guide](./43-crt-overlay-polish-guide.md)
+- Last Reviewed Phase: 43 CRT Overlay Polish Guide
 
 ## Goal
 
@@ -33,6 +33,7 @@ Computer UI polish를 작은 단계로 나누고, 현재 안정화된 startup, s
 - desktop icon interaction polish와 taskbar interaction polish는 기능별 phase 문서로 분리되어 있다.
 - desktop clock/system info는 `DesktopSystemInfoUI`와 [Desktop Clock System Info Guide](./41-desktop-clock-system-info-guide.md)로 분리되어 있다.
 - fake OS ambience는 `DesktopAmbienceUI`와 [Fake OS Ambience Guide](./42-fake-os-ambience-guide.md)로 분리되어 있다.
+- CRT overlay polish는 `CRTOverlayUI`와 [CRT Overlay Polish Guide](./43-crt-overlay-polish-guide.md)로 분리되어 있다.
 - Unity Editor 연결 작업은 사용자가 직접 수행하고, Codex는 연결 기준 문서만 작성한다.
 
 ## Phase 1: Window Minimize UX
@@ -128,6 +129,11 @@ Computer UI polish를 작은 단계로 나누고, 현재 안정화된 startup, s
 - `docs: add fake os ambience editor guide`
 
 ## Phase 4: CRT Overlay Polish
+
+상태:
+
+- 구현 완료: `CRTOverlayUI`
+- Editor 연결 기준: [CRT Overlay Polish Guide](./43-crt-overlay-polish-guide.md)
 
 목표:
 

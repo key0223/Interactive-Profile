@@ -4,8 +4,8 @@
 
 - Status: Active
 - Replaced By: 최신 문서가 완전 대체하지는 않음.
-- Related Documents: [Boot Screen Editor Guide](../phases/02-computer-ui/33-boot-screen-editor-guide.md), [Shutdown Transition Plan](../phases/02-computer-ui/34-shutdown-transition-plan.md), [Window Transition Guide](../phases/02-computer-ui/35-window-transition-guide.md), [Taskbar Interaction Guide](../phases/02-computer-ui/36-taskbar-interaction-guide.md), [Desktop Icon Interaction Guide](../phases/02-computer-ui/37-desktop-icon-guide.md), [Future Transition Polish](../phases/02-computer-ui/38-future-transition-polish.md), [Computer UI Polish Roadmap](../phases/02-computer-ui/39-computer-ui-polish-roadmap.md), [Window Minimize Guide](../phases/02-computer-ui/40-window-minimize-guide.md), [Desktop Clock System Info Guide](../phases/02-computer-ui/41-desktop-clock-system-info-guide.md), [Fake OS Ambience Guide](../phases/02-computer-ui/42-fake-os-ambience-guide.md)
-- Last Reviewed Phase: 42 Fake OS Ambience Guide
+- Related Documents: [Boot Screen Editor Guide](../phases/02-computer-ui/33-boot-screen-editor-guide.md), [Shutdown Transition Plan](../phases/02-computer-ui/34-shutdown-transition-plan.md), [Window Transition Guide](../phases/02-computer-ui/35-window-transition-guide.md), [Taskbar Interaction Guide](../phases/02-computer-ui/36-taskbar-interaction-guide.md), [Desktop Icon Interaction Guide](../phases/02-computer-ui/37-desktop-icon-guide.md), [Future Transition Polish](../phases/02-computer-ui/38-future-transition-polish.md), [Computer UI Polish Roadmap](../phases/02-computer-ui/39-computer-ui-polish-roadmap.md), [Window Minimize Guide](../phases/02-computer-ui/40-window-minimize-guide.md), [Desktop Clock System Info Guide](../phases/02-computer-ui/41-desktop-clock-system-info-guide.md), [Fake OS Ambience Guide](../phases/02-computer-ui/42-fake-os-ambience-guide.md), [CRT Overlay Polish Guide](../phases/02-computer-ui/43-crt-overlay-polish-guide.md)
+- Last Reviewed Phase: 43 CRT Overlay Polish Guide
 
 ## 목적
 
@@ -40,6 +40,7 @@ Interactive Desktop Portfolio의 Computer UI는 CRT 화면 안에서 실행되�
 - [Window Minimize Guide](../phases/02-computer-ui/40-window-minimize-guide.md) — minimize button, transition, taskbar indicator, restore/focus 검증 기준.
 - [Desktop Clock System Info Guide](../phases/02-computer-ui/41-desktop-clock-system-info-guide.md) — taskbar clock, date, fake system info 배치와 Editor 연결 기준.
 - [Fake OS Ambience Guide](../phases/02-computer-ui/42-fake-os-ambience-guide.md) — rotating fake OS status message 배치와 Editor 연결 기준.
+- [CRT Overlay Polish Guide](../phases/02-computer-ui/43-crt-overlay-polish-guide.md) — CanvasGroup 기반 CRT overlay alpha와 subtle flicker 연결 기준.
 
 관련 legacy/editor wiring 문서:
 
