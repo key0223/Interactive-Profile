@@ -42,6 +42,7 @@ public class ContactWindowView : MonoBehaviour
     [SerializeField] private TMP_Text _previewTitleText;
     [SerializeField] private TMP_Text _previewBodyText;
     [SerializeField] private TMP_Text _statusText;
+    [SerializeField] private TMP_Text _statusBarText;
     [SerializeField] private Button _connectButton;
     [SerializeField] private ScrollRect _messageScrollRect;
     [SerializeField] private ScrollRect _previewScrollRect;
@@ -51,6 +52,7 @@ public class ContactWindowView : MonoBehaviour
     [SerializeField] private ContactFolderRowUI _folderRowPrefab;
 
     [Header("Content")]
+    [SerializeField] private string _networkStatusPrefix = "Connected to GIL_OS network";
     [SerializeField] private ContactEntry[] _entries =
     {
         new ContactEntry(
@@ -168,6 +170,7 @@ public class ContactWindowView : MonoBehaviour
         RebuildFolderRows();
         RebuildMessageRows();
         RefreshMessageList();
+        UpdateStatusBar(GetFilteredEntryCount());
 
         int firstEntryIndex = GetFirstFilteredEntryIndex();
         if (firstEntryIndex != NoSelection)
@@ -197,6 +200,9 @@ public class ContactWindowView : MonoBehaviour
         if (_statusText != null)
             _statusText.text = string.Empty;
 
+        if (_statusBarText != null)
+            _statusBarText.text = string.Empty;
+
         SetConnectButtonActive(false);
         ResetScrollToTop();
     }
@@ -224,6 +230,7 @@ public class ContactWindowView : MonoBehaviour
         UpdateFolderSelection();
         RebuildMessageRows();
         RefreshMessageList();
+        UpdateStatusBar(GetFilteredEntryCount());
 
         int firstEntryIndex = GetFirstFilteredEntryIndex();
         if (firstEntryIndex != NoSelection)
@@ -436,6 +443,15 @@ public class ContactWindowView : MonoBehaviour
         ApplyScrollTopAfterLayout(_previewScrollRect);
     }
 
+    private void UpdateStatusBar(int messageCount)
+    {
+        if (_statusBarText == null)
+            return;
+
+        string messageLabel = messageCount == 1 ? "message" : "messages";
+        _statusBarText.text = $"{_networkStatusPrefix} | {messageCount} {messageLabel} loaded";
+    }
+
     private static void ApplyScrollTopAfterLayout(ScrollRect scrollRect)
     {
         if (scrollRect == null)
@@ -486,6 +502,21 @@ public class ContactWindowView : MonoBehaviour
         }
 
         return NoSelection;
+    }
+
+    private int GetFilteredEntryCount()
+    {
+        if (_entries == null)
+            return 0;
+
+        int count = 0;
+        for (int i = 0; i < _entries.Length; i++)
+        {
+            if (ShouldShowEntry(_entries[i]))
+                count++;
+        }
+
+        return count;
     }
 
     private bool ShouldShowEntry(ContactEntry entry)

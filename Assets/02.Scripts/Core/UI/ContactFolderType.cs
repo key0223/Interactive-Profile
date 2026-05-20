@@ -1,4 +1,4 @@
-public enum ContactFolderType
+﻿public enum ContactFolderType
 {
     Inbox,
     GitHub,
