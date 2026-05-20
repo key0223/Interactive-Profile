@@ -1,8 +1,8 @@
-# ROOM_SETUP: MVP Scene Editor Guide
+# ROOM_SETUP: Scene Editor Guide
 
 ## 목적
 
-이 문서는 Retro Gamified Portfolio MVP 방 Scene을 Unity Editor에서 구성하기 위한 최소 setup 가이드다. Codex는 `.unity`, `.prefab`, `.asset`, `.meta` 파일을 직접 수정하지 않으며, 이 문서의 항목은 사람이 Unity Editor에서 연결하고 검증한다.
+이 문서는 Retro Gamified Portfolio 방 Scene과 컴퓨터 desktop UI를 Unity Editor에서 구성하기 위한 setup 가이드다. Codex는 `.unity`, `.prefab`, `.asset`, `.meta` 파일을 직접 수정하지 않으며, 이 문서의 항목은 사람이 Unity Editor에서 연결하고 검증한다.
 
 ## Scene Hierarchy 추천 구조
 
@@ -26,15 +26,11 @@ Scene
 │       ├── DesktopLayer
 │       │   └── DesktopIconRoot
 │       ├── WindowLayer
-│       │   └── ProjectWindow runtime instances
-│       │       └── ProjectViewer
-│       │           ├── TitleText
-│       │           ├── SubtitleText
-│       │           ├── RoleText
-│       │           ├── DescriptionText
-│       │           ├── TechStackText
-│       │           ├── HighlightsText
-│       │           └── UrlText
+│       │   └── Window runtime instances
+│       │       ├── ProjectViewer
+│       │       ├── README.TXT viewer
+│       │       ├── SYSTEM.LOG viewer
+│       │       └── CONTACT.EXE view
 │       └── TaskbarRoot
 │           └── TaskbarButtonRoot
 └── EventSystem
@@ -184,6 +180,7 @@ Scene
 
 ```text
 ComputerUIRoot
+├── CRTFrame 또는 ScreenMask
 ├── DesktopLayer
 │   └── DesktopIconRoot
 ├── WindowLayer
@@ -191,11 +188,12 @@ ComputerUIRoot
     └── TaskbarButtonRoot
 ```
 
-- `DesktopLayer`는 desktop background와 project icon runtime parent를 담는다.
-- `WindowLayer`는 runtime `ProjectWindow` instance의 parent다.
+- `DesktopLayer`는 desktop background와 runtime desktop icon parent를 담는다.
+- `WindowLayer`는 runtime app window instance의 parent다.
 - `TaskbarRoot`는 `ComputerUIRoot`의 마지막 sibling으로 두고 화면 하단에 고정한다.
 - `TaskbarButtonRoot`는 runtime taskbar button instance의 parent다.
 - `WindowLayer`는 taskbar 영역을 제외한 bounds여야 한다.
+- CRT overlay, frame, mask Image는 icon/window 클릭을 막지 않도록 필요한 경우 `Raycast Target`을 끈다.
 
 RectTransform 기준:
 
@@ -216,18 +214,32 @@ WindowLayer Bottom = TaskbarRoot Height
   - `_projectWindowPrefab`: `ProjectWindowUI` prefab 또는 template
   - `_windowRoot`: `WindowLayer`
   - `_projectTaskbarUI`: `TaskbarRoot`의 `ProjectTaskbarUI`
+  - `_showAboutMeDesktopIcon`: true
+  - `_aboutMeDesktopTitle`: `README.TXT`
+  - `_aboutMeWindowPrefab`: README.TXT window prefab
+  - `_showSkillsDesktopIcon`: true
+  - `_skillsDesktopTitle`: `SYSTEM.LOG`
+  - `_skillsWindowPrefab`: SYSTEM.LOG window prefab
+  - `_showContactDesktopIcon`: true
+  - `_contactDesktopTitle`: `CONTACT.EXE`
+  - `_contactWindowPrefab`: CONTACT.EXE window prefab
 
 주의:
 
 - `_windowRoot`는 반드시 taskbar 제외 영역인 `WindowLayer`를 가리켜야 한다.
 - `_projectTaskbarUI`가 비어 있어도 window 기능은 null-safe하게 동작해야 하지만, taskbar 검증은 이 참조가 필요하다.
 - 같은 `ProjectData`를 다시 열면 기존 window/taskbar button을 restore/focus해야 하며 중복 생성되면 안 된다.
+- `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE`도 scene 수동 배치가 아니라 runtime desktop icon으로 생성하는 방식을 우선한다.
 
-### ProjectWindow
+### ProjectWindow / Typed App Windows
 
 - `ProjectWindowUI`
-- `ProjectViewerUI`
-- TextMeshPro `TMP_Text` 필드 연결:
+- Project app prefab은 `ProjectViewerUI`
+- README.TXT prefab은 `AboutMeViewerUI`
+- SYSTEM.LOG prefab은 `SkillsWindowView`
+- CONTACT.EXE prefab은 `ContactWindowView`
+
+Project app의 TextMeshPro `TMP_Text` 필드 연결:
   - `_titleText`
   - `_subtitleText`
   - `_roleText`
@@ -236,7 +248,63 @@ WindowLayer Bottom = TaskbarRoot Height
   - `_highlightsText`
   - `_urlText`
 
-runtime project window는 `ProjectDesktopUI._projectWindowPrefab`에서 instantiate된다. prefab/template root에는 window control button, drag/resize/maximize 대상, 내부 `ProjectViewerUI`가 연결되어 있어야 한다.
+runtime project window는 `ProjectDesktopUI._projectWindowPrefab`에서 instantiate된다. typed app window는 각각 `_aboutMeWindowPrefab`, `_skillsWindowPrefab`, `_contactWindowPrefab`에서 instantiate된다. prefab/template root에는 window control button, drag/resize/maximize 대상, 해당 view component가 연결되어 있어야 한다.
+
+`ProjectWindowUI` 연결 기준:
+
+- Projects: `_windowType = Projects`, `_projectViewerUI` 연결
+- README.TXT: `_windowType = AboutMe`, `_aboutMeViewerUI` 연결
+- SYSTEM.LOG: `_windowType = Skills`, `_skillsWindowView` 연결
+- CONTACT.EXE: `_windowType = Contact`, `_contactWindowView` 연결
+
+### CONTACT.EXE View
+
+권장 hierarchy:
+
+```text
+ContactWindow
+├── LeftFolderPane
+│   └── FolderContent
+│       └── ContactFolderRow
+├── MessageListArea
+│   └── ScrollView
+│       └── Viewport
+│           └── Content
+│               └── ContactMessageRow
+├── PreviewPane
+│   ├── PreviewTitleText
+│   ├── PreviewBodyText
+│   ├── PreviewStatusText
+│   └── ConnectButton
+└── StatusBar
+    └── StatusBarText
+```
+
+`ContactWindowView` 연결:
+
+- `_folderRowRoot`: `LeftFolderPane/FolderContent`
+- `_folderRowPrefab`: `ContactFolderRowUI` prefab/template
+- `_messageRowRoot`: `MessageListArea/ScrollView/Viewport/Content`
+- `_messageRowPrefab`: `ContactMessageRowUI` prefab/template
+- `_messageListText`: legacy TMP fallback일 때만 연결
+- `_previewTitleText`, `_previewBodyText`, `_statusText`: PreviewPane TMP
+- `_statusBarText`: StatusBar TMP
+- `_connectButton`: Connect button
+- `_messageScrollRect`, `_previewScrollRect`: 필요 시 연결
+
+`ContactFolderRowUI` 연결:
+
+- `_button`
+- `_selectionImage`
+- `_labelText`
+
+`ContactMessageRowUI` 연결:
+
+- `_button`
+- `_selectionImage`
+- `_fromText`
+- `_subjectText`
+- `_statusText`
 
 ### TaskbarRoot
 
@@ -271,7 +339,7 @@ Inspector 연결:
 - Button OnClick에 수동 listener를 추가하지 않는다.
 - `ProjectTaskbarButtonUI`가 runtime에 click listener를 등록하고 `ProjectWindowManager`로 restore/focus 요청을 중계한다.
 
-### ProjectViewer Fallback
+### Legacy ProjectViewer Fallback
 
 - `ProjectViewerUI`
 - TextMeshPro `TMP_Text` 필드 연결:
@@ -283,7 +351,7 @@ Inspector 연결:
   - `_highlightsText`
   - `_urlText`
 
-이 fallback은 `_projectDesktopUI`를 사용하지 않는 단일 프로젝트 표시 경로용이다. 현재 runtime taskbar/window 구조에서는 `ProjectWindow` 내부 `ProjectViewerUI`를 기본으로 사용한다.
+이 fallback은 `_projectDesktopUI`를 사용하지 않는 legacy 단일 프로젝트 표시 경로용이다. 현재 runtime desktop app 구조에서는 `WindowLayer` 아래 runtime window를 기본으로 사용한다.
 
 ### EventSystem
 
@@ -423,11 +491,17 @@ Foreground
 
 ### UI
 
-- Computer UI가 열릴 때 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`가 표시된다.
+- Computer UI가 열릴 때 CRT frame/mask, `DesktopLayer`, `WindowLayer`, `TaskbarRoot`가 표시된다.
+- runtime desktop icon으로 project icon, `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE`가 생성된다.
 - Project icon을 열면 해당 `ProjectData` 내용이 `ProjectWindow` 내부에 표시된다.
+- `README.TXT`를 열면 단일 scroll document viewer가 표시된다.
+- `SYSTEM.LOG`를 열면 `UNITY_CLIENT`, `SYSTEM_DESIGN`, `SERVER_BACKEND`, `WORK_STYLE`, `STATUS` 로그가 표시된다.
+- `CONTACT.EXE`를 열면 LeftFolderPane, message row list, PreviewPane, StatusBar가 표시된다.
 - 제목, 설명, 기술 스택, 하이라이트, URL Text가 의도한 위치에 보인다.
 - 프로젝트 창을 열면 `TaskbarButtonRoot` 아래 runtime taskbar button이 생성된다.
+- typed app 창을 열면 `DesktopWindowId.ForType` 기준 taskbar button이 생성된다.
 - 같은 프로젝트를 다시 열면 window와 taskbar button이 중복 생성되지 않고 기존 window가 restore/focus된다.
+- 같은 typed app을 다시 열면 window와 taskbar button이 중복 생성되지 않고 기존 window가 restore/focus된다.
 - 서로 다른 프로젝트를 열면 각각 별도 window와 taskbar button이 생성된다.
 - window click 또는 title bar drag 시 해당 window가 최상단 sibling이 되고 taskbar active indicator가 동기화된다.
 - minimize 시 window는 숨겨지고 taskbar button은 유지되며 minimized indicator가 동기화된다.
@@ -435,6 +509,13 @@ Foreground
 - close 시 해당 taskbar button이 제거된다.
 - focused window close/minimize 후에는 남은 opened window 중 가장 최근 focus된 window가 active가 된다.
 - Project window maximize 시 taskbar 영역을 침범하지 않는다.
+- `CONTACT.EXE`에서 Inbox는 전체 message를 표시한다.
+- `CONTACT.EXE`에서 GitHub, Email, Portfolio, Resume folder는 해당 entry만 필터링한다.
+- `CONTACT.EXE`에서 선택된 folder와 message row highlight가 표시된다.
+- `CONTACT.EXE` row 클릭 시 PreviewPane이 갱신된다.
+- `CONTACT.EXE` CONNECT 버튼은 URL이 있는 entry에서 동작한다.
+- `CONTACT.EXE` StatusBar가 현재 folder 기준 message count를 표시한다.
+- 모든 window가 CRT mask 안에서 표시된다.
 - UI가 열려 있는 동안 Interaction Prompt가 숨겨진다.
 - Computer UI를 닫는 별도 버튼 또는 fallback close 흐름을 사용할 경우 window/taskbar cleanup과 Prompt 표시 복구를 함께 확인한다.
 
@@ -455,8 +536,10 @@ Foreground
 - `ProjectTaskbarUI._buttonRoot`와 `_buttonPrefab`이 연결되어 있다.
 - `ProjectTaskbarButtonUI`의 `_button`, `_titleText`, indicator 참조가 연결되어 있다.
 - `ProjectData`가 `ProjectWindow` 내부 `ProjectViewerUI`에 표시된다.
+- `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE` typed app icon과 window가 runtime 생성된다.
 - runtime taskbar button 생성, restore/focus, minimize 유지, close 제거가 동작한다.
-- Escape로 focused/opened `ProjectWindow`가 닫힌다.
-- Project window가 maximize/drag/resize 시 taskbar 영역을 침범하지 않는다.
+- Escape로 focused/opened window가 닫힌다.
+- window가 maximize/drag/resize 시 taskbar 영역과 CRT mask를 침범하지 않는다.
+- CONTACT.EXE folder filtering, row selection, CONNECT, StatusBar message count가 동작한다.
 - Bed와 Cat은 최소 `LogInteractable` 반응을 제공한다.
 - Console에 누락된 Inspector 참조 warning이 남지 않는다.

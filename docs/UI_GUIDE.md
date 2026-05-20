@@ -1,64 +1,49 @@
 # UI 디자인 가이드
 
-## 디자인 원칙
-1. {원칙 1 — 예: "도구처럼 보여야 한다. 마케팅 페이지가 아니라 매일 쓰는 대시보드."}
-2. {원칙 2}
-3. {원칙 3}
+## 목표
 
-## AI 슬롭 안티패턴 — 하지 마라
-| 금지 사항 | 이유 |
-|-----------|------|
-| backdrop-filter: blur() | glass morphism은 AI 템플릿의 가장 흔한 징후 |
-| gradient-text (배경 그라데이션 텍스트) | AI가 만든 SaaS 랜딩의 1번 특징 |
-| "Powered by AI" 배지 | 기능이 아니라 장식. 사용자에게 가치 없음 |
-| box-shadow 글로우 애니메이션 | 네온 글로우 = AI 슬롭 |
-| 보라/인디고 브랜드 색상 | "AI = 보라색" 클리셰 |
-| 모든 카드에 동일한 rounded-2xl | 균일한 둥근 모서리는 템플릿 느낌 |
-| 배경 gradient orb (blur-3xl 원형) | 모든 AI 랜딩 페이지에 있는 장식 |
+Interactive Desktop Portfolio의 컴퓨터 UI는 웹 포트폴리오가 아니라 CRT 화면 안에서 실행되는 Windows 95/98 스타일 faux operating system처럼 보여야 한다. 사용자는 desktop icon, window, taskbar, 문서 뷰어, 로그 뷰어, 메일 클라이언트를 탐색하는 느낌을 받아야 한다.
 
-## 색상
-### 배경
-| 용도 | 값 |
-|------|------|
-| 페이지 | {예: #0a0a0a} |
-| 카드 | {예: #141414} |
+## 핵심 원칙
 
-### 텍스트
-| 용도 | 값 |
-|------|------|
-| 주 텍스트 | {예: text-white} |
-| 본문 | {예: text-neutral-300} |
-| 보조 | {예: text-neutral-400} |
-| 비활성 | {예: text-neutral-500} |
+1. 운영체제 안을 탐험하는 느낌을 우선한다.
+2. 앱마다 역할과 정보 구조를 명확히 분리한다.
+3. 현대적인 카드 UI, 랜딩 페이지, hero section, gradient 장식은 사용하지 않는다.
+4. CRT overlay/frame/mask 안에서 모든 window가 읽히고 조작 가능해야 한다.
+5. 새 UI는 기존 runtime icon/window/taskbar lifecycle을 따라야 한다.
 
-### 데이터/시맨틱 색상
-| 용도 | 값 |
-|------|------|
-| {긍정/성공} | {예: #22c55e} |
-| {부정/에러} | {예: #ef4444} |
-| {중립/기본} | {예: #525252} |
+## Desktop App 역할
 
-## 컴포넌트
-### 카드
-```
-{예: rounded-lg bg-[#141414] border border-neutral-800 p-6}
-```
+### PROJECTS
 
-### 버튼
-```
-Primary: {예: rounded-lg bg-white text-black hover:bg-neutral-200}
-Text:    {예: text-neutral-500 hover:text-neutral-300}
-```
+- 실제 프로젝트 탐색 앱이다.
+- `ProjectData` 기반 project window로 표시한다.
+- 프로젝트 제목, 요약, 역할, 설명, 기술 스택, 하이라이트, URL을 보여준다.
+- 프로젝트별 window는 독립적으로 열릴 수 있고 taskbar button과 1:1로 동기화된다.
 
-### 입력 필드
-```
-{예: rounded-lg bg-neutral-900 border border-neutral-800 px-4 py-3}
-```
+### README.TXT
 
-## 레이아웃
-- 전체 너비: {예: max-w-5xl}
-- 정렬: {예: 좌측 정렬 기본. 중앙 정렬 금지}
-- 간격: {예: gap-3~4, 섹션 간 space-y-8}
+- 자기소개, 개발 철학, 경험을 README 문서처럼 보여준다.
+- 단일 scroll text viewer를 사용한다.
+- monospace 또는 pixel font를 권장한다.
+- profile card, avatar card, marketing bio layout으로 만들지 않는다.
+
+### SYSTEM.LOG
+
+- 기술 스택과 작업 강점을 시스템 진단 로그처럼 보여준다.
+- 기본 섹션은 `UNITY_CLIENT`, `SYSTEM_DESIGN`, `SERVER_BACKEND`, `WORK_STYLE`이다.
+- 마지막 `STATUS` 문구로 개발자 방향성을 압축한다.
+- 단일 scroll log viewer와 monospace text를 사용한다.
+
+### CONTACT.EXE
+
+- Windows 95/98 Microsoft Exchange 스타일 메일/네트워크 클라이언트다.
+- `LeftFolderPane`, `MessageListArea`, `PreviewPane`, `StatusBar` 구조를 가진다.
+- folder row는 `ContactFolderRowUI`, message row는 `ContactMessageRowUI` prefab 기반이다.
+- `Inbox`는 전체 보기이고 `GitHub`, `Email`, `Portfolio`, `Resume`은 해당 entry만 필터링한다.
+- 선택된 folder와 message row는 Windows 95/98 selection highlight를 표시한다.
+- `CONNECT`는 선택 entry의 URL을 여는 최종 action이다.
+- StatusBar는 현재 folder 기준 message count를 표시한다.
 
 ## Computer UI Layout
 
@@ -66,6 +51,7 @@ Text:    {예: text-neutral-500 hover:text-neutral-300}
 
 ```text
 ComputerUIRoot
+├── CRT Frame / Mask / Overlay
 ├── DesktopLayer
 │   └── DesktopIconRoot
 ├── WindowLayer
@@ -73,40 +59,100 @@ ComputerUIRoot
     └── TaskbarButtonRoot
 ```
 
-- `TaskbarRoot`는 `ComputerUIRoot`의 마지막 sibling으로 둔다.
 - `TaskbarRoot`는 화면 하단에 고정한다.
 - `WindowLayer`는 taskbar 영역을 제외한다.
 - 기준은 `WindowLayer Bottom = TaskbarRoot Height`다.
-- `ProjectWindow`의 drag, resize, maximize bounds는 `WindowLayer`를 기준으로 한다.
-- fixed per-type taskbar button 배치는 사용하지 않는다. taskbar button은 `ProjectTaskbarUI`가 runtime 생성한다.
+- window drag, resize, maximize bounds는 `WindowLayer`를 기준으로 한다.
+- icon은 scene 수동 배치가 아니라 `ProjectDesktopUI`가 runtime 생성한다.
+- fixed per-type taskbar button 배치는 사용하지 않는다.
 
-## Computer UI Interaction
+## Window Lifecycle Interaction
 
-- 프로젝트 icon open은 해당 `ProjectData`의 project window를 열거나 기존 window를 restore/focus한다.
-- 서로 다른 프로젝트는 각각 독립된 window와 taskbar button을 가진다.
+- icon open은 해당 project 또는 typed app window를 열거나 기존 window를 restore/focus한다.
+- typed app은 `DesktopWindowId.ForType` 기반 단일 window다.
+- project window는 `DesktopWindowId.ForProject` 기반으로 project data별 window를 가진다.
 - visible/opened window를 클릭하거나 title bar를 드래그하면 해당 window가 focus되고 최상단 sibling이 된다.
 - taskbar button click은 minimized window를 restore/focus하거나 visible window를 focus한다.
 - focused window close/minimize 후에는 남은 opened window 중 가장 최근 focus된 window가 active가 된다.
 - 후보가 없으면 active taskbar indicator는 모두 해제된다.
-- Escape는 focused/opened project window 하나를 닫는다. minimized window는 Escape close 대상이 아니다.
+- Escape는 focused/opened window 하나를 닫는다. minimized window는 Escape close 대상이 아니다.
+
+## Visual Direction
+
+권장:
+
+- Windows 95/98 회색 panel.
+- bevel border와 inset border.
+- 작고 조밀한 titlebar, toolbar, status bar.
+- pixel 또는 monospace 느낌의 TMP font.
+- selection blue highlight.
+- 얇은 splitter와 scroll view.
+- CRT scanline, mask, frame을 통한 화면 몰입감.
+
+금지:
+
+- 현대적 카드 UI.
+- 둥근 카드 grid.
+- 큰 CTA 중심 layout.
+- gradient background.
+- gradient text.
+- glass morphism.
+- glow-heavy neon effect.
+- hero/landing page composition.
+- link tile dashboard.
+
+## Contact Window Layout
+
+권장 hierarchy:
+
+```text
+ContactWindow
+├── TitleBar
+├── MenuBar
+├── Toolbar
+├── WindowBody
+│   ├── LeftFolderPane
+│   │   └── FolderContent
+│   │       └── ContactFolderRow
+│   └── RightContentArea
+│       ├── MessageListArea
+│       │   └── ScrollView
+│       │       └── Viewport
+│       │           └── Content
+│       │               └── ContactMessageRow
+│       └── PreviewPane
+├── StatusBar
+└── ResizeHandle
+```
+
+- `_messageListText` TMP-only 방식은 legacy fallback이다.
+- row prefab mode에서는 `_messageRowRoot`와 `_messageRowPrefab`을 primary 구조로 사용한다.
+- `StatusBar`는 `_statusBarText`에 연결해 `Connected to GIL_OS network | N messages loaded` 형태를 표시한다.
+- `PreviewPane`의 `_statusText`와 StatusBar의 `_statusBarText`를 혼동하지 않는다.
 
 ## Taskbar Button States
 
 - active indicator는 focused/opened window의 button에만 표시한다.
 - minimized indicator는 minimized window의 button에 표시한다.
-- active와 minimized visual의 최종 스타일 polish는 후속 작업으로 관리한다.
+- closed window의 taskbar button은 제거하거나 숨긴다.
+- taskbar 상태는 `ProjectWindowManager`의 `WindowState`와 동기화한다.
 
-## 타이포그래피
-| 용도 | 스타일 |
-|------|--------|
-| 페이지 제목 | {예: text-4xl font-semibold text-white} |
-| 카드 제목 | {예: text-sm font-medium text-neutral-400} |
-| 본문 | {예: text-sm text-neutral-300 leading-relaxed} |
+## Play Mode 검증 체크리스트
 
-## 애니메이션
-- {허용할 애니메이션만 나열. 예: fade-in (0.4s), slide-up (0.5s)}
-- {그 외 모든 애니메이션 금지}
-
-## 아이콘
-- {예: SVG 인라인, strokeWidth 1.5}
-- {예: 아이콘 컨테이너(둥근 배경 박스)로 감싸지 않는다}
+- runtime desktop icon이 생성된다.
+- project icon과 `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE` icon이 표시된다.
+- icon double click 또는 open action으로 window가 열린다.
+- 중복 open 시 기존 typed app window를 restore/focus한다.
+- taskbar button이 window open 시 생성되고 close 시 제거된다.
+- minimize 시 window가 숨겨지고 minimized state가 표시된다.
+- taskbar button click 시 restore/focus된다.
+- Escape가 focused/opened window를 닫는다.
+- window restore/focus 시 scroll reset이 필요한 view는 top으로 돌아간다.
+- `README.TXT`가 document viewer처럼 표시된다.
+- `SYSTEM.LOG`가 log viewer처럼 표시된다.
+- `CONTACT.EXE`에서 Inbox 전체 보기와 folder별 필터링이 동작한다.
+- `CONTACT.EXE`에서 folder highlight와 message row highlight가 동작한다.
+- `CONTACT.EXE` row 클릭 시 PreviewPane이 갱신된다.
+- `CONTACT.EXE` CONNECT 버튼이 URL을 연다.
+- `CONTACT.EXE` StatusBar message count가 folder 기준으로 갱신된다.
+- 모든 window가 CRT mask 안에 표시되고 taskbar를 침범하지 않는다.

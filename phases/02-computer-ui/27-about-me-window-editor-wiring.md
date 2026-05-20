@@ -54,7 +54,7 @@ AboutMe window prefab 연결이 필요한 `ProjectWindowUI` 필드:
   - `ProjectDesktopUI` Inspector 연결.
   - AboutMe window prefab/template 연결.
   - `AboutMeViewerUI` document viewer field 연결.
-  - AboutMe desktop icon 또는 button 연결 방식.
+  - AboutMe runtime desktop icon 연결 방식.
   - Play Mode 검증 시나리오.
   - TMP overflow, word wrapping, font 연결 주의사항.
 - 제외:
@@ -293,11 +293,11 @@ ScrollRect 기준:
 - `ResetScroll()`은 open/restore 시 문서를 항상 top에서 시작하게 만든다.
 - `Initialize()`는 `_textArea.text` 갱신 후 `ResetScroll()`을 호출한다.
 
-## Desktop Icon Or Button Wiring
+## Runtime Desktop Icon Wiring
 
-AboutMe를 여는 UI는 desktop icon 또는 임시 button 중 하나로 시작할 수 있다.
+AboutMe를 여는 UI는 `ProjectDesktopUI`가 runtime 생성하는 desktop icon을 기준으로 한다.
 
-### Desktop Icon 후보
+### Desktop Icon
 
 권장 위치:
 
@@ -309,31 +309,25 @@ DesktopLayer
 
 연결 방식:
 
-- `AboutMeDesktopIcon`에 `Button`을 둔다.
-- Button OnClick에 `ProjectDesktopUI.OpenAboutMeWindow()`를 연결한다.
-- icon label 후보: `README.TXT`, `About Me`, `PROFILE.TXT`
-- MVP에서는 단일 click open으로 시작해도 된다.
-- double click이 필요하면 후속 `DesktopAppIconUI` 같은 범용 앱 아이콘 component를 추가한다.
+- `ProjectDesktopUI._showAboutMeDesktopIcon`을 true로 둔다.
+- `ProjectDesktopUI._aboutMeDesktopTitle`은 `README.TXT`를 권장한다.
+- `ProjectDesktopUI._aboutMeDesktopIcon`에 README/TXT icon sprite를 연결한다.
+- `ProjectDesktopUI`가 `ProjectDesktopIconUI.Setup(Sprite, string, Action, Action)`으로 icon을 생성한다.
+- icon open action은 `ProjectDesktopUI.OpenAboutMeWindow()`를 호출한다.
 
 주의:
 
-- 기존 `ProjectDesktopIconUI`는 `ProjectData` 전용이다.
-- AboutMe는 `ProjectData`가 아니므로 기존 `ProjectDesktopIconUI`를 억지로 재사용하지 않는다.
-- selection highlight와 double click UX를 맞추려면 `DesktopAppIconUI`를 후속 구현 후보로 둔다.
-
-### Temporary Button 후보
-
-초기 wiring 검증만 빠르게 하려면 DesktopLayer에 임시 button을 만들고 OnClick으로 `ProjectDesktopUI.OpenAboutMeWindow()`를 연결한다.
-
-검증 후에는 Windows desktop icon 스타일로 교체한다.
+- AboutMe는 `ProjectData`가 아니며 `DesktopWindowId.ForType(DesktopWindowType.AboutMe)`로 관리된다.
+- scene에 AboutMe icon을 수동 고정 배치하지 않는다.
+- project icon과 typed app icon은 같은 runtime desktop icon prefab 흐름을 공유한다.
 
 ## Play Mode Verification
 
 Play Mode에서 다음 순서로 확인한다.
 
 1. Computer UI를 연다.
-2. DesktopLayer 안에 AboutMe icon 또는 button이 보이는지 확인한다.
-3. AboutMe icon/button을 클릭한다.
+2. DesktopLayer 안에 `README.TXT` runtime icon이 보이는지 확인한다.
+3. README.TXT icon을 클릭 또는 double click한다.
 4. `WindowLayer` 아래 runtime AboutMe window instance가 생성되는지 확인한다.
 5. window title이 `README.TXT`, `ABOUT_ME.TXT`, 또는 설정한 `_aboutMeWindowTitle`로 표시되는지 확인한다.
 6. `DocumentText`에 README/TXT 문서가 표시되는지 확인한다.
@@ -341,7 +335,7 @@ Play Mode에서 다음 순서로 확인한다.
 8. vertical scroll이 정상 동작하는지 확인한다.
 9. 모노스페이스/픽셀 폰트가 적용되고 CRT overlay 아래에서도 읽히는지 확인한다.
 10. `TaskbarButtonRoot` 아래 AboutMe taskbar button이 생성되는지 확인한다.
-11. AboutMe icon/button을 다시 클릭한다.
+11. README.TXT icon을 다시 클릭 또는 double click한다.
 12. 새 AboutMe window가 중복 생성되지 않고 기존 window가 focus되는지 확인한다.
 13. AboutMe window를 minimize한다.
 14. window가 숨겨지고 taskbar button이 유지되는지 확인한다.
@@ -399,15 +393,13 @@ click이 막힐 때:
 
 ## Component And File Structure Notes
 
-현재 `AboutMeViewerUI`는 별도 `AboutMeViewerUI.cs` 파일이 아니라 `ProjectWindowUI.cs` 내부에 정의되어 있다.
+현재 `AboutMeViewerUI`는 별도 `AboutMeViewerUI.cs` 파일로 분리되어 있다.
 
 Unity Editor에서 주의할 점:
 
 - Add Component 검색에서 `AboutMeViewerUI`가 정상 표시되는지 확인한다.
 - 표시되지 않으면 Unity script compilation 상태와 Console error를 먼저 확인한다.
-- Unity가 component를 인식하지만 파일명과 class명이 다르다는 점 때문에 유지보수가 불편하면 후속 step에서 `AboutMeViewerUI.cs`로 분리한다.
-- 새 `.cs` 파일로 분리할 경우 Unity가 `.csproj`를 갱신했는지 확인해야 한다.
-- 분리 직후 `dotnet build Interactive-Profile.sln`을 다시 실행한다.
+- Unity가 새 `.cs` 파일을 인식하지 못하면 project files regenerate 후 `dotnet build Interactive-Profile.sln`을 다시 실행한다.
 
 금지 사항:
 
@@ -415,13 +407,14 @@ Unity Editor에서 주의할 점:
 - scene YAML 또는 prefab YAML에서 serialized field를 직접 조작하지 않는다.
 - `ProjectData` asset을 AboutMe 대용으로 만들지 않는다.
 - taskbar fixed button mapping을 복구하지 않는다.
+- scene에 AboutMe icon을 수동 고정 배치하지 않는다.
 - 카드형 profile UI의 avatar/sidebar/contact button 구조로 되돌리지 않는다.
 
 ## Acceptance Criteria
 
 - `ProjectDesktopUI._aboutMeWindowPrefab`이 AboutMe window prefab의 `ProjectWindowUI`를 가리킨다.
 - `ProjectDesktopUI._aboutMeWindowTitle`이 README/TXT 계열 title로 설정되어 있거나 fallback `About Me`를 사용한다.
-- AboutMe icon/button에서 `ProjectDesktopUI.OpenAboutMeWindow()`를 호출할 수 있다.
+- `README.TXT` runtime icon에서 `ProjectDesktopUI.OpenAboutMeWindow()`를 호출할 수 있다.
 - AboutMe window prefab의 `ProjectWindowUI._windowType`이 `AboutMe`다.
 - AboutMe window prefab의 `ProjectWindowUI._aboutMeViewerUI`가 연결되어 있다.
 - `AboutMeViewerUI._textArea`가 `DocumentText` TextMeshProUGUI를 가리킨다.
@@ -438,6 +431,5 @@ Unity Editor에서 주의할 점:
 - ProjectSettings 또는 Packages 수정.
 - 새 데이터 시스템 추가.
 - `DesktopAppIconUI` 구현.
-- `AboutMeViewerUI.cs` 분리.
 - Skills/Contact window wiring.
 - 카드형 profile UI 복구.

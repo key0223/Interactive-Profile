@@ -193,7 +193,7 @@ Clear()
 
 역할:
 
-- Sidebar에 표시되는 프로젝트 1개의 버튼 UI다.
+- Sidebar에 표시되는 단일 프로젝트 항목 버튼 UI다.
 - 표시 이름을 설정하고, 클릭 이벤트를 `ProjectSelectionUI`에 전달한다.
 - 선택됨/선택 안 됨 상태의 시각 표현을 담당한다.
 
@@ -432,7 +432,7 @@ MVP에서 제외:
 완료 후 다음 step에는 다음 context를 넘긴다.
 
 - 프로젝트 데이터는 JSON이 아니라 ScriptableObject 기반으로 유지한다.
-- `ProjectData`는 프로젝트 1개의 상세 데이터로 유지한다.
+- `ProjectData`는 단일 프로젝트 항목의 상세 데이터로 유지한다.
 - 여러 프로젝트의 순서와 기본 선택은 `ProjectCatalog` ScriptableObject가 담당한다.
 - Sidebar 목록 생성과 선택 상태는 `ProjectSelectionUI`가 담당한다.
 - 버튼 1개의 표시와 클릭 전달은 `ProjectListItemUI`가 담당한다.

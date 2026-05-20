@@ -72,7 +72,7 @@ ComputerInteractable.Interact()
 
 현재 책임:
 
-- `ProjectData`: 프로젝트 1개의 상세 표시 데이터.
+- `ProjectData`: 단일 프로젝트 항목의 상세 표시 데이터.
 - `ProjectCatalog`: 프로젝트 배열과 기본 선택 index.
 - `ProjectViewerUI`: `ProjectData` 1개를 받아 상세 텍스트 표시.
 - `ComputerUIController`: 컴퓨터 UI 열기/닫기, 플레이어 이동 잠금, 프롬프트 차단, Escape 닫기.

@@ -41,6 +41,7 @@ pending
 - `_previewTitleText`
 - `_previewBodyText`
 - `_statusText`
+- `_statusBarText`
 - `_connectButton`
 - `_messageScrollRect`
 - `_previewScrollRect`
@@ -231,7 +232,10 @@ Contact window prefab의 `ProjectWindowUI`를 다음 기준으로 연결한다.
 - `_previewBodyText`
   - 선택된 entry의 설명과 URL 표시.
 - `_statusText`
-  - 선택 상태 또는 fake status 표시.
+  - PreviewPane의 선택 상태 또는 entry status 표시.
+- `_statusBarText`
+  - StatusBar 전용 TMP.
+  - 현재 folder 기준 message count 표시.
 - `_connectButton`
   - URL이 있는 entry에서만 활성화/표시.
   - 클릭 시 `Application.OpenURL(url)` 실행.
@@ -260,6 +264,7 @@ folder filtering 기준:
 - folder 변경 시 message row 목록을 재생성하고 첫 filtered entry를 자동 선택한다.
 - filtered entry가 없으면 preview와 `CONNECT`를 안전하게 비운다.
 - 선택된 folder row와 message row는 각각 selection highlight를 표시한다.
+- StatusBar는 `Connected to GIL_OS network | N message(s) loaded` 형태로 현재 folder 기준 count를 표시한다.
 
 serialized entries 설정 기준:
 
@@ -411,6 +416,7 @@ Contact content:
 - folder 변경 시 첫 filtered entry가 자동 선택되어 preview가 채워진다.
 - 선택된 message row highlight가 표시된다.
 - message row 클릭 시 PreviewPane이 선택 entry 기준으로 갱신된다.
+- StatusBar가 현재 folder 기준 message count를 표시한다.
 - `SYSTEM`처럼 URL이 없는 entry에서는 `CONNECT` 버튼이 비활성화되거나 숨겨진다.
 - URL이 있는 entry가 선택되면 `CONNECT` 버튼이 활성화된다.
 - `CONNECT` 클릭 시 `Application.OpenURL(url)`이 호출된다.

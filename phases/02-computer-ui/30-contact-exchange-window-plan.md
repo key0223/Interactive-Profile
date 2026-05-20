@@ -185,7 +185,7 @@ ContactWindow
 - `LeftFolderPane`은 `ContactFolderRowUI` 기반 folder 목록을 가진다.
 - `RightContentArea`는 위쪽 `MessageList`, 아래쪽 `PreviewPane`으로 나눈다.
 - `MessageListArea`는 `ContactMessageRowUI` 기반 row prefab 목록을 가진다.
-- `StatusBar`에는 `5 item(s)`, `CONNECTED: LOCAL`, `READY` 같은 fake status를 표시할 수 있다.
+- `StatusBar`에는 `Connected to GIL_OS network | N message(s) loaded`처럼 현재 folder 기준 message count를 표시한다.
 - `ResizeHandle`은 기존 window resize 정책을 따르며, 새 resize 시스템을 만들지 않는다.
 
 ## MVP Implementation Direction
