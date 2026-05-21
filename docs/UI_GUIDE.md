@@ -121,6 +121,10 @@ ComputerUIRoot
 - project window는 `DesktopWindowId.ForProject` 기반으로 project data별 window를 가진다.
 - visible/opened window를 클릭하거나 title bar를 드래그하면 해당 window가 focus되고 최상단 sibling이 된다.
 - taskbar button click은 minimized window를 restore/focus하거나 visible window를 focus한다.
+- 처음 열린 window는 base position에 작은 cascade offset을 적용한다.
+- 이미 열린 window focus와 minimize/restore는 위치를 유지한다.
+- close 후 같은 window를 다시 열면 Computer UI 세션 안에서는 마지막 위치를 우선 복구한다.
+- window position은 `WindowLayer` bounds 안으로 clamp한다.
 - focused window close/minimize 후에는 남은 opened window 중 가장 최근 focus된 window가 active가 된다.
 - 후보가 없으면 active taskbar indicator는 모두 해제된다.
 - Escape는 focused/opened window 하나를 닫는다. minimized window는 Escape close 대상이 아니다.

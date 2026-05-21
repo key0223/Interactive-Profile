@@ -116,6 +116,10 @@ completed
 - close 중 같은 icon을 다시 실행하면 window가 복구되고 destroy되지 않는다.
 - taskbar restore/focus 입력이 close 중 들어와도 window가 정상 복구된다.
 - 여러 window를 연속으로 열어도 focus와 sibling order가 정상 유지된다.
+- 최초 open은 base position에서 `20px` 단위의 작은 cascade offset으로 배치된다.
+- 이미 열린 window focus와 minimize/restore는 window 위치를 바꾸지 않는다.
+- close 후 같은 window를 다시 열면 마지막 anchored position을 우선 복구하고, 새 window만 cascade position을 사용한다.
+- open, restore, maximize restore, drag, resize 이후 window가 `WindowLayer` bounds 밖으로 나가지 않는다.
 - focused window close 후 남은 opened window가 있으면 가장 최근 focus window가 active가 된다.
 - `CanvasGroup`을 임시로 연결 해제하면 fade 없이 scale 또는 즉시 fallback이 동작한다. 테스트 후 다시 연결한다.
 - `WindowTransitionUI`를 임시로 연결 해제하면 기존 즉시 open/close fallback이 동작한다. 테스트 후 다시 연결한다.

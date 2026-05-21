@@ -178,25 +178,25 @@ Inspector 연결 순서:
 - `_canvasGroup` → `BootScreenRoot`의 `CanvasGroup`
 - `_logText` → `BootLogText`의 `TMP_Text`
 - `_bootLines` → 짧은 boot log 문장 4~7개
-- `_lineDelay` → `0.12`~`0.35`초 권장
-- `_characterDelay` → `0.006`~`0.018`초 권장
-- `_completionDelay` → `0.2`~`0.45`초 권장
+- `_lineDelay` → `0.16`초 권장
+- `_characterDelay` → `0.008`초 권장
+- `_completionDelay` → `0.35`초 권장
 - `_showCursor` → terminal cursor가 필요하면 enabled
 - `_cursor` → `_` 또는 `█` 중 하나 권장
 - `_cursorBlinkInterval` → `0.12`~`0.25`초 권장
 - `_useFadeOut` → enabled 권장
-- `_fadeOutDuration` → `0.15`~`0.35`초 권장
+- `_fadeOutDuration` → `0.22`초 권장
 
 권장 Inspector 값:
 
-- `_lineDelay`: `0.12`~`0.25`
-- `_characterDelay`: `0.006`~`0.018`
-- `_completionDelay`: `0.2`~`0.45`
+- `_lineDelay`: `0.16`
+- `_characterDelay`: `0.008`
+- `_completionDelay`: `0.35`
 - `_showCursor`: enabled
 - `_cursor`: `_`
 - `_cursorBlinkInterval`: `0.12`~`0.25`
 - `_useFadeOut`: enabled
-- `_fadeOutDuration`: `0.15`~`0.35`
+- `_fadeOutDuration`: `0.22`
 
 CanvasGroup 설정:
 
@@ -212,10 +212,10 @@ CanvasGroup 설정:
 boot log 예시:
 
 ```text
-SYSTEM BOOT...
-LOADING PROFILE...
-MOUNTING PROJECT DRIVE...
-INITIALIZING DESKTOP...
+INITIALIZING WORKSTATION...
+LOADING PROFILE DATA...
+MOUNTING PROJECT ARCHIVE...
+STARTING DESKTOP SHELL...
 READY.
 ```
 
@@ -223,9 +223,9 @@ READY.
 
 ```text
 GIL_OS 98 BOOT SEQUENCE
-CHECKING MEMORY........OK
-LOADING DESKTOP SHELL..OK
-MOUNTING PROJECT DRIVE.OK
+LOADING PROFILE DATA...OK
+MOUNTING PROJECT ARCHIVE...OK
+STARTING DESKTOP SHELL...OK
 READY.
 ```
 

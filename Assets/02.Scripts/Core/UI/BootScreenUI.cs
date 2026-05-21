@@ -11,21 +11,20 @@ public class BootScreenUI : MonoBehaviour
     [SerializeField] private TMP_Text _logText;
     [SerializeField] private string[] _bootLines =
     {
-        "GIL_OS 98 BOOT SEQUENCE",
-        "Checking memory........OK",
-        "Loading desktop shell..OK",
-        "Mounting portfolio.....OK",
-        "Starting window manager.OK",
-        "Ready."
+        "INITIALIZING WORKSTATION...",
+        "LOADING PROFILE DATA...",
+        "MOUNTING PROJECT ARCHIVE...",
+        "STARTING DESKTOP SHELL...",
+        "READY."
     };
-    [SerializeField] private float _lineDelay = 0.2f;
-    [SerializeField] private float _characterDelay = 0.01f;
-    [SerializeField] private float _completionDelay = 0.25f;
+    [SerializeField] private float _lineDelay = 0.16f;
+    [SerializeField] private float _characterDelay = 0.008f;
+    [SerializeField] private float _completionDelay = 0.35f;
     [SerializeField] private bool _showCursor = true;
     [SerializeField] private string _cursor = "_";
     [SerializeField] private float _cursorBlinkInterval = 0.16f;
     [SerializeField] private bool _useFadeOut = true;
-    [SerializeField] private float _fadeOutDuration = 0.25f;
+    [SerializeField] private float _fadeOutDuration = 0.22f;
 
     private readonly StringBuilder _logBuilder = new StringBuilder();
     private Coroutine _playRoutine;

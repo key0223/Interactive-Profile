@@ -11,14 +11,16 @@ public class ShutdownScreenUI : MonoBehaviour
     [SerializeField] private CanvasGroup _canvasGroup;
     [SerializeField] private string[] _shutdownLines =
     {
-        "SHUTTING DOWN...",
         "SAVING SESSION...",
+        "CLOSING WINDOWS...",
+        "DISCONNECTING LOCAL CHANNELS...",
+        "SHUTTING DOWN...",
         "GOODBYE."
     };
-    [SerializeField] private float _lineDelay = 0.15f;
-    [SerializeField] private float _completionDelay = 0.2f;
+    [SerializeField] private float _lineDelay = 0.16f;
+    [SerializeField] private float _completionDelay = 0.25f;
     [SerializeField] private bool _useFadeOut = true;
-    [SerializeField] private float _fadeOutDuration = 0.2f;
+    [SerializeField] private float _fadeOutDuration = 0.22f;
 
     private readonly StringBuilder _logBuilder = new StringBuilder();
     private Coroutine _playRoutine;

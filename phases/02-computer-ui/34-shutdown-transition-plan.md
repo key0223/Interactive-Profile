@@ -271,8 +271,10 @@ desktop 상태
 권장 문구:
 
 ```text
-SHUTTING DOWN...
 SAVING SESSION...
+CLOSING WINDOWS...
+DISCONNECTING LOCAL CHANNELS...
+SHUTTING DOWN...
 GOODBYE.
 ```
 
@@ -288,9 +290,9 @@ POWERING OFF...
 
 - 전체 길이: `0.6`~`1.2`초.
 - startup보다 빠르게 느껴져야 한다.
-- line delay: `0.12`~`0.2`초.
-- final hold: `0.15`~`0.3`초.
-- fade duration: `0.15`~`0.3`초.
+- line delay: `0.16`초.
+- final hold: `0.25`초.
+- fade duration: `0.22`초.
 
 시각 방향:
 
@@ -412,19 +414,19 @@ RectTransform 권장값:
 - `_root` → `ShutdownScreenRoot`
 - `_canvasGroup` → `ShutdownScreenRoot`의 `CanvasGroup`
 - `_messageText` → `ShutdownText`의 `TMP_Text`
-- `_shutdownLines` → `SHUTTING DOWN...`, `SAVING SESSION...`, `GOODBYE.`
-- `_lineDelay` → `0.12`~`0.2`
-- `_completionDelay` → `0.15`~`0.3`
+- `_shutdownLines` → `SAVING SESSION...`, `CLOSING WINDOWS...`, `DISCONNECTING LOCAL CHANNELS...`, `SHUTTING DOWN...`, `GOODBYE.`
+- `_lineDelay` → `0.16`
+- `_completionDelay` → `0.25`
 - `_useFadeOut` → enabled 권장
-- `_fadeOutDuration` → `0.15`~`0.3`
+- `_fadeOutDuration` → `0.22`
 
 권장 Inspector 값:
 
-- `_shutdownLines`: `SHUTTING DOWN...`, `SAVING SESSION...`, `GOODBYE.`
-- `_lineDelay`: `0.12`~`0.2`
-- `_completionDelay`: `0.15`~`0.3`
+- `_shutdownLines`: `SAVING SESSION...`, `CLOSING WINDOWS...`, `DISCONNECTING LOCAL CHANNELS...`, `SHUTTING DOWN...`, `GOODBYE.`
+- `_lineDelay`: `0.16`
+- `_completionDelay`: `0.25`
 - `_useFadeOut`: true
-- `_fadeOutDuration`: `0.15`~`0.35`
+- `_fadeOutDuration`: `0.22`
 
 `ComputerUIController` Inspector 연결:
 
@@ -522,7 +524,7 @@ MVP 권장:
 6. `Shut Down...`을 클릭한다.
 7. `DesktopLayer`, `WindowLayer`, `TaskbarRoot`가 숨겨지는지 확인한다.
 8. `ShutdownScreenRoot`가 active가 되는지 확인한다.
-9. `SHUTTING DOWN...`, `SAVING SESSION...`, `GOODBYE.`가 순서대로 출력되는지 확인한다.
+9. `SAVING SESSION...`, `CLOSING WINDOWS...`, `DISCONNECTING LOCAL CHANNELS...`, `SHUTTING DOWN...`, `GOODBYE.`가 순서대로 출력되는지 확인한다.
 10. shutdown log 이후 fade out이 실행되는지 확인한다.
 11. fade out 완료 후 `ShutdownScreenRoot`가 inactive가 되는지 확인한다.
 12. shutdown 완료 후 `ComputerUIRoot`가 inactive가 되는지 확인한다.

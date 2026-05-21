@@ -11,7 +11,7 @@ public class ProjectDesktopUI : MonoBehaviour, IPointerDownHandler
     [SerializeField] private ProjectWindowUI _projectWindowPrefab;
     [SerializeField] private Transform _windowRoot;
     [SerializeField] private Vector2 _windowSpawnPosition = new Vector2(0f, 0f);
-    [SerializeField] private Vector2 _windowSpawnOffset = new Vector2(28f, -28f);
+    [SerializeField] private Vector2 _windowSpawnOffset = new Vector2(20f, -20f);
     [SerializeField] private int _maxWindowCascadeSteps = 6;
     [SerializeField] private ProjectWindowUI _projectWindowUI;
     [SerializeField] private ProjectTaskbarUI _projectTaskbarUI;
@@ -359,6 +359,7 @@ public sealed class ProjectWindowManager
     private readonly Dictionary<DesktopWindowId, WindowState> _windowStates = new Dictionary<DesktopWindowId, WindowState>();
     private readonly Dictionary<DesktopWindowId, ProjectWindowUI> _registeredWindows = new Dictionary<DesktopWindowId, ProjectWindowUI>();
     private readonly Dictionary<ProjectWindowUI, DesktopWindowId> _idsByWindow = new Dictionary<ProjectWindowUI, DesktopWindowId>();
+    private readonly Dictionary<DesktopWindowId, Vector2> _lastAnchoredPositions = new Dictionary<DesktopWindowId, Vector2>();
     private readonly List<DesktopWindowId> _focusOrder = new List<DesktopWindowId>();
     private readonly string _ownerName;
     private readonly ProjectWindowUI _windowPrefab;
@@ -445,9 +446,10 @@ public sealed class ProjectWindowManager
         window.Minimized += HandleWindowMinimized;
         window.Restored += HandleWindowRestored;
 
+        DesktopWindowId id = DesktopWindowId.ForProject(projectData);
         _openWindows[projectData] = window;
-        RegisterWindow(window, DesktopWindowId.ForProject(projectData), ResolveWindowTitle(projectData, window), projectData.Icon);
-        ApplySpawnPosition(window);
+        RegisterWindow(window, id, ResolveWindowTitle(projectData, window), projectData.Icon);
+        ApplyInitialPosition(window, id);
         window.ShowProject(projectData);
         FocusWindow(window);
     }
@@ -622,6 +624,7 @@ public sealed class ProjectWindowManager
         _registeredWindows.Clear();
         _windowStates.Clear();
         _idsByWindow.Clear();
+        _lastAnchoredPositions.Clear();
         _focusOrder.Clear();
         ClearActiveWindow();
         _taskbarUI?.Clear();
@@ -639,14 +642,23 @@ public sealed class ProjectWindowManager
         _spawnCount = 0;
     }
 
-    private void ApplySpawnPosition(ProjectWindowUI window)
+    private void ApplyInitialPosition(ProjectWindowUI window, DesktopWindowId id)
     {
         if (window == null || window.WindowRectTransform == null)
             return;
 
-        int cascadeStep = _maxCascadeSteps > 0 ? _spawnCount % _maxCascadeSteps : 0;
-        window.WindowRectTransform.anchoredPosition = _spawnPosition + _spawnOffset * cascadeStep;
-        _spawnCount++;
+        if (_lastAnchoredPositions.TryGetValue(id, out Vector2 lastAnchoredPosition))
+        {
+            window.WindowRectTransform.anchoredPosition = lastAnchoredPosition;
+        }
+        else
+        {
+            int cascadeStep = _maxCascadeSteps > 0 ? _spawnCount % _maxCascadeSteps : 0;
+            window.WindowRectTransform.anchoredPosition = _spawnPosition + _spawnOffset * cascadeStep;
+            _spawnCount++;
+        }
+
+        WindowBoundsUtility.ClampToBounds(window.WindowRectTransform, ResolveWindowBoundsRoot(window));
     }
 
     public void OpenAboutMeWindow(ProjectWindowUI aboutMeWindowPrefab, string title, Sprite icon)
@@ -680,7 +692,7 @@ public sealed class ProjectWindowManager
 
         string resolvedTitle = ResolveAboutMeWindowTitle(title);
         RegisterWindow(window, id, resolvedTitle, icon);
-        ApplySpawnPosition(window);
+        ApplyInitialPosition(window, id);
         window.ShowAboutMe(resolvedTitle, icon);
         FocusWindow(window);
     }
@@ -716,7 +728,7 @@ public sealed class ProjectWindowManager
 
         string resolvedTitle = ResolveSkillsWindowTitle(title);
         RegisterWindow(window, id, resolvedTitle, icon);
-        ApplySpawnPosition(window);
+        ApplyInitialPosition(window, id);
         window.ShowSkills(resolvedTitle, icon);
         FocusWindow(window);
     }
@@ -752,7 +764,7 @@ public sealed class ProjectWindowManager
 
         string resolvedTitle = ResolveContactWindowTitle(title);
         RegisterWindow(window, id, resolvedTitle, icon);
-        ApplySpawnPosition(window);
+        ApplyInitialPosition(window, id);
         window.ShowContact(resolvedTitle, icon);
         FocusWindow(window);
     }
@@ -776,6 +788,7 @@ public sealed class ProjectWindowManager
 
         window.transform.SetAsLastSibling();
         _windowStates[id] = WindowState.Opened;
+        StoreWindowPosition(id, window);
         MarkRecentlyFocused(id);
         SetActiveWindow(id);
         SyncTaskbarWindowState(id);
@@ -812,6 +825,7 @@ public sealed class ProjectWindowManager
         if (!_idsByWindow.TryGetValue(window, out DesktopWindowId id))
             id = DesktopWindowId.ForType(window.WindowType);
 
+        StoreWindowPosition(id, window);
         _registeredWindows.Remove(id);
         _idsByWindow.Remove(window);
         _windowStates[id] = WindowState.Closed;
@@ -832,6 +846,7 @@ public sealed class ProjectWindowManager
         if (window == null || !_idsByWindow.TryGetValue(window, out DesktopWindowId id))
             return;
 
+        StoreWindowPosition(id, window);
         _windowStates[id] = WindowState.Minimized;
         SyncTaskbarWindowState(id);
 
@@ -844,6 +859,7 @@ public sealed class ProjectWindowManager
         if (window == null || !_idsByWindow.TryGetValue(window, out DesktopWindowId id))
             return;
 
+        StoreWindowPosition(id, window);
         _windowStates[id] = WindowState.Opened;
         SyncTaskbarWindowState(id);
     }
@@ -937,6 +953,14 @@ public sealed class ProjectWindowManager
         {
             SyncTaskbarWindowState(id);
         }
+    }
+
+    private void StoreWindowPosition(DesktopWindowId id, ProjectWindowUI window)
+    {
+        if (window == null || window.WindowRectTransform == null)
+            return;
+
+        _lastAnchoredPositions[id] = window.WindowRectTransform.anchoredPosition;
     }
 
     private void SyncTaskbarWindowState(DesktopWindowId id)
