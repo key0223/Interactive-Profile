@@ -13,7 +13,8 @@ public class ComputerUIController : MonoBehaviour
     [SerializeField] private StartMenuUI _startMenuUI;
     [SerializeField] private BootScreenUI _bootScreenUI;
     [SerializeField] private ShutdownScreenUI _shutdownScreenUI;
-    [SerializeField] private ComputerCrtOverlayController _crtOverlayController;
+    [SerializeField] private Camera _crtCamera;
+    [SerializeField] private GameObject _crtDisplaySystem;
     [SerializeField] private GameObject _desktopLayer;
     [SerializeField] private GameObject _windowLayer;
     [SerializeField] private GameObject _taskbarRoot;
@@ -56,7 +57,7 @@ public class ComputerUIController : MonoBehaviour
             _shutdownScreenUI.Hide();
 
         SetDesktopShellActive(false);
-        SetCrtOverlayVisible(false);
+        SetCrtSystemActive(false);
         SetRootActive(false);
         IsOpen = false;
     }
@@ -104,7 +105,7 @@ public class ComputerUIController : MonoBehaviour
             HandleBootComplete();
         }
 
-        SetCrtOverlayVisible(true);
+        SetCrtSystemActive(true);
     }
 
     public void RequestShutdown()
@@ -163,7 +164,7 @@ public class ComputerUIController : MonoBehaviour
             _startMenuUI.Hide();
 
         SetDesktopShellActive(false);
-        SetCrtOverlayVisible(false);
+        SetCrtSystemActive(false);
         SetRootActive(false);
 
         if (_projectDesktopUI != null)
@@ -186,10 +187,16 @@ public class ComputerUIController : MonoBehaviour
             _root.SetActive(active);
     }
 
-    private void SetCrtOverlayVisible(bool visible)
+    private void SetCrtSystemActive(bool active)
     {
-        if (_crtOverlayController != null)
-            _crtOverlayController.SetVisible(visible);
+        if (!active && _crtDisplaySystem != null)
+            _crtDisplaySystem.SetActive(false);
+
+        if (_crtCamera != null)
+            _crtCamera.gameObject.SetActive(active);
+
+        if (active && _crtDisplaySystem != null)
+            _crtDisplaySystem.SetActive(true);
     }
 
     private void ResetComputerUiStateForOpen()

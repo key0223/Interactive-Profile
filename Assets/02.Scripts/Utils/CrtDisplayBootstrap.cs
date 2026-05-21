@@ -70,9 +70,7 @@ public sealed class CrtDisplayBootstrap : MonoBehaviour
     private void EnsureSourceCamera()
     {
         if (sourceCamera == null)
-        {
-            sourceCamera = Camera.main;
-        }
+            Debug.LogWarning("CRT Display Bootstrap requires an explicit source camera reference.", this);
     }
 
     private void BuildDisplay()

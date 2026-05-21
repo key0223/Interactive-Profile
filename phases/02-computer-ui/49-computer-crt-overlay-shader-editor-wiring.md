@@ -1,8 +1,12 @@
 # Step: Computer CRT Overlay Shader Editor Wiring
 
+## Status
+
+Deprecated. `ComputerCrtOverlayController`와 `ComputerCrtOverlay.shader` 방식은 현재 open/close 흐름에서 사용하지 않는다. 현재 방향은 [CRT Display System Editor Wiring](./48-crt-display-system-editor-wiring.md)의 `CRTCamera` + `CrtDisplayBootstrap` 제어 방식이다.
+
 ## Document Metadata
 
-- Status: pending
+- Status: deprecated
 - Replaces: [CRT Display System Editor Wiring](./48-crt-display-system-editor-wiring.md)
 - Related Scripts: `Assets/02.Scripts/Core/UI/ComputerUIController.cs`, `Assets/02.Scripts/Core/UI/ComputerCrtOverlayController.cs`
 - Related Shader: `Assets/03.Shaders/UI/ComputerCrtOverlay.shader`
