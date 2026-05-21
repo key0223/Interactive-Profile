@@ -627,7 +627,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -761194885
   m_SortingLayer: 3
-  m_SortingOrder: 0
+  m_SortingOrder: 20
   m_Sprite: {fileID: -1944934207, guid: d80832bfe7b37cb4b8b3c77ec0fcc387, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -712,7 +712,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33d1aabd0f678144090fa7eb7140ac1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _promptText: "\uC549\uAE30"
+  _promptText: "E - \uC549\uAE30"
   _isInteractable: 1
   _playerMovement: {fileID: 2137112914}
   _playerSpriteAnimator: {fileID: 2137112918}
@@ -3606,9 +3606,10 @@ GameObject:
   - component: {fileID: 1220046950}
   - component: {fileID: 1220046949}
   - component: {fileID: 1220046948}
+  - component: {fileID: 1220046951}
   - component: {fileID: 1220046947}
   - component: {fileID: 1220046946}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Cat
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3725,9 +3726,73 @@ MonoBehaviour:
     _up:
     - {fileID: -2044498378, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
     - {fileID: 1221855860, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+  _meow:
+    _down:
+    - {fileID: 2050813156, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1777303279, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1417344401, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    _left:
+    - {fileID: 2050813156, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1777303279, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1417344401, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    _right:
+    - {fileID: 2050813156, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1777303279, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1417344401, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    _up:
+    - {fileID: -599171717, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1413864909, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1696716010, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1132891010, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+  _sit:
+    _down:
+    - {fileID: -61040500, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 977084362, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 996343318, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1925776304, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1216402340, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -45403982, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1799335511, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -634822123, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    _left:
+    - {fileID: -1585075007, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -2115153476, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1084408861, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -640706148, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 951390839, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 196955471, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1250413885, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 614235481, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1159745858, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    _right:
+    - {fileID: -1560423017, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1084609488, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 101261135, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1030514133, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1044850853, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 449907933, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1212591583, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1490463861, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1920223687, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1560946004, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1488013624, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    _up:
+    - {fileID: -1560423017, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1084609488, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 101261135, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1030514133, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1044850853, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 449907933, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1212591583, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1490463861, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: -1920223687, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1560946004, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
+    - {fileID: 1488013624, guid: 31732ab424705c6458fd625ca56dad14, type: 3}
   _idleFrameRate: 2
   _walkFrameRate: 6
   _sleepFrameRate: 1
+  _meowFrameRate: 4
+  _sitFrameRate: 2
 --- !u!212 &1220046948
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -3842,6 +3907,23 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
+--- !u!114 &1220046951
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1220046944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ae54f5de66f12e4ea28a3d90d78a834, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _promptText: "E - \uB9CC\uC9C0\uAE30"
+  _isInteractable: 1
+  _ambientAI: {fileID: 1220046946}
+  _reactions: 0000000001000000
+  _reactionDuration: 2
 --- !u!1 &1251114685
 GameObject:
   m_ObjectHideFlags: 0

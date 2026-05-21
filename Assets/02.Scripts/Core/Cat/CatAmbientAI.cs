@@ -2,11 +2,18 @@ using UnityEngine;
 
 public class CatAmbientAI : MonoBehaviour
 {
+    public enum InteractionReaction
+    {
+        Meow,
+        Sit
+    }
+
     private enum AmbientState
     {
         Idle,
         Walk,
-        Sleep
+        Sleep,
+        Interaction
     }
 
     [SerializeField] private CatSpriteAnimator _animator;
@@ -49,7 +56,7 @@ public class CatAmbientAI : MonoBehaviour
         if (_stateTimer > 0f)
             return;
 
-        if (_state == AmbientState.Sleep)
+        if (_state == AmbientState.Sleep || _state == AmbientState.Interaction)
             BeginIdle();
         else
             ChooseNextRoutine();
@@ -77,6 +84,28 @@ public class CatAmbientAI : MonoBehaviour
 
         if (_animator != null)
             _animator.PlayWalk(movement);
+    }
+
+    public void PlayInteractionReaction(InteractionReaction reaction, float duration)
+    {
+        _state = AmbientState.Interaction;
+        _stateTimer = Mathf.Max(0.1f, duration);
+        _hasTarget = false;
+        _walkingToSleep = false;
+
+        if (_animator == null)
+            return;
+
+        switch (reaction)
+        {
+            case InteractionReaction.Sit:
+                _animator.PlaySit();
+                break;
+            case InteractionReaction.Meow:
+            default:
+                _animator.PlayMeow();
+                break;
+        }
     }
 
     private void ChooseNextRoutine()

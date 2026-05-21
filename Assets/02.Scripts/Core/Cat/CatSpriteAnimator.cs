@@ -7,7 +7,9 @@ public class CatSpriteAnimator : MonoBehaviour
     {
         Idle,
         Walk,
-        Sleep
+        Sleep,
+        Meow,
+        Sit
     }
 
     public enum Direction
@@ -82,9 +84,13 @@ public class CatSpriteAnimator : MonoBehaviour
     [SerializeField] private DirectionalAnimationSet _idle = new DirectionalAnimationSet();
     [SerializeField] private DirectionalAnimationSet _walk = new DirectionalAnimationSet();
     [SerializeField] private DirectionalAnimationSet _sleep = new DirectionalAnimationSet();
+    [SerializeField] private DirectionalAnimationSet _meow = new DirectionalAnimationSet();
+    [SerializeField] private DirectionalAnimationSet _sit = new DirectionalAnimationSet();
     [SerializeField] private float _idleFrameRate = 2f;
     [SerializeField] private float _walkFrameRate = 6f;
     [SerializeField] private float _sleepFrameRate = 1f;
+    [SerializeField] private float _meowFrameRate = 4f;
+    [SerializeField] private float _sitFrameRate = 2f;
 
     private AnimationState _currentState = AnimationState.Idle;
     private Direction _currentDirection = Direction.Down;
@@ -128,6 +134,16 @@ public class CatSpriteAnimator : MonoBehaviour
     public void PlaySleep()
     {
         SetState(AnimationState.Sleep);
+    }
+
+    public void PlayMeow()
+    {
+        SetState(AnimationState.Meow);
+    }
+
+    public void PlaySit()
+    {
+        SetState(AnimationState.Sit);
     }
 
     public void SetState(AnimationState state)
@@ -227,6 +243,10 @@ public class CatSpriteAnimator : MonoBehaviour
                 return _walk;
             case AnimationState.Sleep:
                 return _sleep;
+            case AnimationState.Meow:
+                return _meow;
+            case AnimationState.Sit:
+                return _sit;
             case AnimationState.Idle:
             default:
                 return _idle;
@@ -241,6 +261,10 @@ public class CatSpriteAnimator : MonoBehaviour
                 return _walkFrameRate;
             case AnimationState.Sleep:
                 return _sleepFrameRate;
+            case AnimationState.Meow:
+                return _meowFrameRate;
+            case AnimationState.Sit:
+                return _sitFrameRate;
             case AnimationState.Idle:
             default:
                 return _idleFrameRate;
