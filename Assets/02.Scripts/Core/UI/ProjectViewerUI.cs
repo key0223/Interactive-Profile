@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class ProjectViewerUI : MonoBehaviour
 {
     private const string ImplementationHeader = "IMPLEMENTATION";
+    private const float ThumbnailRevealDuration = 0.12f;
 
     [SerializeField] private Image _iconImage;
     [SerializeField] private Sprite _fallbackIcon;
@@ -28,10 +29,12 @@ public class ProjectViewerUI : MonoBehaviour
     [SerializeField] private Button _githubLinkButton;
     [SerializeField] private TMP_Text _githubLinkButtonText;
     [SerializeField] private ScrollRect _scrollRect;
+    [SerializeField] private float _loadingFeedbackDuration = 0.08f;
 
     private string _projectUrl;
     private string _githubUrl;
     private Coroutine _resetScrollCoroutine;
+    private Coroutine _loadProjectCoroutine;
 
     private void Awake()
     {
@@ -56,6 +59,12 @@ public class ProjectViewerUI : MonoBehaviour
 
     private void OnDisable()
     {
+        if (_loadProjectCoroutine != null)
+        {
+            StopCoroutine(_loadProjectCoroutine);
+            _loadProjectCoroutine = null;
+        }
+
         if (_resetScrollCoroutine != null)
         {
             StopCoroutine(_resetScrollCoroutine);
@@ -78,23 +87,28 @@ public class ProjectViewerUI : MonoBehaviour
             return;
         }
 
-        _projectUrl = projectData.ProjectUrl;
-        _githubUrl = projectData.GithubUrl;
+        if (_loadProjectCoroutine != null)
+        {
+            StopCoroutine(_loadProjectCoroutine);
+            _loadProjectCoroutine = null;
+        }
 
-        SetPreviewImage(projectData);
-        SetText(_titleText, projectData.Title);
-        SetSectionText(_subtitleText, _subtitleRoot, projectData.Subtitle);
-        SetSectionText(_roleText, _roleRoot, projectData.Role);
-        SetSectionText(_descriptionText, _descriptionRoot, projectData.Description);
-        SetSectionText(_techStackText, _techStackRoot, BuildStackText(projectData.TechStack));
-        SetSectionText(_highlightsText, _highlightsRoot, BuildArchiveText(projectData));
-        SetSectionText(_urlText, null, BuildUrlText(projectData));
-        UpdateLinkButtons();
-        ResetScrollToTop();
+        SetLoadingState(projectData);
+
+        if (isActiveAndEnabled && _loadingFeedbackDuration > 0f)
+            _loadProjectCoroutine = StartCoroutine(ApplyProjectDataAfterDelay(projectData));
+        else
+            ApplyProjectData(projectData);
     }
 
     public void Clear()
     {
+        if (_loadProjectCoroutine != null)
+        {
+            StopCoroutine(_loadProjectCoroutine);
+            _loadProjectCoroutine = null;
+        }
+
         _projectUrl = null;
         _githubUrl = null;
 
@@ -120,6 +134,52 @@ public class ProjectViewerUI : MonoBehaviour
 
         ApplyScrollTopAfterLayout();
         _resetScrollCoroutine = StartCoroutine(ResetScrollToTopNextFrame());
+    }
+
+    private IEnumerator ApplyProjectDataAfterDelay(ProjectData projectData)
+    {
+        yield return new WaitForSecondsRealtime(_loadingFeedbackDuration);
+        ApplyProjectData(projectData);
+        _loadProjectCoroutine = null;
+    }
+
+    private void ApplyProjectData(ProjectData projectData)
+    {
+        if (projectData == null)
+        {
+            Clear();
+            return;
+        }
+
+        _projectUrl = projectData.ProjectUrl;
+        _githubUrl = projectData.GithubUrl;
+        SetPreviewImage(projectData);
+        SetText(_titleText, projectData.Title);
+        SetSectionText(_subtitleText, _subtitleRoot, projectData.Subtitle);
+        SetSectionText(_roleText, _roleRoot, projectData.Role);
+        SetSectionText(_descriptionText, _descriptionRoot, projectData.Description);
+        SetSectionText(_techStackText, _techStackRoot, BuildStackText(projectData.TechStack));
+        SetSectionText(_highlightsText, _highlightsRoot, BuildArchiveText(projectData));
+        SetSectionText(_urlText, null, BuildUrlText(projectData));
+        UpdateLinkButtons();
+        ResetScrollToTop();
+    }
+
+    private void SetLoadingState(ProjectData projectData)
+    {
+        _projectUrl = null;
+        _githubUrl = null;
+
+        SetPreviewImage(projectData);
+        SetText(_titleText, projectData != null ? projectData.Title : "PROJECT ARCHIVE");
+        SetSectionText(_subtitleText, _subtitleRoot, "LOADING PROJECT DATA...");
+        SetSectionText(_roleText, _roleRoot, string.Empty);
+        SetSectionText(_descriptionText, _descriptionRoot, "ACCESSING RECORD...");
+        SetSectionText(_techStackText, _techStackRoot, string.Empty);
+        SetSectionText(_highlightsText, _highlightsRoot, BuildLoadingArchiveText(projectData));
+        SetSectionText(_urlText, null, string.Empty);
+        UpdateLinkButtons();
+        ResetScrollToTop();
     }
 
     private IEnumerator ResetScrollToTopNextFrame()
@@ -177,6 +237,16 @@ public class ProjectViewerUI : MonoBehaviour
 
         _iconImage.sprite = sprite;
         _iconImage.enabled = true;
+        RevealThumbnail();
+    }
+
+    private void RevealThumbnail()
+    {
+        if (_iconImage == null)
+            return;
+
+        _iconImage.canvasRenderer.SetAlpha(0.45f);
+        _iconImage.CrossFadeAlpha(1f, ThumbnailRevealDuration, true);
     }
 
     private void SetPreviewImage(ProjectData projectData)
@@ -256,19 +326,66 @@ public class ProjectViewerUI : MonoBehaviour
             return string.Empty;
 
         StringBuilder builder = new StringBuilder();
+        AppendArchiveMetadata(builder, projectData, "VERIFIED");
+        builder.AppendLine();
         AppendImplementationHeader(builder);
-        AppendArchiveGroup(builder, "SYSTEM DESIGN", projectData.SystemDesign);
-        AppendArchiveGroup(builder, "MY WORK", projectData.MyWork);
-        AppendArchiveGroup(builder, "PROBLEM SOLVING", projectData.ProblemSolving);
+        bool hasArchiveSections = false;
+        hasArchiveSections |= AppendArchiveGroup(builder, "SYSTEM DESIGN", projectData.SystemDesign);
+        hasArchiveSections |= AppendArchiveGroup(builder, "MY WORK", projectData.MyWork);
+        hasArchiveSections |= AppendArchiveGroup(builder, "PROBLEM SOLVING", projectData.ProblemSolving);
 
-        if (!HasArchiveContent(builder))
+        if (!hasArchiveSections)
         {
             builder.Clear();
+            AppendArchiveMetadata(builder, projectData, "VERIFIED");
+            builder.AppendLine();
             AppendImplementationHeader(builder);
-            AppendFallbackHighlights(builder, projectData.Highlights);
+            hasArchiveSections = AppendFallbackHighlights(builder, projectData.Highlights);
         }
 
-        return HasArchiveContent(builder) ? builder.ToString() : string.Empty;
+        return hasArchiveSections ? builder.ToString() : string.Empty;
+    }
+
+    private static string BuildLoadingArchiveText(ProjectData projectData)
+    {
+        StringBuilder builder = new StringBuilder();
+        AppendArchiveMetadata(builder, projectData, "LOADING");
+        builder.AppendLine();
+        builder.AppendLine("LOADING PROJECT DATA...");
+        builder.AppendLine();
+        builder.Append("ACCESSING RECORD...");
+        return builder.ToString();
+    }
+
+    private static void AppendArchiveMetadata(StringBuilder builder, ProjectData projectData, string status)
+    {
+        if (builder == null)
+            return;
+
+        builder.Append("ARCHIVE STATUS : ");
+        builder.AppendLine(string.IsNullOrWhiteSpace(status) ? "VERIFIED" : status.Trim().ToUpperInvariant());
+        builder.Append("RECORD NAME    : ");
+        builder.AppendLine(projectData != null && !string.IsNullOrWhiteSpace(projectData.Title) ? projectData.Title.Trim() : "UNTITLED");
+        builder.Append("CATEGORY       : ");
+        builder.AppendLine(ResolveArchiveCategory(projectData));
+    }
+
+    private static string ResolveArchiveCategory(ProjectData projectData)
+    {
+        if (projectData == null)
+            return "PROJECT RECORD";
+
+        string text = $"{projectData.Title} {projectData.Subtitle} {projectData.Role}".ToUpperInvariant();
+        if (text.Contains("SERVER") || text.Contains("BACKEND") || text.Contains("API"))
+            return "SERVER BACKEND";
+
+        if (text.Contains("3D") || text.Contains("ACTION"))
+            return "3D ACTION SYSTEM";
+
+        if (text.Contains("2D") || text.Contains("SIMULATION") || text.Contains("FARM"))
+            return "2D SIMULATION SYSTEM";
+
+        return "SYSTEM DESIGN";
     }
 
     private static void AppendImplementationHeader(StringBuilder builder)
@@ -280,10 +397,10 @@ public class ProjectViewerUI : MonoBehaviour
         builder.AppendLine();
     }
 
-    private static void AppendArchiveGroup(StringBuilder builder, string title, string[] items)
+    private static bool AppendArchiveGroup(StringBuilder builder, string title, string[] items)
     {
         if (builder == null || string.IsNullOrWhiteSpace(title) || items == null || items.Length == 0)
-            return;
+            return false;
 
         bool hasGroupHeader = false;
 
@@ -294,7 +411,7 @@ public class ProjectViewerUI : MonoBehaviour
 
             if (!hasGroupHeader)
             {
-                if (HasArchiveContent(builder))
+                if (HasArchiveGroup(builder))
                     builder.AppendLine().AppendLine();
 
                 builder.Append("[ ");
@@ -311,17 +428,19 @@ public class ProjectViewerUI : MonoBehaviour
             builder.Append("- ");
             builder.AppendLine(items[i].Trim());
         }
+
+        return hasGroupHeader;
     }
 
-    private static bool HasArchiveContent(StringBuilder builder)
+    private static bool HasArchiveGroup(StringBuilder builder)
     {
-        return builder != null && builder.ToString().Trim() != ImplementationHeader;
+        return builder != null && builder.ToString().Contains("[ ");
     }
 
-    private static void AppendFallbackHighlights(StringBuilder builder, string[] items)
+    private static bool AppendFallbackHighlights(StringBuilder builder, string[] items)
     {
         if (builder == null || items == null || items.Length == 0)
-            return;
+            return false;
 
         bool hasItem = false;
         for (int i = 0; i < items.Length; i++)
@@ -336,6 +455,8 @@ public class ProjectViewerUI : MonoBehaviour
             builder.AppendLine(items[i].Trim());
             hasItem = true;
         }
+
+        return hasItem;
     }
 
     private static string BuildUrlText(ProjectData projectData)

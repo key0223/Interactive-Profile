@@ -15,6 +15,8 @@
 - 포함:
   - project info section 구조.
   - heading spacing 기준.
+  - archive navigation feedback 기준.
+  - project explorer selected/hover 기준.
   - TECH STACK compact metadata 기준.
   - ProjectData 입력 기준.
   - Play Mode 검증과 troubleshooting.
@@ -40,6 +42,57 @@
 - bottom action area: project link, GitHub link.
 - scroll 영역은 `ProjectViewerUI._scrollRect` 기준으로 열기, restore 시 top으로 복구된다.
 - 기존 데이터는 `Highlights` 배열에 핵심 구현 정보가 몰려 있었고, 새 section field가 비어 있으면 `Highlights`를 heading 없는 fallback bullet로 표시한다.
+- project switching 시 `ProjectSelectionUI.SelectProjectAt()` 또는 desktop icon open 경로가 `ProjectViewerUI.Show(ProjectData)`를 호출하고, viewer는 loading feedback 후 content를 갱신한다.
+
+## Archive Navigation Feedback
+
+runtime feedback:
+
+```text
+ARCHIVE STATUS : LOADING
+RECORD NAME    : Farming's My Vocation
+CATEGORY       : 2D SIMULATION SYSTEM
+
+LOADING PROJECT DATA...
+
+ACCESSING RECORD...
+```
+
+loaded metadata:
+
+```text
+ARCHIVE STATUS : VERIFIED
+RECORD NAME    : Farming's My Vocation
+CATEGORY       : 2D SIMULATION SYSTEM
+```
+
+기준:
+
+- TMP plain text만 사용한다.
+- loading feedback은 짧게 표시하고 과한 animation으로 만들지 않는다.
+- `ARCHIVE ENTRY VERIFIED`, `LOADING PROJECT DATA...`, `ACCESSING RECORD...` 같은 old archive tone 문구를 사용한다.
+- metadata는 archive 본문 상단에 두며 새 prefab 슬롯을 요구하지 않는다.
+- status 값은 실제 네트워크 상태가 아니라 faux archive viewer feedback이다.
+
+## Project Explorer Interaction
+
+기준:
+
+- project list row는 selected background를 가장 강하게 표시한다.
+- hover background는 selected보다 약하게 표시한다.
+- selected row label은 `> Project Title` 형식으로 현재 opened record를 표시한다.
+- non-selected row는 정렬이 흔들리지 않게 앞에 공백을 둔다.
+- desktop icon 경로는 기존 selected/hover/double click 정책을 유지한다.
+- list hover/selected는 Image color와 TMP text만 갱신하며 tween/VFX를 사용하지 않는다.
+
+## Thumbnail Reveal
+
+기준:
+
+- project switch 후 thumbnail은 매우 짧은 alpha reveal만 허용한다.
+- reveal은 `Image.CrossFadeAlpha` 같은 Unity UI 기본 기능만 사용한다.
+- shader, post-processing, glow, blur, scale animation은 사용하지 않는다.
+- thumbnail이 없으면 icon fallback을 같은 방식으로 표시한다.
 
 ## Project Info Structure
 
@@ -99,6 +152,7 @@ IMPLEMENTATION
 - spacing으로 hierarchy를 표현하되 scroll 길이가 과도하게 늘어나지 않게 subgroup 수를 제한한다.
 - CRT overlay 위에서 제목과 bullet이 모두 읽혀야 한다.
 - console log보다 old help/archive viewer 느낌을 우선한다.
+- metadata block과 `IMPLEMENTATION` 사이에는 1줄 공백을 둔다.
 
 ## TECH STACK Metadata Visual
 
@@ -254,6 +308,11 @@ ProjectWindow
 ## Play Mode Verification
 
 - PROJECT ARCHIVE desktop icon이 생성되고 window가 열린다.
+- project switch 시 `LOADING PROJECT DATA...` 또는 `ACCESSING RECORD...` 피드백이 짧게 표시된다.
+- archive metadata에 `ARCHIVE STATUS : VERIFIED`가 표시된다.
+- project list hover와 selected state가 구분된다.
+- selected project row에 current marker가 표시된다.
+- thumbnail/icon reveal이 과하지 않게 표시된다.
 - preview thumbnail 또는 fallback icon이 표시된다.
 - `ROLE`, `TECH STACK`, `IMPLEMENTATION`이 분리되어 보인다.
 - `IMPLEMENTATION` 내부에 `[ SYSTEM DESIGN ]`, `[ MY WORK ]`, `[ PROBLEM SOLVING ]` subgroup이 보인다.
@@ -290,11 +349,13 @@ ProjectWindow
 
 - rounded chip, gradient, neon glow를 제거한다.
 - divider를 추가하지 말고 `[ SYSTEM DESIGN ]` 한 줄과 spacing으로 hierarchy를 만든다.
+- loading feedback은 TMP plain text로만 처리한다.
+- thumbnail reveal은 짧은 alpha 변화만 허용한다.
 - button과 label은 Windows 95식 각진 bevel 톤을 유지한다.
 
 ## WebGL Compatibility
 
-- 사용 범위는 TMP text 갱신, Image sprite/color, ScrollRect, Button click, `Application.OpenURL`이다.
+- 사용 범위는 TMP text 갱신, Image sprite/color/alpha, ScrollRect, Button click, coroutine, `Application.OpenURL`이다.
 - Thread, blocking sleep, native plugin, platform-specific API를 사용하지 않는다.
 - 외부 tween 라이브러리, shader, particle, post-processing을 사용하지 않는다.
 - 모든 데이터는 serialized `ProjectData`와 runtime string formatting으로 처리한다.
@@ -302,6 +363,8 @@ ProjectWindow
 ## Acceptance Criteria
 
 - PROJECT ARCHIVE가 old installer/manual/archive viewer 톤을 유지한다.
+- project switching 시 archive loading/verified feedback이 표시된다.
+- project explorer의 selected/hover/current record state가 구분된다.
 - Highlights에 몰린 정보가 `IMPLEMENTATION` 내부 subgroup으로 분리되고, legacy fallback은 heading 없이 표시된다.
 - TECH STACK은 compact metadata 형식으로 표시된다.
 - 기존 project open, link button, scroll, minimize/restore lifecycle이 유지된다.
