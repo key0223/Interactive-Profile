@@ -515,7 +515,8 @@ GameObject:
   - component: {fileID: 188554141}
   - component: {fileID: 188554140}
   - component: {fileID: 188554142}
-  m_Layer: 0
+  - component: {fileID: 188554143}
+  m_Layer: 6
   m_Name: Bed
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -582,12 +583,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 188554139}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.74, y: -3.8, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1, y: -3.8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
+  m_Children:
+  - {fileID: 999162985}
+  m_Father: {fileID: 8146544847899470685}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &188554142
 BoxCollider2D:
@@ -632,8 +634,26 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 1.4375, y: 1.5170939}
+  m_Size: {x: 1.4375, y: 1.1}
   m_EdgeRadius: 0
+--- !u!114 &188554143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 188554139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33d1aabd0f678144090fa7eb7140ac1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _promptText: "\uC549\uAE30"
+  _isInteractable: 1
+  _playerMovement: {fileID: 2137112914}
+  _playerSpriteAnimator: {fileID: 2137112918}
+  _computerUIController: {fileID: 1729515124}
+  _sitAnchor: {fileID: 999162985}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -2921,6 +2941,37 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &999162984
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 999162985}
+  m_Layer: 6
+  m_Name: Sit Pos
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &999162985
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 999162984}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.21, y: 0.48, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 188554141}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1061290006
 GameObject:
   m_ObjectHideFlags: 0
@@ -8361,6 +8412,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1314420103}
+  - {fileID: 188554141}
   m_Father: {fileID: 3486554853516782566}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &8192189253906194356
@@ -9065,6 +9117,5 @@ SceneRoots:
   - {fileID: 1782393820}
   - {fileID: 1576734979}
   - {fileID: 3486554853516782566}
-  - {fileID: 188554141}
   - {fileID: 595243274}
   - {fileID: 7849177305457909402}

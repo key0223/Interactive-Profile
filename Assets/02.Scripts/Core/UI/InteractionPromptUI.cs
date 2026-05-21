@@ -37,6 +37,14 @@ public class InteractionPromptUI : MonoBehaviour
         _interactionDetector.CurrentInteractableChanged -= HandleCurrentInteractableChanged;
     }
 
+    private void Update()
+    {
+        if (_interactionDetector == null)
+            return;
+
+        Refresh(_interactionDetector.CurrentInteractable);
+    }
+
     private void HandleCurrentInteractableChanged(IInteractable interactable)
     {
         Refresh(interactable);
@@ -63,13 +71,19 @@ public class InteractionPromptUI : MonoBehaviour
             return;
         }
 
-        if (interactable == null || !interactable.CanInteract)
+        if (interactable == null || !interactable.CanInteract || !ShouldShowPrompt(interactable))
         {
             Hide();
             return;
         }
 
         Show(interactable.PromptText);
+    }
+
+    private static bool ShouldShowPrompt(IInteractable interactable)
+    {
+        IInteractionPromptVisibility promptVisibility = interactable as IInteractionPromptVisibility;
+        return promptVisibility == null || promptVisibility.ShouldShowPrompt;
     }
 
     private void Show(string prompt)

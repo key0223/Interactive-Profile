@@ -57,6 +57,14 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    public void MoveToPosition(Vector2 position)
+    {
+        if (_rigidbody != null)
+            _rigidbody.position = position;
+        else
+            transform.position = position;
+    }
+
     private void UpdateSpriteAnimator(bool canMove)
     {
         if (_spriteAnimator != null)

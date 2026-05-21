@@ -133,7 +133,7 @@ Editor 작업 기준:
 - `PlayerMovement`에 `[SerializeField] private PlayerSpriteAnimator _spriteAnimator;`를 추가한다.
 - `PlayerMovement.Update()`에서 movement enabled 상태와 이동 입력을 `PlayerSpriteAnimator.SetMovement()`로 전달한다.
 - `PlayerMovement.SetMovementEnabled(false)`에서 즉시 `SetMovement(Vector2.zero, false)`를 전달한다.
-- `PlayerSpriteAnimator.SetSitting(bool)`은 침대, 의자 등 추후 interaction용 API로 둔다.
+- `PlayerSpriteAnimator.SetSitting(bool)`은 침대, 의자 등 room interaction에서 호출한다.
 
 금지:
 
@@ -191,4 +191,4 @@ Codex는 위 Editor 작업을 직접 수행하지 않는다.
 ## Next Recommended Step
 
 - 다음 Editor step에서 sprite sheet slicing, `PlayerSpriteAnimator` 배열 입력, `PlayerMovement._spriteAnimator` 연결을 수행한다.
-- 이후 침대 또는 의자 interaction을 추가할 때 `SetSitting(true/false)` 호출 지점을 별도 step으로 구현한다.
+- sit 대상 오브젝트는 [Sit Interaction Guide](./02-sit-interaction-guide.md)에 따라 `SitInteraction`에서 `SetSitting(true/false)`를 호출한다.
