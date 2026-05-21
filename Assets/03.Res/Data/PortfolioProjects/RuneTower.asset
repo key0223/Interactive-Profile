@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5935ea1c46134aa4b8425fb8acb16dfe, type: 3}
+  m_Name: RuneTower
+  m_EditorClassIdentifier: 
+  _icon: {fileID: 21300000, guid: 675d868332ad3984cbdc6ba1ff9f816d, type: 3}
+  _previewImage: {fileID: 21300000, guid: 675d868332ad3984cbdc6ba1ff9f816d, type: 3}
+  _title: Rune Tower
+  _subtitle: "\uC11C\uBC84 \uAE30\uBC18 \uC778\uC99D\uACFC \uACB0\uC81C \uAC80\uC99D
+    \uC2DC\uC2A4\uD15C\uC744 \uAD6C\uCD95\uD55C \uBAA8\uBC14\uC77C \uAC8C\uC784 \uD504\uB85C\uC81D\uD2B8"
+  _role: Client / Server Programmer
+  _description: "Unity \uAE30\uBC18 \uBAA8\uBC14\uC77C \uAC8C\uC784 \uD504\uB85C\uC81D\uD2B8\uC5D0\uC11C
+    \uD074\uB77C\uC774\uC5B8\uD2B8-\uC11C\uBC84 \uB370\uC774\uD130 \uD1B5\uC2E0 \uBC0F
+    \uC778\uC99D, \uACB0\uC81C \uC2DC\uC2A4\uD15C \uAD6C\uD604\n\nREST API, JWT \uC778\uC99D,
+    \uC11C\uBC84 \uAE30\uBC18 \uC601\uC218\uC99D \uAC80\uC99D \uAD6C\uC870 \uB4F1\uC744
+    \uACBD\uD5D8"
+  _techStack:
+  - ASP.NET Core
+  - MySQL
+  - Firebase
+  - AWS EC2
+  - C#
+  - Unity
+  _systemDesign:
+  - "REST API \uAE30\uBC18 \uD074\uB77C\uC774\uC5B8\uD2B8-\uC11C\uBC84 \uD1B5\uC2E0
+    \uAD6C\uC870 \uAD6C\uD604"
+  - "JWT \uAE30\uBC18 \uC778\uC99D \uBC0F \uC0AC\uC6A9\uC790 \uAC80\uC99D \uAD6C\uC870
+    \uAD6C\uD604"
+  - "\uC11C\uBC84 \uAE30\uBC18 \uC778\uC571 \uACB0\uC81C \uBC0F \uC601\uC218\uC99D
+    \uAC80\uC99D \uD750\uB984 \uC124\uACC4"
+  _myWork:
+  - "AWS EC2 \uD658\uACBD\uC5D0 ASP.NET Core \uAE30\uBC18 \uAC8C\uC784 \uC11C\uBC84
+    \uAD6C\uCD95"
+  - "\uD50C\uB808\uC774\uC5B4 \uBC0F \uC778\uBCA4\uD1A0\uB9AC \uB370\uC774\uD130
+    \uC11C\uBC84 \uB3D9\uAE30\uD654 \uAD6C\uD604"
+  - "Firebase Authentication \uBC0F Google Play Games \uB85C\uADF8\uC778 \uC5F0\uB3D9"
+  - "Authorization Header \uAE30\uBC18 \uC778\uC99D API \uAD6C\uD604"
+  - "Unity IAP \uC601\uC218\uC99D \uC11C\uBC84 \uC804\uB2EC \uBC0F Google Play Developer
+    API \uAC80\uC99D \uCC98\uB9AC \uAD6C\uD604"
+  _problemSolving:
+  - "\uD074\uB77C\uC774\uC5B8\uD2B8 \uC800\uC7A5 \uBC29\uC2DD\uC758 \uB370\uC774\uD130
+    \uBCC0\uC870 \uC704\uD5D8\uC744 \uC11C\uBC84 \uC911\uC2EC \uAD6C\uC870\uB85C
+    \uAC1C\uC120"
+  - "\uC778\uC99D\uB418\uC9C0 \uC54A\uC740 \uC0AC\uC6A9\uC790\uC758 API \uC811\uADFC
+    \uBB38\uC81C\uB97C JWT \uC778\uC99D \uAD6C\uC870\uB85C \uD574\uACB0"
+  - "\uD074\uB77C\uC774\uC5B8\uD2B8 \uB2E8\uB3C5 \uC7AC\uD654 \uC9C0\uAE09 \uAD6C\uC870\uC758
+    \uBCF4\uC548 \uBB38\uC81C\uB97C \uC11C\uBC84 \uAC80\uC99D \uBC29\uC2DD\uC73C\uB85C
+    \uAC1C\uC120"
+  - "\uD50C\uB7AB\uD3FC \uB85C\uADF8\uC778\uACFC \uAC8C\uC784 \uC11C\uBC84 \uC778\uC99D
+    \uD750\uB984\uC744 \uC5F0\uB3D9\uD558\uC5EC \uC778\uC99D \uC0C1\uD0DC \uC720\uC9C0
+    \uBB38\uC81C \uD574\uACB0"
+  _highlights: []
+  _projectUrl: 
+  _githubUrl: 

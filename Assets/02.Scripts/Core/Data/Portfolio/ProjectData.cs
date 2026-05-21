@@ -10,6 +10,9 @@ public class ProjectData : ScriptableObject
     [SerializeField] private string _role;
     [SerializeField, TextArea(3, 8)] private string _description;
     [SerializeField] private string[] _techStack;
+    [SerializeField] private string[] _systemDesign;
+    [SerializeField] private string[] _myWork;
+    [SerializeField] private string[] _problemSolving;
     [SerializeField] private string[] _highlights;
     [SerializeField] private string _projectUrl;
     [SerializeField] private string _githubUrl;
@@ -21,6 +24,9 @@ public class ProjectData : ScriptableObject
     public string Role => _role;
     public string Description => _description;
     public string[] TechStack => _techStack;
+    public string[] SystemDesign => _systemDesign;
+    public string[] MyWork => _myWork;
+    public string[] ProblemSolving => _problemSolving;
     public string[] Highlights => _highlights;
     public string ProjectUrl => _projectUrl;
     public string GithubUrl => _githubUrl;

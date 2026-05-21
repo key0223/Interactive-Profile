@@ -6,6 +6,8 @@ using UnityEngine.UI;
 
 public class ProjectViewerUI : MonoBehaviour
 {
+    private const string ImplementationHeader = "IMPLEMENTATION";
+
     [SerializeField] private Image _iconImage;
     [SerializeField] private Sprite _fallbackIcon;
     [SerializeField] private TMP_Text _titleText;
@@ -84,8 +86,8 @@ public class ProjectViewerUI : MonoBehaviour
         SetSectionText(_subtitleText, _subtitleRoot, projectData.Subtitle);
         SetSectionText(_roleText, _roleRoot, projectData.Role);
         SetSectionText(_descriptionText, _descriptionRoot, projectData.Description);
-        SetSectionText(_techStackText, _techStackRoot, BuildListText(projectData.TechStack));
-        SetSectionText(_highlightsText, _highlightsRoot, BuildListText(projectData.Highlights));
+        SetSectionText(_techStackText, _techStackRoot, BuildStackText(projectData.TechStack));
+        SetSectionText(_highlightsText, _highlightsRoot, BuildArchiveText(projectData));
         SetSectionText(_urlText, null, BuildUrlText(projectData));
         UpdateLinkButtons();
         ResetScrollToTop();
@@ -228,7 +230,7 @@ public class ProjectViewerUI : MonoBehaviour
             Application.OpenURL(url);
     }
 
-    private static string BuildListText(string[] items)
+    private static string BuildStackText(string[] items)
     {
         if (items == null || items.Length == 0)
             return string.Empty;
@@ -240,13 +242,100 @@ public class ProjectViewerUI : MonoBehaviour
                 continue;
 
             if (builder.Length > 0)
-                builder.AppendLine();
+                builder.Append(" | ");
 
-            builder.Append("- ");
-            builder.Append(items[i]);
+            builder.Append(items[i].Trim());
         }
 
         return builder.ToString();
+    }
+
+    private static string BuildArchiveText(ProjectData projectData)
+    {
+        if (projectData == null)
+            return string.Empty;
+
+        StringBuilder builder = new StringBuilder();
+        AppendImplementationHeader(builder);
+        AppendArchiveGroup(builder, "SYSTEM DESIGN", projectData.SystemDesign);
+        AppendArchiveGroup(builder, "MY WORK", projectData.MyWork);
+        AppendArchiveGroup(builder, "PROBLEM SOLVING", projectData.ProblemSolving);
+
+        if (!HasArchiveContent(builder))
+        {
+            builder.Clear();
+            AppendImplementationHeader(builder);
+            AppendFallbackHighlights(builder, projectData.Highlights);
+        }
+
+        return HasArchiveContent(builder) ? builder.ToString() : string.Empty;
+    }
+
+    private static void AppendImplementationHeader(StringBuilder builder)
+    {
+        if (builder == null)
+            return;
+
+        builder.AppendLine(ImplementationHeader);
+        builder.AppendLine();
+    }
+
+    private static void AppendArchiveGroup(StringBuilder builder, string title, string[] items)
+    {
+        if (builder == null || string.IsNullOrWhiteSpace(title) || items == null || items.Length == 0)
+            return;
+
+        bool hasGroupHeader = false;
+
+        for (int i = 0; i < items.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(items[i]))
+                continue;
+
+            if (!hasGroupHeader)
+            {
+                if (HasArchiveContent(builder))
+                    builder.AppendLine().AppendLine();
+
+                builder.Append("[ ");
+                builder.Append(title.Trim().ToUpperInvariant());
+                builder.AppendLine(" ]");
+                builder.AppendLine();
+                hasGroupHeader = true;
+            }
+            else
+            {
+                builder.AppendLine();
+            }
+
+            builder.Append("- ");
+            builder.AppendLine(items[i].Trim());
+        }
+    }
+
+    private static bool HasArchiveContent(StringBuilder builder)
+    {
+        return builder != null && builder.ToString().Trim() != ImplementationHeader;
+    }
+
+    private static void AppendFallbackHighlights(StringBuilder builder, string[] items)
+    {
+        if (builder == null || items == null || items.Length == 0)
+            return;
+
+        bool hasItem = false;
+        for (int i = 0; i < items.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(items[i]))
+                continue;
+
+            if (hasItem)
+                builder.AppendLine();
+
+            builder.Append("- ");
+            builder.AppendLine(items[i].Trim());
+            hasItem = true;
+        }
     }
 
     private static string BuildUrlText(ProjectData projectData)
