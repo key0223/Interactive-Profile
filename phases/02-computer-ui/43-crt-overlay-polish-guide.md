@@ -1,5 +1,9 @@
 # Step: CRT Overlay Polish Guide
 
+## Status
+
+Deprecated. 기존 `ScanlineOverlay`, `ScreenVignette`, `NoiseOverlay` 분리 구조는 더 이상 사용하지 않는다. 최신 구성은 [Computer CRT Overlay Shader Editor Wiring](./49-computer-crt-overlay-shader-editor-wiring.md)의 단일 `CRTOverlayImage`와 `ComputerCrtOverlay.shader`를 따른다.
+
 ## Document Metadata
 
 - Status: Active

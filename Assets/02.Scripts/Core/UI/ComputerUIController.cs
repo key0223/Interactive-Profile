@@ -13,6 +13,7 @@ public class ComputerUIController : MonoBehaviour
     [SerializeField] private StartMenuUI _startMenuUI;
     [SerializeField] private BootScreenUI _bootScreenUI;
     [SerializeField] private ShutdownScreenUI _shutdownScreenUI;
+    [SerializeField] private ComputerCrtOverlayController _crtOverlayController;
     [SerializeField] private GameObject _desktopLayer;
     [SerializeField] private GameObject _windowLayer;
     [SerializeField] private GameObject _taskbarRoot;
@@ -55,6 +56,7 @@ public class ComputerUIController : MonoBehaviour
             _shutdownScreenUI.Hide();
 
         SetDesktopShellActive(false);
+        SetCrtOverlayVisible(false);
         SetRootActive(false);
         IsOpen = false;
     }
@@ -82,13 +84,9 @@ public class ComputerUIController : MonoBehaviour
         if (IsOpen)
             return;
 
-        _isShuttingDown = false;
         IsOpen = true;
         SetRootActive(true);
-        SetDesktopShellActive(false);
-
-        if (_startMenuUI != null)
-            _startMenuUI.Hide();
+        ResetComputerUiStateForOpen();
 
         if (_interactionPromptUI != null)
             _interactionPromptUI.SetVisibleBlocked(true);
@@ -105,6 +103,8 @@ public class ComputerUIController : MonoBehaviour
         {
             HandleBootComplete();
         }
+
+        SetCrtOverlayVisible(true);
     }
 
     public void RequestShutdown()
@@ -163,6 +163,7 @@ public class ComputerUIController : MonoBehaviour
             _startMenuUI.Hide();
 
         SetDesktopShellActive(false);
+        SetCrtOverlayVisible(false);
         SetRootActive(false);
 
         if (_projectDesktopUI != null)
@@ -183,6 +184,29 @@ public class ComputerUIController : MonoBehaviour
     {
         if (_root != null)
             _root.SetActive(active);
+    }
+
+    private void SetCrtOverlayVisible(bool visible)
+    {
+        if (_crtOverlayController != null)
+            _crtOverlayController.SetVisible(visible);
+    }
+
+    private void ResetComputerUiStateForOpen()
+    {
+        _isBooting = false;
+        _isShuttingDown = false;
+
+        if (_bootScreenUI != null)
+            _bootScreenUI.Hide();
+
+        if (_shutdownScreenUI != null)
+            _shutdownScreenUI.Hide();
+
+        if (_startMenuUI != null)
+            _startMenuUI.Hide();
+
+        SetDesktopShellActive(false);
     }
 
     private void HandleBootComplete()
