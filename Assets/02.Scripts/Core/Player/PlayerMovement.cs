@@ -5,6 +5,7 @@ public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private InputManager _inputManager;
     [SerializeField] private Rigidbody2D _rigidbody;
+    [SerializeField] private PlayerSpriteAnimator _spriteAnimator;
     [SerializeField] private float _moveSpeed = 4f;
 
     private Vector2 _moveInput;
@@ -24,6 +25,7 @@ public class PlayerMovement : MonoBehaviour
         if (!_movementEnabled || _inputManager == null)
         {
             _moveInput = Vector2.zero;
+            UpdateSpriteAnimator(false);
             return;
         }
 
@@ -31,6 +33,8 @@ public class PlayerMovement : MonoBehaviour
 
         if (_moveInput.sqrMagnitude > 1f)
             _moveInput.Normalize();
+
+        UpdateSpriteAnimator(true);
     }
 
     private void FixedUpdate()
@@ -47,6 +51,15 @@ public class PlayerMovement : MonoBehaviour
         _movementEnabled = enabled;
 
         if (!enabled)
+        {
             _moveInput = Vector2.zero;
+            UpdateSpriteAnimator(false);
+        }
+    }
+
+    private void UpdateSpriteAnimator(bool canMove)
+    {
+        if (_spriteAnimator != null)
+            _spriteAnimator.SetMovement(_moveInput, canMove);
     }
 }
