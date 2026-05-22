@@ -131,13 +131,13 @@ Assets/
 ### ProjectDesktopUI / ProjectWindowManager
 
 - `ProjectDesktopUI`는 `ProjectCatalog`, desktop icon root, project window prefab, window root, taskbar UI 참조를 보관하는 composition root다.
-- `ProjectDesktopUI`는 project icon과 `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE` typed app icon을 runtime 생성한다.
+- `ProjectDesktopUI`는 project icon, `TextWindowData` 기반 텍스트 앱 icon, `SYSTEM.LOG`, `CONTACT.EXE` typed app icon을 runtime 생성한다.
 - `ProjectWindowManager`는 runtime project window lifecycle, identity, state, focus order, taskbar sync의 source of truth다.
 - project window identity는 `DesktopWindowId`를 사용한다. 프로젝트 창은 `DesktopWindowType.Projects`와 project key로 구분한다.
-- typed app identity는 `DesktopWindowId.ForType(DesktopWindowType.AboutMe/Skills/Contact)`를 사용한다.
+- typed app identity는 app 성격에 따라 `DesktopWindowId`를 사용한다. 텍스트 앱은 `DesktopWindowType.Text`와 `TextWindowData.Id`로 구분한다.
 - 같은 `ProjectData`를 다시 열면 새 창과 버튼을 만들지 않고 기존 창을 restore/focus한다.
 - 서로 다른 `ProjectData`는 각각 window와 taskbar button을 1:1로 생성한다.
-- `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE`는 app type별 단일 window다. 이미 열린 상태에서 다시 열면 기존 window를 restore/focus한다.
+- `README.TXT`, `DEVLOG.EXE` 같은 텍스트 앱은 data id별 단일 window다. `SYSTEM.LOG`, `CONTACT.EXE`는 app type별 단일 window다. 이미 열린 상태에서 다시 열면 기존 window를 restore/focus한다.
 - visible/opened window를 focus하면 window sibling이 최상단으로 이동하고 taskbar active button도 갱신된다.
 - focused window가 close 또는 minimize되면 `_focusOrder` 기준으로 남아 있는 opened window 중 가장 최근 focus된 창이 active가 된다.
 - minimized window는 focus 대상에서 제외되지만 taskbar button은 유지된다.
@@ -158,11 +158,11 @@ Assets/
 
 ### AboutMeViewerUI
 
-- `README.TXT` 앱의 단일 scroll text viewer다.
-- serialized document text 또는 기본 README 문서를 TextMeshPro 영역에 표시한다.
-- monospace font가 연결되면 문서 뷰어 톤으로 적용한다.
+- 텍스트 앱 공용 scroll text viewer다.
+- `TextWindowData` 하나를 런타임에 받아 title/body TextMeshPro 영역에 표시한다.
+- 본문은 `TextWindowData._optionalTextAsset`이 있으면 해당 `TextAsset.text`, 없으면 `_bodyText`를 사용한다.
 - 초기화와 restore 시 scroll을 top으로 되돌린다.
-- profile card UI가 아니라 README/document viewer 책임만 가진다.
+- serialized default text, prefab별 본문, 외부 string 주입은 사용하지 않는다.
 
 ### SkillsWindowView
 
@@ -228,7 +228,8 @@ Project Desktop
     ├── DesktopIconRoot 참조
     ├── ProjectDesktopIconUI prefab 참조
     ├── ProjectWindowUI prefab 참조
-    ├── AboutMe window prefab 참조
+    ├── TextWindow prefab 참조
+    ├── TextWindowData 목록
     ├── Skills window prefab 참조
     ├── Contact window prefab 참조
     ├── WindowLayer 참조
@@ -290,7 +291,7 @@ Canvas
 - `WindowLayer Bottom`은 `TaskbarRoot Height`와 맞춰 maximize/drag/resize bounds가 taskbar를 침범하지 않게 한다.
 - `ProjectTaskbarUI._buttonRoot`는 `TaskbarButtonRoot`를 가리키고, `_buttonPrefab`은 `ProjectTaskbarButtonUI` prefab 또는 template을 가리킨다.
 - Project app은 `ProjectWindowUI._projectViewerUI`에 연결한다.
-- `README.TXT` app은 `ProjectWindowUI._aboutMeViewerUI`에 연결한다.
+- `README.TXT`, `DEVLOG.EXE` 같은 텍스트 앱은 공용 TextWindow prefab의 `ProjectWindowUI._aboutMeViewerUI`에 연결하고, 실제 내용은 `TextWindowData`로 주입한다.
 - `SYSTEM.LOG` app은 `ProjectWindowUI._skillsWindowView`에 연결한다.
 - `CONTACT.EXE` app은 `ProjectWindowUI._contactWindowView`에 연결한다.
 - `Interaction Prompt Root` 또는 Prompt Text는 `InteractionPromptUI`가 표시/숨김을 제어한다.
@@ -303,11 +304,13 @@ Desktop
 ├── Project icons from ProjectCatalog
 ├── README.TXT
 ├── SYSTEM.LOG
-└── CONTACT.EXE
+├── CONTACT.EXE
+└── DEVLOG.EXE
 ```
 
 - Project icons는 `ProjectCatalog.Projects`를 순회해 runtime 생성한다.
-- `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE`는 `ProjectDesktopUI`의 typed app 설정에 따라 runtime 생성한다.
+- `README.TXT`, `DEVLOG.EXE` 같은 텍스트 앱은 `ProjectDesktopUI._textDesktopApps`의 `TextWindowData` 목록에 따라 runtime 생성한다.
+- `SYSTEM.LOG`, `CONTACT.EXE`는 `ProjectDesktopUI`의 typed app 설정에 따라 runtime 생성한다.
 - scene에 icon을 고정 배치하는 방식이 아니라 icon prefab을 instantiate하는 방식이다.
 - 모든 window는 `ProjectWindowManager`에 등록되고 taskbar button lifecycle을 공유한다.
 

@@ -1867,8 +1867,8 @@ MonoBehaviour:
   m_StartAxis: 1
   m_CellSize: {x: 50, y: 50}
   m_Spacing: {x: 0, y: 0}
-  m_Constraint: 0
-  m_ConstraintCount: 2
+  m_Constraint: 2
+  m_ConstraintCount: 6
 --- !u!1 &745478647
 GameObject:
   m_ObjectHideFlags: 0
@@ -5343,14 +5343,11 @@ MonoBehaviour:
   _projectWindowUI: {fileID: 8616159403429938701, guid: 34b97c5aae152f64c823aa9ed2f281e6,
     type: 3}
   _projectTaskbarUI: {fileID: 528551333}
-  _showAboutMeDesktopIcon: 1
-  _aboutMeDesktopTitle: README.TXT
-  _aboutMeDesktopIcon: {fileID: 21300000, guid: d941406d433a16343aaf6b451db67730,
+  _textWindowPrefab: {fileID: 9026193025153962724, guid: d0e51d3acfece514298e91f5e4a3cbfd,
     type: 3}
-  _aboutMeWindowPrefab: {fileID: 9026193025153962724, guid: d0e51d3acfece514298e91f5e4a3cbfd,
-    type: 3}
-  _aboutMeWindowIcon: {fileID: 21300000, guid: d941406d433a16343aaf6b451db67730, type: 3}
-  _aboutMeWindowTitle: README.TXT
+  _textDesktopApps:
+  - {fileID: 11400000, guid: 3511144b9f8a59342a5d0d9043b4bbb5, type: 2}
+  - {fileID: 11400000, guid: 4706f5eb2cf587c48be63fa1d1955ec0, type: 2}
   _showSkillsDesktopIcon: 1
   _skillsDesktopTitle: SYSTEM.LOG
   _skillsDesktopIcon: {fileID: 21300000, guid: f60ea14244959b64588d1df1e250f49c, type: 3}

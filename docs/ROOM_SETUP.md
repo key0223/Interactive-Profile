@@ -214,9 +214,8 @@ WindowLayer Bottom = TaskbarRoot Height
   - `_projectWindowPrefab`: `ProjectWindowUI` prefab 또는 template
   - `_windowRoot`: `WindowLayer`
   - `_projectTaskbarUI`: `TaskbarRoot`의 `ProjectTaskbarUI`
-  - `_showAboutMeDesktopIcon`: true
-  - `_aboutMeDesktopTitle`: `README.TXT`
-  - `_aboutMeWindowPrefab`: README.TXT window prefab
+  - `_textWindowPrefab`: 공용 TextWindow prefab
+  - `_textDesktopApps`: `AboutMeTextData`, `DevLogTextData` 같은 `TextWindowData` asset 목록
   - `_showSkillsDesktopIcon`: true
   - `_skillsDesktopTitle`: `SYSTEM.LOG`
   - `_skillsWindowPrefab`: SYSTEM.LOG window prefab
@@ -229,13 +228,13 @@ WindowLayer Bottom = TaskbarRoot Height
 - `_windowRoot`는 반드시 taskbar 제외 영역인 `WindowLayer`를 가리켜야 한다.
 - `_projectTaskbarUI`가 비어 있어도 window 기능은 null-safe하게 동작해야 하지만, taskbar 검증은 이 참조가 필요하다.
 - 같은 `ProjectData`를 다시 열면 기존 window/taskbar button을 restore/focus해야 하며 중복 생성되면 안 된다.
-- `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE`도 scene 수동 배치가 아니라 runtime desktop icon으로 생성하는 방식을 우선한다.
+- `README.TXT`, `SYSTEM.LOG`, `CONTACT.EXE`, `DEVLOG.EXE`도 scene 수동 배치가 아니라 runtime desktop icon으로 생성하는 방식을 우선한다.
 
 ### ProjectWindow / Typed App Windows
 
 - `ProjectWindowUI`
 - Project app prefab은 `ProjectViewerUI`
-- README.TXT prefab은 `AboutMeViewerUI`
+- README.TXT, DEVLOG.EXE 같은 텍스트 앱은 공용 TextWindow prefab과 `TextWindowData`
 - SYSTEM.LOG prefab은 `SkillsWindowView`
 - CONTACT.EXE prefab은 `ContactWindowView`
 
@@ -248,14 +247,16 @@ Project app의 TextMeshPro `TMP_Text` 필드 연결:
   - `_highlightsText`
   - `_urlText`
 
-runtime project window는 `ProjectDesktopUI._projectWindowPrefab`에서 instantiate된다. typed app window는 각각 `_aboutMeWindowPrefab`, `_skillsWindowPrefab`, `_contactWindowPrefab`에서 instantiate된다. prefab/template root에는 window control button, drag/resize/maximize 대상, 해당 view component가 연결되어 있어야 한다.
+runtime project window는 `ProjectDesktopUI._projectWindowPrefab`에서 instantiate된다. 텍스트 앱 window는 `ProjectDesktopUI._textWindowPrefab` 하나를 공유하고, SYSTEM.LOG/CONTACT.EXE는 각각 `_skillsWindowPrefab`, `_contactWindowPrefab`에서 instantiate된다. prefab/template root에는 window control button, drag/resize/maximize 대상, 해당 view component가 연결되어 있어야 한다.
 
 `ProjectWindowUI` 연결 기준:
 
 - Projects: `_windowType = Projects`, `_projectViewerUI` 연결
-- README.TXT: `_windowType = AboutMe`, `_aboutMeViewerUI` 연결
+- TextWindow: `_windowType = Text`, `_aboutMeViewerUI` 연결, 내용은 `TextWindowData`로 런타임 주입
 - SYSTEM.LOG: `_windowType = Skills`, `_skillsWindowView` 연결
 - CONTACT.EXE: `_windowType = Contact`, `_contactWindowView` 연결
+
+TextWindowData 기반 텍스트 앱 상세 연결은 `docs/TEXT_WINDOW_SETUP.md`를 따른다.
 
 ### CONTACT.EXE View
 

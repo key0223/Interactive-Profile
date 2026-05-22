@@ -9,7 +9,8 @@ public enum DesktopWindowType
     Projects,
     AboutMe,
     Skills,
-    Contact
+    Contact,
+    Text
 }
 
 public enum WindowState
@@ -70,6 +71,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
         if (_windowType == DesktopWindowType.Projects && _projectViewerUI == null)
             Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} requires a {nameof(ProjectViewerUI)} reference.");
+
+        if (_windowType == DesktopWindowType.Text && _aboutMeViewerUI == null)
+            Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} requires an {nameof(AboutMeViewerUI)} reference for text window mode.");
 
         if (_windowType == DesktopWindowType.Contact && _contactWindowView == null)
             Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} requires a {nameof(ContactWindowView)} reference.");
@@ -138,10 +142,22 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
     public void ShowAboutMe(string title, Sprite icon)
     {
+        Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} received legacy ShowAboutMe call. Use {nameof(ShowTextWindow)} with {nameof(TextWindowData)}.");
+    }
+
+    public void ShowTextWindow(TextWindowData data)
+    {
+        if (data == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} received null {nameof(TextWindowData)}.");
+            Hide();
+            return;
+        }
+
         CurrentProjectData = null;
         ShowRoot();
-        SetTitle(string.IsNullOrWhiteSpace(title) ? "About Me" : title);
-        SetIcon(icon);
+        SetTitle(data.WindowTitle);
+        SetIcon(data.Icon);
 
         if (_projectViewerUI != null)
             _projectViewerUI.Clear();
@@ -153,7 +169,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
             _contactWindowView.Clear();
 
         if (_aboutMeViewerUI != null)
-            _aboutMeViewerUI.Initialize();
+            _aboutMeViewerUI.Initialize(data);
+        else
+            Debug.LogWarning($"{nameof(ProjectWindowUI)} on {name} requires an {nameof(AboutMeViewerUI)} reference for text window data {data.Id}.");
 
         RequestFocus();
     }

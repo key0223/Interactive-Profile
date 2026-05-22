@@ -94,7 +94,7 @@ GameObject:
   - component: {fileID: 2184145755212998227}
   - component: {fileID: 905431625879636206}
   m_Layer: 0
-  m_Name: ReadMeText
+  m_Name: DevLogText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -232,7 +232,7 @@ GameObject:
   - component: {fileID: 9026193025153962724}
   - component: {fileID: 3736446209754059063}
   m_Layer: 0
-  m_Name: AboutMeWindow
+  m_Name: DevLogWindow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -322,7 +322,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d82396259c96d6b459ee5f4523abc7fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _windowType: 1
+  _windowType: 4
   _windowRoot: {fileID: 656063180069917153}
   _iconImage: {fileID: 4544687193614983033}
   _fallbackIcon: {fileID: 21300000, guid: d941406d433a16343aaf6b451db67730, type: 3}
@@ -1130,7 +1130,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:

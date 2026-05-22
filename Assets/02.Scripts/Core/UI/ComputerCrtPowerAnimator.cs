@@ -146,3 +146,4 @@ public sealed class ComputerCrtPowerAnimator : MonoBehaviour
         _powerRoutine = null;
     }
 }
+

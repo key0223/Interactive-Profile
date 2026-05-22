@@ -15,12 +15,8 @@ public class ProjectDesktopUI : MonoBehaviour, IPointerDownHandler
     [SerializeField] private int _maxWindowCascadeSteps = 6;
     [SerializeField] private ProjectWindowUI _projectWindowUI;
     [SerializeField] private ProjectTaskbarUI _projectTaskbarUI;
-    [SerializeField] private bool _showAboutMeDesktopIcon = true;
-    [SerializeField] private string _aboutMeDesktopTitle = "README.TXT";
-    [SerializeField] private Sprite _aboutMeDesktopIcon;
-    [SerializeField] private ProjectWindowUI _aboutMeWindowPrefab;
-    [SerializeField] private Sprite _aboutMeWindowIcon;
-    [SerializeField] private string _aboutMeWindowTitle = "ABOUT_ME.TXT";
+    [SerializeField] private ProjectWindowUI _textWindowPrefab;
+    [SerializeField] private TextWindowData[] _textDesktopApps;
     [SerializeField] private bool _showSkillsDesktopIcon = true;
     [SerializeField] private string _skillsDesktopTitle = "SYSTEM.LOG";
     [SerializeField] private Sprite _skillsDesktopIcon;
@@ -37,7 +33,7 @@ public class ProjectDesktopUI : MonoBehaviour, IPointerDownHandler
     [SerializeField] private bool _clearSelectionOnDesktopClick = true;
 
     private readonly List<ProjectDesktopIconUI> _icons = new List<ProjectDesktopIconUI>();
-    private ProjectDesktopIconUI _aboutMeIcon;
+    private readonly Dictionary<TextWindowData, ProjectDesktopIconUI> _textAppIcons = new Dictionary<TextWindowData, ProjectDesktopIconUI>();
     private ProjectDesktopIconUI _skillsIcon;
     private ProjectDesktopIconUI _contactIcon;
     private ProjectDesktopIconUI _selectedIcon;
@@ -55,6 +51,9 @@ public class ProjectDesktopUI : MonoBehaviour, IPointerDownHandler
 
         if (_iconPrefab == null)
             Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} requires a {nameof(ProjectDesktopIconUI)} prefab reference.");
+
+        if (_textWindowPrefab == null && _textDesktopApps != null && _textDesktopApps.Length > 0)
+            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} requires a text window prefab to open configured text desktop apps.");
 
         if (_projectWindowPrefab != null)
         {
@@ -119,17 +118,17 @@ public class ProjectDesktopUI : MonoBehaviour, IPointerDownHandler
             _projectWindowUI.ShowProject(projectData);
     }
 
-    public void OpenAboutMeWindow()
+    public void OpenTextWindow(TextWindowData data)
     {
-        SelectAboutMeIcon();
+        SelectTextAppIcon(data);
 
         if (_projectWindowManager == null)
         {
-            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} cannot open AboutMe without multi-window mode. Assign a project window prefab and window root.");
+            Debug.LogWarning($"{nameof(ProjectDesktopUI)} on {name} cannot open a text window without multi-window mode. Assign a project window prefab and window root.");
             return;
         }
 
-        _projectWindowManager.OpenAboutMeWindow(_aboutMeWindowPrefab, _aboutMeWindowTitle, _aboutMeWindowIcon);
+        _projectWindowManager.OpenTextWindow(_textWindowPrefab, data);
     }
 
     public void OpenSkillsWindow()
@@ -202,7 +201,7 @@ public class ProjectDesktopUI : MonoBehaviour, IPointerDownHandler
             return;
         }
 
-        CreateAboutMeIcon();
+        CreateTextAppIcons();
         CreateSkillsIcon();
         CreateContactIcon();
 
@@ -228,15 +227,28 @@ public class ProjectDesktopUI : MonoBehaviour, IPointerDownHandler
         }
     }
 
-    private void CreateAboutMeIcon()
+    private void CreateTextAppIcons()
     {
-        if (!_showAboutMeDesktopIcon)
+        if (_textDesktopApps == null)
             return;
 
-        ProjectDesktopIconUI icon = Instantiate(_iconPrefab, _iconRoot);
-        icon.Setup(_aboutMeDesktopIcon, _aboutMeDesktopTitle, SelectAboutMeIcon, OpenAboutMeWindow);
-        _aboutMeIcon = icon;
-        _icons.Add(icon);
+        for (int i = 0; i < _textDesktopApps.Length; i++)
+        {
+            TextWindowData textWindowData = _textDesktopApps[i];
+            if (textWindowData == null)
+                continue;
+
+            ProjectDesktopIconUI icon = Instantiate(_iconPrefab, _iconRoot);
+            TextWindowData capturedData = textWindowData;
+            icon.Setup(
+                textWindowData.Icon,
+                textWindowData.WindowTitle,
+                () => SelectTextAppIcon(capturedData),
+                () => OpenTextWindow(capturedData));
+
+            _textAppIcons[textWindowData] = icon;
+            _icons.Add(icon);
+        }
     }
 
     private void CreateSkillsIcon()
@@ -270,7 +282,7 @@ public class ProjectDesktopUI : MonoBehaviour, IPointerDownHandler
         }
 
         _icons.Clear();
-        _aboutMeIcon = null;
+        _textAppIcons.Clear();
         _skillsIcon = null;
         _contactIcon = null;
         _selectedIcon = null;
@@ -281,13 +293,6 @@ public class ProjectDesktopUI : MonoBehaviour, IPointerDownHandler
     {
         _selectedProjectData = null;
         _selectedIcon = null;
-        UpdateSelectionVisuals();
-    }
-
-    private void SelectAboutMeIcon()
-    {
-        _selectedProjectData = null;
-        _selectedIcon = _aboutMeIcon;
         UpdateSelectionVisuals();
     }
 
@@ -302,6 +307,15 @@ public class ProjectDesktopUI : MonoBehaviour, IPointerDownHandler
     {
         _selectedProjectData = null;
         _selectedIcon = _contactIcon;
+        UpdateSelectionVisuals();
+    }
+
+    private void SelectTextAppIcon(TextWindowData data)
+    {
+        _selectedProjectData = null;
+        _selectedIcon = data != null && _textAppIcons.TryGetValue(data, out ProjectDesktopIconUI icon)
+            ? icon
+            : null;
         UpdateSelectionVisuals();
     }
 
@@ -661,42 +675,6 @@ public sealed class ProjectWindowManager
         WindowBoundsUtility.ClampToBounds(window.WindowRectTransform, ResolveWindowBoundsRoot(window));
     }
 
-    public void OpenAboutMeWindow(ProjectWindowUI aboutMeWindowPrefab, string title, Sprite icon)
-    {
-        DesktopWindowId id = DesktopWindowId.ForType(DesktopWindowType.AboutMe);
-
-        if (_registeredWindows.TryGetValue(id, out ProjectWindowUI existingWindow) && existingWindow != null)
-        {
-            if (!existingWindow.IsVisible)
-                RestoreWindow(id);
-            else
-                existingWindow.ResetWindowScrollToTop();
-
-            FocusWindow(existingWindow);
-            return;
-        }
-
-        if (aboutMeWindowPrefab == null || _windowRoot == null)
-        {
-            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot open AboutMe without an AboutMe window prefab and window root.");
-            return;
-        }
-
-        ProjectWindowUI window = UnityEngine.Object.Instantiate(aboutMeWindowPrefab, _windowRoot);
-        RectTransform boundsRoot = ResolveWindowBoundsRoot(window);
-        window.SetBoundsRoot(boundsRoot);
-        window.Closed += HandleWindowClosed;
-        window.FocusRequested += FocusWindow;
-        window.Minimized += HandleWindowMinimized;
-        window.Restored += HandleWindowRestored;
-
-        string resolvedTitle = ResolveAboutMeWindowTitle(title);
-        RegisterWindow(window, id, resolvedTitle, icon);
-        ApplyInitialPosition(window, id);
-        window.ShowAboutMe(resolvedTitle, icon);
-        FocusWindow(window);
-    }
-
     public void OpenSkillsWindow(ProjectWindowUI skillsWindowPrefab, string title, Sprite icon)
     {
         DesktopWindowId id = DesktopWindowId.ForType(DesktopWindowType.Skills);
@@ -766,6 +744,47 @@ public sealed class ProjectWindowManager
         RegisterWindow(window, id, resolvedTitle, icon);
         ApplyInitialPosition(window, id);
         window.ShowContact(resolvedTitle, icon);
+        FocusWindow(window);
+    }
+
+    public void OpenTextWindow(ProjectWindowUI textWindowPrefab, TextWindowData data)
+    {
+        if (data == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} received null {nameof(TextWindowData)}.");
+            return;
+        }
+
+        DesktopWindowId id = new DesktopWindowId(DesktopWindowType.Text, data.Id);
+
+        if (_registeredWindows.TryGetValue(id, out ProjectWindowUI existingWindow) && existingWindow != null)
+        {
+            if (!existingWindow.IsVisible)
+                RestoreWindow(id);
+            else
+                existingWindow.ResetWindowScrollToTop();
+
+            FocusWindow(existingWindow);
+            return;
+        }
+
+        if (textWindowPrefab == null || _windowRoot == null)
+        {
+            Debug.LogWarning($"{nameof(ProjectWindowManager)} for {_ownerName} cannot open text window {data.Id} without a text window prefab and window root.");
+            return;
+        }
+
+        ProjectWindowUI window = UnityEngine.Object.Instantiate(textWindowPrefab, _windowRoot);
+        RectTransform boundsRoot = ResolveWindowBoundsRoot(window);
+        window.SetBoundsRoot(boundsRoot);
+        window.Closed += HandleWindowClosed;
+        window.FocusRequested += FocusWindow;
+        window.Minimized += HandleWindowMinimized;
+        window.Restored += HandleWindowRestored;
+
+        RegisterWindow(window, id, data.WindowTitle, data.Icon);
+        ApplyInitialPosition(window, id);
+        window.ShowTextWindow(data);
         FocusWindow(window);
     }
 
@@ -1002,14 +1021,6 @@ public sealed class ProjectWindowManager
         }
 
         return window != null ? window.WindowType.ToString() : "Window";
-    }
-
-    private static string ResolveAboutMeWindowTitle(string title)
-    {
-        if (!string.IsNullOrWhiteSpace(title))
-            return title;
-
-        return "About Me";
     }
 
     private static string ResolveSkillsWindowTitle(string title)
