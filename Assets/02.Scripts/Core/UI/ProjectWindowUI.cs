@@ -33,6 +33,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     [SerializeField] private AboutMeViewerUI _aboutMeViewerUI;
     [SerializeField] private SkillsWindowView _skillsWindowView;
     [SerializeField] private ContactWindowView _contactWindowView;
+    [SerializeField] private ComputerWindowAnimator _computerWindowAnimator;
     [SerializeField] private WindowTransitionUI _windowTransitionUI;
     [SerializeField] private RectTransform _maximizeBoundsRoot;
     [SerializeField] private Vector2 _fallbackMaximizedSize = new Vector2(860f, 560f);
@@ -209,7 +210,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         _isMinimizing = false;
         _isClosing = true;
 
-        if (_windowTransitionUI != null && IsVisible)
+        if (_computerWindowAnimator != null && IsVisible)
+            _computerWindowAnimator.PlayClose(FinalizeHide);
+        else if (_windowTransitionUI != null && IsVisible)
             _windowTransitionUI.PlayClose(FinalizeHide);
         else
             FinalizeHide();
@@ -254,7 +257,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
         _isMinimizing = true;
 
-        if (_windowTransitionUI != null)
+        if (_computerWindowAnimator != null)
+            _computerWindowAnimator.PlayMinimize(FinalizeMinimize);
+        else if (_windowTransitionUI != null)
             _windowTransitionUI.PlayMinimize(FinalizeMinimize);
         else
             FinalizeMinimize();
@@ -318,6 +323,13 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         {
             if (draggableWindows[i] != null)
                 draggableWindows[i].SetBoundsRoot(boundsRoot);
+        }
+
+        ComputerWindowDragHandler[] computerDragHandlers = GetComponentsInChildren<ComputerWindowDragHandler>(true);
+        for (int i = 0; i < computerDragHandlers.Length; i++)
+        {
+            if (computerDragHandlers[i] != null)
+                computerDragHandlers[i].SetBoundsRoot(boundsRoot);
         }
 
         ResizableWindowUI[] resizableWindows = GetComponentsInChildren<ResizableWindowUI>(true);
@@ -504,7 +516,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         _isClosing = false;
         SetRootActive(true);
 
-        if (_windowTransitionUI != null)
+        if (_computerWindowAnimator != null)
+            _computerWindowAnimator.PlayOpen();
+        else if (_windowTransitionUI != null)
             _windowTransitionUI.PlayOpen();
     }
 
@@ -526,7 +540,9 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         _isClosing = false;
         _isMinimizing = false;
 
-        if (_windowTransitionUI != null)
+        if (_computerWindowAnimator != null)
+            _computerWindowAnimator.ResetOpenState();
+        else if (_windowTransitionUI != null)
             _windowTransitionUI.ResetState();
 
         ProjectData closedProjectData = CurrentProjectData;

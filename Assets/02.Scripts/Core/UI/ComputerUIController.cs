@@ -18,11 +18,16 @@ public class ComputerUIController : MonoBehaviour
     [SerializeField] private GameObject _desktopLayer;
     [SerializeField] private GameObject _windowLayer;
     [SerializeField] private GameObject _taskbarRoot;
+    [SerializeField] private ComputerBootAudioController _bootAudioController;
+    [SerializeField] private ComputerFakeCursorController _fakeCursorController;
+    [SerializeField] private ComputerCursorController _cursorController;
+    [SerializeField] private ComputerCrtPowerAnimator _crtPowerAnimator;
 
     public bool IsOpen { get; private set; }
 
     private bool _isBooting;
     private bool _isShuttingDown;
+    private bool _isPoweringOff;
 
     private void Awake()
     {
@@ -55,6 +60,9 @@ public class ComputerUIController : MonoBehaviour
 
         if (_shutdownScreenUI != null)
             _shutdownScreenUI.Hide();
+
+        if (_crtPowerAnimator != null)
+            _crtPowerAnimator.ResetPoweredOff();
 
         SetDesktopShellActive(false);
         SetCrtSystemActive(false);
@@ -89,6 +97,11 @@ public class ComputerUIController : MonoBehaviour
         SetRootActive(true);
         ResetComputerUiStateForOpen();
 
+        if (_fakeCursorController != null)
+            _fakeCursorController.SetVisible(true);
+        else if (_cursorController != null)
+            _cursorController.ApplyCustomCursor();
+
         if (_interactionPromptUI != null)
             _interactionPromptUI.SetVisibleBlocked(true);
 
@@ -106,6 +119,12 @@ public class ComputerUIController : MonoBehaviour
         }
 
         SetCrtSystemActive(true);
+
+        if (_crtPowerAnimator != null)
+            _crtPowerAnimator.PlayPowerOn();
+
+        if (_bootAudioController != null)
+            _bootAudioController.PlayBoot();
     }
 
     public void RequestShutdown()
@@ -124,11 +143,17 @@ public class ComputerUIController : MonoBehaviour
 
         if (_shutdownScreenUI == null)
         {
-            CloseImmediate();
+            if (_bootAudioController != null)
+                _bootAudioController.PlayShutdown();
+
+            Close();
             return;
         }
 
         _isShuttingDown = true;
+
+        if (_bootAudioController != null)
+            _bootAudioController.PlayShutdown();
 
         if (_bootScreenUI != null)
             _bootScreenUI.Hide();
@@ -142,7 +167,17 @@ public class ComputerUIController : MonoBehaviour
 
     public void Close()
     {
-        CloseImmediate();
+        if (!IsOpen || _isPoweringOff)
+            return;
+
+        _isPoweringOff = true;
+        _isBooting = false;
+        _isShuttingDown = true;
+
+        if (_crtPowerAnimator != null)
+            _crtPowerAnimator.PlayPowerOff(CloseImmediate);
+        else
+            CloseImmediate();
     }
 
     private void CloseImmediate()
@@ -153,6 +188,7 @@ public class ComputerUIController : MonoBehaviour
         IsOpen = false;
         _isBooting = false;
         _isShuttingDown = false;
+        _isPoweringOff = false;
 
         if (_bootScreenUI != null)
             _bootScreenUI.Hide();
@@ -166,6 +202,12 @@ public class ComputerUIController : MonoBehaviour
         SetDesktopShellActive(false);
         SetCrtSystemActive(false);
         SetRootActive(false);
+
+        if (_fakeCursorController != null)
+            _fakeCursorController.SetVisible(false);
+
+        if (_cursorController != null)
+            _cursorController.RestoreCursor();
 
         if (_projectDesktopUI != null)
             _projectDesktopUI.Clear();
@@ -203,6 +245,7 @@ public class ComputerUIController : MonoBehaviour
     {
         _isBooting = false;
         _isShuttingDown = false;
+        _isPoweringOff = false;
 
         if (_bootScreenUI != null)
             _bootScreenUI.Hide();
@@ -212,6 +255,9 @@ public class ComputerUIController : MonoBehaviour
 
         if (_startMenuUI != null)
             _startMenuUI.Hide();
+
+        if (_crtPowerAnimator != null)
+            _crtPowerAnimator.ResetPoweredOff();
 
         SetDesktopShellActive(false);
     }
@@ -237,7 +283,7 @@ public class ComputerUIController : MonoBehaviour
 
     private void HandleShutdownComplete()
     {
-        CloseImmediate();
+        Close();
     }
 
     private void SetDesktopShellActive(bool active)

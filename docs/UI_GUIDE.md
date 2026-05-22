@@ -44,6 +44,7 @@ Interactive Desktop Portfolio의 Computer UI는 CRT 화면 안에서 실행되�
 - [SYSTEM.LOG Diagnostic Reveal Guide](../phases/02-computer-ui/45-system-log-diagnostic-guide.md) — `SYSTEM.LOG` line reveal, status delay, rich text 색 강조, interaction 정책.
 - [CONTACT.EXE Window Polish Guide](../phases/02-computer-ui/46-contact-window-polish-guide.md) — `CONTACT.EXE` selected row, status keyword, preview header, status bar feedback 기준.
 - [PROJECT ARCHIVE Window Polish Guide](../phases/02-computer-ui/47-project-archive-window-polish-guide.md) — project viewer의 archive feedback, explorer state, readable implementation spacing 기준.
+- [Computer UI UX Polish Editor Wiring](../phases/02-computer-ui/50-computer-ui-ux-polish-editor-wiring.md) — boot/shutdown audio, fake cursor, CRT power, drag, window animation, taskbar state 연결 기준.
 
 관련 legacy/editor wiring 문서:
 

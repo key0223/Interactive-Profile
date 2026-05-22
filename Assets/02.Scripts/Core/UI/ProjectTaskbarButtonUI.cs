@@ -10,6 +10,7 @@ public class ProjectTaskbarButtonUI : MonoBehaviour, IPointerEnterHandler, IPoin
     [SerializeField] private Image _backgroundImage;
     [SerializeField] private Image _iconImage;
     [SerializeField] private TMP_Text _titleText;
+    [SerializeField] private ComputerTaskbarItem _taskbarItem;
     [SerializeField] private GameObject _activeIndicator;
     [SerializeField] private GameObject _minimizedIndicator;
     [SerializeField] private Color _normalColor = new Color(0.75f, 0.75f, 0.75f, 1f);
@@ -33,6 +34,9 @@ public class ProjectTaskbarButtonUI : MonoBehaviour, IPointerEnterHandler, IPoin
 
         if (_backgroundImage == null)
             _backgroundImage = GetComponent<Image>();
+
+        if (_taskbarItem == null)
+            _taskbarItem = GetComponent<ComputerTaskbarItem>();
 
         if (_button == null)
             Debug.LogWarning($"{nameof(ProjectTaskbarButtonUI)} on {name} requires a {nameof(Button)} reference.");
@@ -149,6 +153,12 @@ public class ProjectTaskbarButtonUI : MonoBehaviour, IPointerEnterHandler, IPoin
 
     private void UpdateVisuals()
     {
+        if (_taskbarItem != null)
+        {
+            _taskbarItem.SetState(_isActive, _isMinimized, _isClosing, _isHovered);
+            return;
+        }
+
         if (_backgroundImage == null)
             return;
 

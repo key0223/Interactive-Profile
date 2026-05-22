@@ -107,6 +107,7 @@ InitTestScene*.unity*
 
 /[Aa]ssets/03.Res/Art
 /[Aa]ssets/03.Res/Fonts
+/[Aa]ssets/03.Res/Sounds
 # IDE
 .vscode/
 .idea/
