@@ -46,6 +46,7 @@ Interactive Desktop Portfolio의 Computer UI는 CRT 화면 안에서 실행되�
 - [PROJECT ARCHIVE Window Polish Guide](../phases/02-computer-ui/47-project-archive-window-polish-guide.md) — project viewer의 archive feedback, explorer state, readable implementation spacing 기준.
 - [Computer UI UX Polish Editor Wiring](../phases/02-computer-ui/50-computer-ui-ux-polish-editor-wiring.md) — boot/shutdown audio, fake cursor, CRT power, drag, window animation, taskbar state 연결 기준.
 - [Fake System Popup Editor Wiring](../phases/02-computer-ui/51-fake-system-popup-editor-wiring.md) — shutdown 전 fake warning popup, 첫 표시 보장, 이후 확률 표시 연결 기준.
+- [Resource Notes Room Document Viewer](../phases/03-room-interactions/01-resource-notes-document-viewer.md) — 방 오브젝트 상호작용 기반 문서 viewer 연결 기준.
 
 관련 legacy/editor wiring 문서:
 
