@@ -27,7 +27,7 @@
 
 ## Step Status
 
-pending
+completed
 
 ## Goal
 
@@ -437,7 +437,7 @@ Close() 또는 Escape
 
 ## Completed Step Summary
 
-이 step은 Unity Editor에서 `BootScreenRoot`를 만들고 `BootScreenUI`와 `ComputerUIController` 참조를 연결하는 절차를 정의한다. `BootScreenRoot`는 `ComputerUIRoot` 하위의 overlay 계층이며, 기본 inactive 상태로 둔다. Play Mode에서는 boot screen 표시, 로그 순차 출력, desktop shell 숨김/표시, Escape close, reopen 재생을 검증한다.
+이 step은 Unity Editor에서 `BootScreenRoot`를 만들고 `BootScreenUI`와 `ComputerUIController` 참조를 연결하는 절차를 정의했고, 현재 구현은 Computer UI open 시 boot screen을 먼저 재생한 뒤 desktop shell을 표시하는 흐름을 사용한다. `BootScreenRoot`는 `ComputerUIRoot` 하위의 overlay 계층이며, 기본 inactive 상태로 둔다. Play Mode에서는 boot screen 표시, 로그 순차 출력, desktop shell 숨김/표시, Escape close, reopen 재생을 검증한다.
 
 ## Next Recommended Step
 

@@ -2,17 +2,17 @@
 
 ## Status
 
-Deprecated. 기존 `ScanlineOverlay`, `ScreenVignette`, `NoiseOverlay` 분리 구조는 더 이상 사용하지 않는다. 최신 구성은 [Computer CRT Overlay Shader Editor Wiring](./49-computer-crt-overlay-shader-editor-wiring.md)의 단일 `CRTOverlayImage`와 `ComputerCrtOverlay.shader`를 따른다.
+Deprecated. 기존 `ScanlineOverlay`, `ScreenVignette`, `NoiseOverlay` 분리 구조는 더 이상 사용하지 않는다. 현재 open/close 흐름의 최신 구성은 [CRT Display System Editor Wiring](./48-crt-display-system-editor-wiring.md)의 `CRTCamera` + `CrtDisplayBootstrap` 방식을 따른다.
 
 ## Document Metadata
 
-- Status: Active
+- Status: deprecated
 - Related Documents: [UI Guide](../../docs/UI_GUIDE.md), [Computer UI Polish Roadmap](./39-computer-ui-polish-roadmap.md), [Future Transition Polish](./38-future-transition-polish.md), [Fake OS Ambience Guide](./42-fake-os-ambience-guide.md)
 - Last Reviewed Phase: 43 CRT Overlay Polish Guide
 
 ## Goal
 
-`CRTOverlayUI`와 Unity UI overlay images를 사용해 Computer UI 전체에 가벼운 CRT 느낌을 더한다.
+`CRTOverlayUI`와 Unity UI overlay images를 사용해 Computer UI 전체에 가벼운 CRT 느낌을 더한다. 이 방식은 현재 CRT display system 이전의 legacy overlay 기록으로만 유지한다.
 
 이 문서는 Editor 작업 가이드다. Unity Editor 작업은 사용자가 직접 수행하며 Codex는 `.unity`, `.prefab`, `.asset`, `.meta` 파일을 직접 수정하지 않는다.
 

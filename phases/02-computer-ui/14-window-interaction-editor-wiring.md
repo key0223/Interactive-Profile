@@ -2,7 +2,7 @@
 
 ## Status
 
-pending
+completed
 
 ## Goal
 
@@ -440,7 +440,7 @@ ProjectDesktopIcon prefab 또는 scene template
 
 ## Completed Step Summary
 
-아직 실행 전이다. 완료 시 이 문서의 TitleBar wiring, ResizeHandle 생성, bounds root 연결, min/max size, Play Mode 검증 결과를 실제 Unity Editor 작업 결과로 갱신한다.
+현재 구현 기준으로 이 step은 완료되었다. Desktop icon double click, title bar drag, resize/bounds clamp 기준이 window interaction 흐름에 반영되어 있으며, 최신 window drag 구현은 `ComputerWindowDragHandler`와 `WindowBoundsUtility` 경로를 함께 사용한다. 실제 Scene/Prefab 연결은 Unity Editor에서 유지하고, 문서는 wiring 및 Play Mode 검증 기준으로 남긴다.
 
 ## Retry / Recovery
 

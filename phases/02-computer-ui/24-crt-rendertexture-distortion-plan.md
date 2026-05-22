@@ -2,7 +2,9 @@
 
 ## Status
 
-pending
+completed
+
+RenderTexture 실험 계획은 현재 [CRT Display System Editor Wiring](./48-crt-display-system-editor-wiring.md)의 `CRTCamera` + `CrtDisplayBootstrap` 방식으로 구체화되었다. 이 문서는 초기 리스크 분석 기록으로 유지한다.
 
 ## Goal
 
@@ -222,7 +224,6 @@ RenderTexture 방식의 처리 순서:
 
 ## Current Recommendation
 
-현재 프로젝트 단계에서는 overlay 기반 CRT 효과와 frame/bezel polish만으로도 충분히 좋은 UX를 제공할 수 있다. 실제 distortion은 presentation 완성도를 올리는 후반 polish 작업으로 두는 편이 안전하다.
+현재 프로젝트는 overlay 기반 CRT 실험을 지나 `CRTCamera`, runtime `RenderTexture`, `RawImage`, display material을 생성하는 `CrtDisplayBootstrap` 경로를 사용한다. Computer UI open/close 시 `ComputerUIController`가 CRT camera와 display system을 함께 켜고 끄며, 비활성화 시 camera target texture와 captured Canvas 상태를 복구한다.
 
-지금은 gameplay, project viewer, window/taskbar interaction iteration 속도를 우선한다. RenderTexture distortion은 구조 설계만 유지하고, 최종 시각 품질이 필요해지는 시점에 별도 prototype으로 검증한다.
-
+이 문서는 RenderTexture 전환 전에 기록한 입력, 성능, 디버깅 리스크 분석으로 유지한다. 최신 Editor wiring과 검증 기준은 [CRT Display System Editor Wiring](./48-crt-display-system-editor-wiring.md)을 우선한다.

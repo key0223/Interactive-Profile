@@ -2,11 +2,13 @@
 
 ## Status
 
-Active. 현재 프로젝트는 Computer UI open/close 흐름에서 `CRTCamera`와 `CrtDisplayBootstrap` GameObject를 함께 켜고 끄는 방식을 사용한다.
+completed
+
+현재 프로젝트는 Computer UI open/close 흐름에서 `CRTCamera`와 `CrtDisplayBootstrap` GameObject를 함께 켜고 끄는 방식을 사용한다.
 
 ## Document Metadata
 
-- Status: pending
+- Status: completed
 - Related Documents: [CRT RenderTexture Distortion Plan](./24-crt-rendertexture-distortion-plan.md), [CRT Frame And Screen Mask Editor Guide](./25-crt-frame-screen-mask-editor-guide.md)
 - Related Scripts: `Assets/02.Scripts/Utils/CrtDisplayBootstrap.cs`, `Assets/02.Scripts/Core/UI/ComputerUIController.cs`
 
@@ -173,3 +175,7 @@ Computer UI를 닫은 뒤 화면이 검거나 UI가 사라진다:
 - Computer UI를 닫으면 CRT Display System이 먼저 inactive가 되고, 그 다음 CRTCamera가 inactive가 된다.
 - source camera `targetTexture`와 captured Canvas 상태가 반복 open/close 후에도 복구된다.
 - Unity scene, prefab, asset, meta 파일은 Codex가 직접 수정하지 않는다.
+
+## Completed Step Summary
+
+이 step은 `CRTCamera`와 `CrtDisplayBootstrap` 기반 CRT display system을 Computer UI lifecycle에 연결하는 기준을 정의했고, 현재 `ComputerUIController`는 open 시 CRT camera와 display system을 활성화하고 close/shutdown 완료 시 display system을 먼저 끈 뒤 camera를 비활성화한다. `CrtDisplayBootstrap`은 runtime RenderTexture, display camera, display canvas, RawImage를 생성하고, 비활성화 시 source camera target texture와 captured Canvas render mode/world camera/plane distance를 복구한다.

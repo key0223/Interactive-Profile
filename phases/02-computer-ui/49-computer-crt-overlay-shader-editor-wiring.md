@@ -7,13 +7,13 @@ Deprecated. `ComputerCrtOverlayController`와 `ComputerCrtOverlay.shader` 방식
 ## Document Metadata
 
 - Status: deprecated
-- Replaces: [CRT Display System Editor Wiring](./48-crt-display-system-editor-wiring.md)
+- Replaced By: [CRT Display System Editor Wiring](./48-crt-display-system-editor-wiring.md)
 - Related Scripts: `Assets/02.Scripts/Core/UI/ComputerUIController.cs`, `Assets/02.Scripts/Core/UI/ComputerCrtOverlayController.cs`
 - Related Shader: `Assets/03.Shaders/UI/ComputerCrtOverlay.shader`
 
 ## Goal
 
-CRT 효과를 Main Camera, RenderTexture, Canvas render mode 변경 없이 `ComputerCanvas/ComputerUI` 내부 UI overlay로만 표시한다.
+CRT 효과를 Main Camera, RenderTexture, Canvas render mode 변경 없이 `ComputerCanvas/ComputerUI` 내부 UI overlay로만 표시한다. 이 방식은 현재 open/close 흐름에서 사용하지 않는 legacy shader overlay 실험이다.
 
 Codex는 scene, prefab, material asset, meta, YAML 파일을 직접 수정하지 않는다. Material 생성과 Inspector 연결은 Unity Editor에서 직접 수행한다.
 

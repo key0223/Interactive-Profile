@@ -2,7 +2,7 @@
 
 ## Status
 
-pending
+completed
 
 ## Goal
 
@@ -342,7 +342,7 @@ Editor 연결:
 
 ## Completed Step Summary
 
-이 step은 Computer UI 진입 시 짧은 faux OS 부팅 로그를 보여주고, 완료 후 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`와 `ProjectDesktopUI.Initialize()`를 활성화하는 `BootScreenUI` 설계를 정의한다. `BootScreenUI`는 로그 연출만 담당하고, Computer UI open/close와 desktop lifecycle 조율은 `ComputerUIController`가 담당한다.
+이 step은 Computer UI 진입 시 짧은 faux OS 부팅 로그를 보여주고, 완료 후 `DesktopLayer`, `WindowLayer`, `TaskbarRoot`와 `ProjectDesktopUI.Initialize()`를 활성화하는 `BootScreenUI` 설계를 정의했고, 현재 코드에 `BootScreenUI`와 `ComputerUIController`의 boot state 흐름이 반영되어 있다. `BootScreenUI`는 로그/커서/fade 연출만 담당하고, Computer UI open/close와 desktop lifecycle 조율은 `ComputerUIController`가 담당한다. boot 중 close/Escape는 coroutine과 callback을 정리하고, reopen 시 boot sequence가 처음부터 재생되는 구조다.
 
 ## Retry / Recovery
 

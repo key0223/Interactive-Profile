@@ -1,5 +1,9 @@
 # Computer UI UX Polish Editor Wiring
 
+## Status
+
+completed
+
 ## Scope
 
 이 문서는 Computer UI의 레트로 PC UX polish 연결 기준만 다룬다. Scene, Prefab, Asset, Meta, YAML 파일은 직접 텍스트 수정하지 않고 Unity Editor에서 연결한다.
@@ -201,3 +205,7 @@ Inspector 기준:
 - `ComputerUIController`의 boot, desktop, shutdown 책임을 helper로 옮기지 않는다.
 - `CRTCamera`와 `CrtDisplayBootstrap`의 활성/비활성 순서는 `ComputerUIController`에 남긴다.
 - Scene 연결 누락은 코드 하드 검색으로 보완하지 말고 Inspector 연결과 경고 로그로 처리한다.
+
+## Completed Step Summary
+
+이 step은 Computer UI UX polish 연결 기준을 정리했고, 현재 코드에 boot/shutdown audio, fake cursor, CRT power on/off animation, window drag, window open/minimize/close animation, taskbar active/minimized/closing state helper가 반영되어 있다. `ComputerUIController`는 helper 참조를 통해 open 시 fake cursor, CRT power on, boot audio를 실행하고, shutdown/close 시 shutdown audio, CRT power off, cursor 복구, CRT display system 정리를 수행한다. Editor 연결과 asset/audio clip 지정은 Unity Editor에서 유지한다.

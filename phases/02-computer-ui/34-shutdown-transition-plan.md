@@ -28,7 +28,7 @@
 
 ## Step Status
 
-pending
+completed
 
 ## Goal
 
@@ -601,7 +601,7 @@ MVP 권장:
 
 ## Completed Step Summary
 
-이 step은 현재 Computer UI startup boot sequence와 즉시 close shutdown 흐름을 분석하고, startup 구조를 깨지 않는 shutdown transition 설계를 제안한다. 권장 방향은 `BootScreenUI`를 재사용하지 않고 전용 `ShutdownScreenUI`를 추가해 짧은 shutdown text, CanvasGroup fade, 완료 후 immediate close cleanup을 수행하는 것이다.
+이 step은 Computer UI startup boot sequence와 shutdown 흐름을 분리했고, 현재 코드에 전용 `ShutdownScreenUI`, `ComputerUIController.RequestShutdown()`, `_isShuttingDown` 상태가 반영되어 있다. `BootScreenUI`를 shutdown에 재사용하지 않고, Start Menu shutdown 요청은 shutdown text/fade 완료 후 CRT power off와 immediate close cleanup으로 이어진다. boot 중 close는 즉시 종료 경로를 유지하고, desktop 상태 shutdown은 전용 transition 경로를 사용한다.
 
 ## Next Recommended Step
 

@@ -15,7 +15,7 @@
 
 ## Step Status
 
-pending
+deprecated
 
 ## Goal
 
@@ -480,7 +480,7 @@ Inspector 연결:
 
 ## Completed Step Summary
 
-완료 후 다음 step에는 다음 context를 넘긴다.
+이 step은 현재 구조에서는 deprecated 상태다. 초기 desktop icon wiring 기록으로만 다음 context를 넘긴다.
 
 - `ComputerUIRoot` 아래 `DesktopLayer`와 `WindowLayer`를 구성한다.
 - `DesktopIconRoot`는 `ProjectDesktopUI._iconRoot`로 연결한다.
@@ -489,6 +489,7 @@ Inspector 연결:
 - `ComputerUIController._projectDesktopUI`가 연결되면 Desktop 흐름이 Sidebar fallback보다 우선한다.
 - 기존 Sidebar GameObject는 비활성화하거나 사용하지 않는 상태로 둔다.
 - Play Mode 검증은 Desktop icon 생성, icon 클릭, Window 표시, CloseButton, Escape 전체 닫기를 포함한다.
+- 최신 구현 기준의 icon selection/double click, multi-window, taskbar 동기화 검증은 [Desktop Icon Interaction Guide](./37-desktop-icon-guide.md), [Window Transition Guide](./35-window-transition-guide.md), [Taskbar Interaction Guide](./36-taskbar-interaction-guide.md)를 우선한다.
 
 ## Retry / Recovery
 

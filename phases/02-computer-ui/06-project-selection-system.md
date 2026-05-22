@@ -2,7 +2,7 @@
 
 ## Status
 
-pending
+completed
 
 ## Goal
 
@@ -429,7 +429,7 @@ MVP에서 제외:
 
 ## Completed Step Summary
 
-완료 후 다음 step에는 다음 context를 넘긴다.
+현재 구현 기준으로 이 step은 완료되었다. 다음 context를 넘긴다.
 
 - 프로젝트 데이터는 JSON이 아니라 ScriptableObject 기반으로 유지한다.
 - `ProjectData`는 단일 프로젝트 항목의 상세 데이터로 유지한다.
@@ -438,6 +438,7 @@ MVP에서 제외:
 - 버튼 1개의 표시와 클릭 전달은 `ProjectListItemUI`가 담당한다.
 - 상세 표시 갱신은 기존 `ProjectViewerUI.Show(ProjectData)`를 그대로 사용한다.
 - `ComputerUIController`는 UI 열기/닫기와 입력 잠금만 유지하고, 프로젝트 선택 세부 로직은 `ProjectSelectionUI`에 위임한다.
+- 현재 코드에는 `ProjectCatalog`, `ProjectSelectionUI`, `ProjectListItemUI`, `ProjectViewerUI.Show(ProjectData)` 흐름이 반영되어 있다.
 
 ## Retry / Recovery
 

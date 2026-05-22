@@ -2,7 +2,7 @@
 
 ## Status
 
-pending
+completed
 
 ## Goal
 
@@ -530,7 +530,7 @@ MVP에서 제외:
 
 ## Completed Step Summary
 
-완료 후 다음 step에는 다음 context를 넘긴다.
+현재 구현 기준으로 이 step은 완료되었다. 다음 context를 넘긴다.
 
 - `ProjectData`, `ProjectCatalog`, `ProjectViewerUI`, `ComputerUIController`는 유지한다.
 - Sidebar 목록 생성과 선택 row 표시 책임은 Desktop icon 구조로 대체한다.
@@ -538,7 +538,8 @@ MVP에서 제외:
 - 새 구조의 중심은 `ProjectDesktopUI`, `ProjectDesktopIconUI`, `ProjectWindowUI`다.
 - 프로젝트 icon 클릭은 `ProjectWindowUI.ShowProject(ProjectData)`를 호출하고, 그 내부에서 `ProjectViewerUI.Show(ProjectData)`를 실행한다.
 - 프로젝트 Window 닫기와 컴퓨터 UI 전체 닫기는 별도 UX로 다룬다.
-- MVP에서는 single click 열기, 단일 Window, 공통 icon sprite, 고정 Window만 구현한다.
+- 현재 코드는 `ProjectDesktopUI`, `ProjectDesktopIconUI`, `ProjectWindowUI`, `ProjectWindowManager` 기반 desktop icon/window 흐름을 사용한다.
+- MVP 설계 당시의 single window 제약은 이후 multi-window/taskbar 단계에서 확장되었다.
 
 ## Retry / Recovery
 

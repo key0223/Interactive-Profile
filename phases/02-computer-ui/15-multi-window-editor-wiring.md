@@ -2,7 +2,7 @@
 
 ## Status
 
-pending
+completed
 
 ## Goal
 
@@ -484,7 +484,7 @@ _doubleClickThreshold: 0.35
 
 ## Completed Step Summary
 
-아직 실행 전이다. 완료 시 이 문서의 prefab 생성, prefab 내부 참조, `ProjectDesktopUI` 연결, WindowLayer 구성, Play Mode 검증 결과를 실제 Unity Editor 작업 결과로 갱신한다.
+현재 구현 기준으로 이 step은 완료되었다. `ProjectDesktopUI`는 window prefab과 `ProjectWindowManager` 기반 multi-window 흐름을 사용하며, 같은 project/app 재오픈은 기존 window focus/restore로 수렴한다. `WindowLayer`, prefab 내부 참조, close 후 재오픈, focus/z-order 검증은 Unity Editor 연결 상태와 Play Mode에서 유지한다.
 
 ## Retry / Recovery
 

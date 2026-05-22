@@ -13,7 +13,7 @@ window controls 배치와 `_minimizeButton`, `_maximizeButton`, `_closeButton`, 
 
 ## Step Status
 
-pending
+completed
 
 ## Goal
 
@@ -532,7 +532,7 @@ _maximizeBoundsRoot: WindowLayer RectTransform
 
 ## Completed Step Summary
 
-아직 실행 전이다. 완료 시 이 문서의 TitleBar window controls 배치, `ProjectWindowUI` Inspector 연결, `_maximizeBoundsRoot` 선택, Play Mode 검증 결과를 실제 Unity Editor 작업 결과로 갱신한다.
+현재 구현 기준으로 이 step은 완료되었다. `ProjectWindowUI`는 minimize, maximize/restore, close button 참조와 maximize bounds를 지원하며, minimize/close animation은 `ComputerWindowAnimator` 또는 `WindowTransitionUI` fallback을 통해 처리한다. 최대화 상태 drag/resize 잠금과 taskbar restore/focus 검증은 최신 taskbar/window transition 문서를 함께 따른다.
 
 ## Retry / Recovery
 
