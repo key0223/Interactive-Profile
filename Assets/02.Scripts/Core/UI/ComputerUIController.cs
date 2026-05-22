@@ -22,6 +22,7 @@ public class ComputerUIController : MonoBehaviour
     [SerializeField] private ComputerFakeCursorController _fakeCursorController;
     [SerializeField] private ComputerCursorController _cursorController;
     [SerializeField] private ComputerCrtPowerAnimator _crtPowerAnimator;
+    [SerializeField] private FakeSystemPopupController _fakeSystemPopupController;
 
     public bool IsOpen { get; private set; }
 
@@ -60,6 +61,9 @@ public class ComputerUIController : MonoBehaviour
 
         if (_shutdownScreenUI != null)
             _shutdownScreenUI.Hide();
+
+        if (_fakeSystemPopupController != null)
+            _fakeSystemPopupController.Hide();
 
         if (_crtPowerAnimator != null)
             _crtPowerAnimator.ResetPoweredOff();
@@ -141,19 +145,7 @@ public class ComputerUIController : MonoBehaviour
         if (_isShuttingDown)
             return;
 
-        if (_shutdownScreenUI == null)
-        {
-            if (_bootAudioController != null)
-                _bootAudioController.PlayShutdown();
-
-            Close();
-            return;
-        }
-
         _isShuttingDown = true;
-
-        if (_bootAudioController != null)
-            _bootAudioController.PlayShutdown();
 
         if (_bootScreenUI != null)
             _bootScreenUI.Hide();
@@ -162,7 +154,11 @@ public class ComputerUIController : MonoBehaviour
             _startMenuUI.Hide();
 
         SetDesktopShellActive(false);
-        _shutdownScreenUI.Play(HandleShutdownComplete);
+
+        if (_fakeSystemPopupController != null)
+            _fakeSystemPopupController.TryShowShutdownPopup(BeginShutdownSequence);
+        else
+            BeginShutdownSequence();
     }
 
     public void Close()
@@ -195,6 +191,9 @@ public class ComputerUIController : MonoBehaviour
 
         if (_shutdownScreenUI != null)
             _shutdownScreenUI.Hide();
+
+        if (_fakeSystemPopupController != null)
+            _fakeSystemPopupController.Hide();
 
         if (_startMenuUI != null)
             _startMenuUI.Hide();
@@ -253,6 +252,9 @@ public class ComputerUIController : MonoBehaviour
         if (_shutdownScreenUI != null)
             _shutdownScreenUI.Hide();
 
+        if (_fakeSystemPopupController != null)
+            _fakeSystemPopupController.Hide();
+
         if (_startMenuUI != null)
             _startMenuUI.Hide();
 
@@ -284,6 +286,23 @@ public class ComputerUIController : MonoBehaviour
     private void HandleShutdownComplete()
     {
         Close();
+    }
+
+    private void BeginShutdownSequence()
+    {
+        if (!IsOpen || !_isShuttingDown)
+            return;
+
+        if (_bootAudioController != null)
+            _bootAudioController.PlayShutdown();
+
+        if (_shutdownScreenUI == null)
+        {
+            Close();
+            return;
+        }
+
+        _shutdownScreenUI.Play(HandleShutdownComplete);
     }
 
     private void SetDesktopShellActive(bool active)
