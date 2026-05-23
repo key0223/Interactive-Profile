@@ -113,6 +113,7 @@ public class FakeSystemPopupController : MonoBehaviour
     {
         _isShowing = true;
         _state = PopupState.Initial;
+        UxSoundManager.Play(UxSoundType.ErrorBeep);
 
         SetText(_titleText, InitialTitle);
         SetText(_bodyText, InitialBody);
@@ -136,6 +137,7 @@ public class FakeSystemPopupController : MonoBehaviour
             return;
 
         _state = PopupState.ScanFollowup;
+        UxSoundManager.Play(UxSoundType.ErrorBeep);
 
         SetText(_titleText, InitialTitle);
         SetText(_bodyText, ScanFollowupBody);
@@ -151,6 +153,7 @@ public class FakeSystemPopupController : MonoBehaviour
             return;
 
         _state = PopupState.IgnoreConfirmation;
+        UxSoundManager.Play(UxSoundType.ErrorBeep);
 
         SetText(_titleText, InitialTitle);
         SetText(_bodyText, IgnoreConfirmationBody);

@@ -55,6 +55,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     private bool _isMaximized;
     private bool _isClosing;
     private bool _isMinimizing;
+    private bool _playCloseSoundOnFinalize;
     private RectTransform _runtimeBoundsRoot;
 
     public DesktopWindowType WindowType => _windowType;
@@ -227,6 +228,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
         _isMinimizing = false;
         _isClosing = true;
+        _playCloseSoundOnFinalize = IsVisible;
 
         if (_computerWindowAnimator != null && IsVisible)
             _computerWindowAnimator.PlayClose(FinalizeHide);
@@ -530,9 +532,13 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
 
     private void ShowRoot()
     {
+        bool wasVisible = IsVisible;
         _isMinimizing = false;
         _isClosing = false;
         SetRootActive(true);
+
+        if (!wasVisible)
+            UxSoundManager.Play(UxSoundType.WindowOpen);
 
         if (_computerWindowAnimator != null)
             _computerWindowAnimator.PlayOpen();
@@ -547,6 +553,10 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
         ResetWindowState(true);
         Clear();
         SetRootActive(false);
+        if (_playCloseSoundOnFinalize)
+            UxSoundManager.Play(UxSoundType.WindowClose);
+
+        _playCloseSoundOnFinalize = false;
         _isClosing = false;
         CurrentProjectData = closedProjectData;
         Closed?.Invoke(this);
@@ -557,6 +567,7 @@ public class ProjectWindowUI : MonoBehaviour, IPointerDownHandler
     {
         _isClosing = false;
         _isMinimizing = false;
+        _playCloseSoundOnFinalize = false;
 
         if (_computerWindowAnimator != null)
             _computerWindowAnimator.ResetOpenState();

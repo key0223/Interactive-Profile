@@ -88,6 +88,7 @@ public class RoomDocumentViewerController : MonoBehaviour
 
         _currentPageIndex++;
         RefreshPage();
+        UxSoundManager.Play(UxSoundType.PageTurn);
     }
 
     public void PreviousPage()
@@ -97,6 +98,7 @@ public class RoomDocumentViewerController : MonoBehaviour
 
         _currentPageIndex--;
         RefreshPage();
+        UxSoundManager.Play(UxSoundType.PageTurn);
     }
 
     public void Close()
