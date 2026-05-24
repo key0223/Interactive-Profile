@@ -100,6 +100,7 @@ public class ComputerUIController : MonoBehaviour
         IsOpen = true;
         SetRootActive(true);
         ResetComputerUiStateForOpen();
+        UxSoundManager.PauseBgm();
 
         if (_fakeCursorController != null)
             _fakeCursorController.SetVisible(true);
@@ -220,6 +221,8 @@ public class ComputerUIController : MonoBehaviour
 
         if (_interactionPromptUI != null)
             _interactionPromptUI.SetVisibleBlocked(false);
+
+        UxSoundManager.ResumeBgm();
     }
 
     private void SetRootActive(bool active)

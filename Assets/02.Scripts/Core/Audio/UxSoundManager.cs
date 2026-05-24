@@ -67,6 +67,27 @@ public class UxSoundManager : MonoBehaviour
         Instance.StopBgmInternal();
     }
 
+    public static void PauseBgm()
+    {
+        if (Instance == null)
+            return;
+
+        Instance.PauseBgmInternal();
+    }
+
+    public static void ResumeBgm()
+    {
+        if (Instance == null)
+            return;
+
+        Instance.ResumeBgmInternal();
+    }
+
+    public static void PlayRoomBgm()
+    {
+        PlayBgm(UxSoundType.RoomBgm);
+    }
+
     public void PlaySfx(UxSoundType type)
     {
         if (_sfxAudioSource == null)
@@ -111,6 +132,34 @@ public class UxSoundManager : MonoBehaviour
             return;
 
         _bgmAudioSource.Stop();
+    }
+
+    public void PauseBgmInternal()
+    {
+        if (_bgmAudioSource == null || !_bgmAudioSource.isPlaying)
+            return;
+
+        _bgmAudioSource.Pause();
+    }
+
+    public void ResumeBgmInternal()
+    {
+        if (_bgmAudioSource == null)
+            return;
+
+        if (_bgmAudioSource.isPlaying)
+            return;
+
+        if (_bgmAudioSource.clip == null)
+        {
+            PlayBgmInternal(UxSoundType.RoomBgm);
+            return;
+        }
+
+        _bgmAudioSource.UnPause();
+
+        if (!_bgmAudioSource.isPlaying)
+            _bgmAudioSource.Play();
     }
 
     private void ConfigureAudioSources()

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3190338409240093104}
   - component: {fileID: 8334471846022944216}
   - component: {fileID: 7930727461252926547}
+  - component: {fileID: 3112779459386292689}
   m_Layer: 0
   m_Name: DesktopIconItem
   m_TagString: Untagged
@@ -110,8 +111,26 @@ MonoBehaviour:
   _selectionImage: {fileID: 605997592218810566}
   _fallbackIcon: {fileID: 0}
   _normalSelectionColor: {r: 1, g: 1, b: 1, a: 1}
+  _hoverSelectionColor: {r: 1, g: 1, b: 1, a: 0.14}
   _selectedSelectionColor: {r: 0.39607844, g: 0.40784314, b: 0.67058825, a: 0.4509804}
   _doubleClickThreshold: 0.35
+--- !u!114 &3112779459386292689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 915891503689519962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3478e2a22190142e09c31809710d3b64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _button: {fileID: 8334471846022944216}
+  _clickSound: 3
+  _hoverSound: 5
+  _playHoverSound: 0
+  _playHoverOnlyWhenInteractable: 0
 --- !u!1 &5625235626693171760
 GameObject:
   m_ObjectHideFlags: 0
