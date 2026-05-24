@@ -9,6 +9,7 @@ public class InteractionDetector : MonoBehaviour
     [SerializeField] private LayerMask _interactionLayerMask = ~0;
 
     private readonly List<IInteractable> _candidates = new List<IInteractable>();
+    private readonly Dictionary<IInteractable, int> _overlapCounts = new Dictionary<IInteractable, int>();
     private IInteractable _currentInteractable;
 
     public event Action<IInteractable> CurrentInteractableChanged;
@@ -43,9 +44,16 @@ public class InteractionDetector : MonoBehaviour
             return;
 
         IInteractable interactable = other.GetComponentInParent<IInteractable>();
-        if (interactable == null || _candidates.Contains(interactable))
+        if (interactable == null)
             return;
 
+        if (_overlapCounts.TryGetValue(interactable, out int overlapCount))
+        {
+            _overlapCounts[interactable] = overlapCount + 1;
+            return;
+        }
+
+        _overlapCounts.Add(interactable, 1);
         _candidates.Add(interactable);
         RefreshCurrentInteractable();
     }
@@ -56,6 +64,17 @@ public class InteractionDetector : MonoBehaviour
         if (interactable == null)
             return;
 
+        if (!_overlapCounts.TryGetValue(interactable, out int overlapCount))
+            return;
+
+        overlapCount--;
+        if (overlapCount > 0)
+        {
+            _overlapCounts[interactable] = overlapCount;
+            return;
+        }
+
+        _overlapCounts.Remove(interactable);
         if (_candidates.Remove(interactable))
             RefreshCurrentInteractable();
     }
@@ -77,14 +96,18 @@ public class InteractionDetector : MonoBehaviour
         for (int i = _candidates.Count - 1; i >= 0; i--)
         {
             if (_candidates[i] == null || !(_candidates[i] is Component))
+            {
+                _overlapCounts.Remove(_candidates[i]);
                 _candidates.RemoveAt(i);
+            }
         }
     }
 
     private IInteractable GetNearestInteractable()
     {
-        IInteractable nearestInteractable = null;
-        float nearestDistanceSqr = float.MaxValue;
+        IInteractable selectedInteractable = null;
+        int selectedPriority = int.MinValue;
+        float selectedDistanceSqr = float.MaxValue;
         Vector3 detectorPosition = transform.position;
 
         foreach (IInteractable candidate in _candidates)
@@ -96,15 +119,26 @@ public class InteractionDetector : MonoBehaviour
             if (candidateComponent == null)
                 continue;
 
+            int priority = GetInteractionPriority(candidate);
             float distanceSqr = (candidateComponent.transform.position - detectorPosition).sqrMagnitude;
-            if (distanceSqr >= nearestDistanceSqr)
+            if (priority < selectedPriority)
                 continue;
 
-            nearestDistanceSqr = distanceSqr;
-            nearestInteractable = candidate;
+            if (priority == selectedPriority && distanceSqr >= selectedDistanceSqr)
+                continue;
+
+            selectedPriority = priority;
+            selectedDistanceSqr = distanceSqr;
+            selectedInteractable = candidate;
         }
 
-        return nearestInteractable;
+        return selectedInteractable;
+    }
+
+    private static int GetInteractionPriority(IInteractable interactable)
+    {
+        IInteractionPriority priority = interactable as IInteractionPriority;
+        return priority != null ? priority.InteractionPriority : 0;
     }
 
     private bool IsInInteractionLayer(int layer)

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class SitInteraction : BaseInteractable, IInteractionPromptVisibility
+public class SitInteraction : BaseInteractable, IInteractionPromptVisibility, IInteractionPriority
 {
     [SerializeField] private PlayerMovement _playerMovement;
     [SerializeField] private PlayerSpriteAnimator _playerSpriteAnimator;
@@ -11,6 +11,7 @@ public class SitInteraction : BaseInteractable, IInteractionPromptVisibility
 
     public override bool CanInteract => base.CanInteract && !IsComputerUIOpen();
     public bool ShouldShowPrompt => !_isSittingHere;
+    public int InteractionPriority => _isSittingHere ? 100 : 0;
 
     private void Awake()
     {

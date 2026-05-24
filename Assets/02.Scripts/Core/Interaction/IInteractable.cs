@@ -5,6 +5,11 @@ public interface IInteractable
     void Interact();
 }
 
+public interface IInteractionPriority
+{
+    int InteractionPriority { get; }
+}
+
 public interface IInteractionPromptVisibility
 {
     bool ShouldShowPrompt { get; }
