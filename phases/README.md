@@ -6,21 +6,26 @@
 
 ## Directory Convention
 
-권장 구조:
+현재 phase 구조:
 
 ```text
 phases/
   00-foundation/
     01-code-architecture.md
-    02-editor-scene-setup.md
-  01-room-interaction/
-    01-player-movement-code.md
-    02-interaction-code.md
-    03-editor-object-wiring.md
+  01-room-setup/
+    01-tilemap-room-wiring.md
   02-computer-ui/
-    01-project-data-code.md
-    02-computer-ui-code.md
-    03-editor-ui-wiring.md
+    ...
+  03-room-character/
+    01-character-animation-plan.md
+    02-sit-interaction-guide.md
+    03-ambient-cat-ai-guide.md
+  04-room-interactions/
+    01-resource-notes-document-viewer.md
+    02-open-url-button-handler.md
+    03-title-screen-editor-handoff.md
+    04-fullscreen-blur-system.md
+    05-ux-sound-system.md
 ```
 
 phase 번호는 큰 목표를 나타내고, step 번호는 실행 순서를 나타낸다. Unity Editor 작업은 코드 작업과 별도 step으로 분리한다.
