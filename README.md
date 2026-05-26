@@ -51,8 +51,8 @@ Harness 기반 개발 방식을 실험하는 과정에서 시작되었습니다.
 
 ### 🖥 Retro Computer System
 
-Interact with the computer
-to access the portfolio system.
+컴퓨터를 통해
+포트폴리오 시스템을 탐색할 수 있습니다.
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/596f7c9e-4b2b-467c-9e94-311e7f41ead3" width="60%" />
